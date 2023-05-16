@@ -1,0 +1,9 @@
+outputs_kinem/
+corner_flow/
+exhumation/
+outputs_kinem/
+sub2D_no_plasticity_high_res/
+inputs/text_files/
+inputs/test_plots/
+inputs/*/text_files/
+inputs/*/test_plots/
