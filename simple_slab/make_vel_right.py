@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+import numpy as np
+from tqdm import tqdm
+
+# box dimensions (make sure consistent with "X extent" and "Y extent" in ASPECT input)
+xmin=0;xmax=400.e3
+ymin=0;zmax=200.e3
+# number of points (should be a multiple of xmax and ymax)
+xnum=1200; znum=600
+# geometry parameters
+c_thick = 5.e3 #crustal thickness
+c_len = 50.e3 #crustal length before bending
+radius = 150.e3 # radius of curvature
+depth_notch = 100.e3
+alpha = 45
+
+v = 5.
+
+x2 = c_len + radius*np.sin(alpha)
+y2 = zmax + radius*np.cos(alpha) - radius
+x3 = 250.e3
+y3 = 0
+
+
+
+
+# create input y-coordinates (with refined region at shallow depth)
+zbound = 200.e3    # depth of refinement boundary
+num_refine = 400   # number of grid points in refined upper layer
+lower_lowres = np.linspace(0,zmax-zbound,znum+1-num_refine)
+upper_highres = np.linspace(zmax-zbound,zmax,1+num_refine)
+zvals = np.concatenate((lower_lowres, upper_highres[1:]), axis=0)
+
+# create empty array for input file (structure: x, y, z, C)
+No_nodes= (xnum + 1) *(znum + 1)
+C=np.zeros([No_nodes,4],float)
+ 
+ind=0
+for j in tqdm(range(znum + 1)): 
+        for i in range(xnum + 1):
+
+            x = xmin + i * ((xmax - xmin)/xnum)
+
+            z = zvals[j]
+
+            C[ind,0] = x
+            C[ind,1] = z
+
+            # flat portion of crust
+            if x > 0 and x <= (c_len):
+                C[ind,2]=v
+                C[ind,3]=0
+            # curved portion of crust (i.e. plate boundary)
+            # elif x > (c_len) and x < (c_len + radius*np.sin(alpha)):
+            #     x1 = c_len ; 
+            #     z1 = zmax - radius
+            #     if ((x-x1)**2 + (z-z1)**2) < radius**2 : 
+            #         C[ind,2]=v
+            #         C[ind,3]=-v
+            elif x > (c_len + radius*np.sin(alpha)) and z < y2 + ((y3-y2)/(x3-x2))*(x - x2):
+                C[ind,2]=v
+                C[ind,3]=-v
+            elif z == zmax:
+                C[ind,2]=0
+                C[ind,3]=0
+
+            ind=ind+1
+            
+           
+
+
+# write to file
+f= open("text_files/base_vel_comp.txt","w+")
+f.write("# POINTS: %s %s\n" % (str(xnum+1),str(znum+1)))
+# f.write("# POINTS: %s\n" % (str((xnum+1)*(znum+1))))
+f.write("# Columns: x velocityx velocityy\n")
+for k in range(0,ind):
+    f.write("%.6f %.2f %.2f\n" % (C[k,0],C[k,2],C[k,3]))
+f.close() 

@@ -1,0 +1,17 @@
+# 1: Time step number
+# 2: Time (years)
+# 3: Time step size (years)
+# 4: Number of mesh cells
+# 5: Number of Stokes degrees of freedom
+# 6: Number of temperature degrees of freedom
+# 7: Number of degrees of freedom for all compositions
+# 8: Number of nonlinear iterations
+# 9: Iterations for temperature solver
+# 10: Iterations for composition solver 1
+# 11: Iterations for Stokes solver
+# 12: Velocity iterations in Stokes preconditioner
+# 13: Schur complement iterations in Stokes preconditioner
+# 14: Visualization file name
+# 15: RMS velocity (m/year)
+# 16: Max. velocity (m/year)
+0 0.000000000000e+00 0.000000000000e+00 37277 346342 153866 153866 20 0 0 4078 35399 35314 outputs/kinem-whole-tns/solution/solution-00000 1.74865004e-02 7.44518399e-02 

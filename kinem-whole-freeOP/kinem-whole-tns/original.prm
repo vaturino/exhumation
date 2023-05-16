@@ -1,0 +1,350 @@
+# set Additional shared libraries = ./libprescribed_velocity.so
+
+set Dimension                              = 2
+set Use years in output instead of seconds = true
+set End time                               = 10e6
+set Output directory                       = outputs/kinem-whole-tns
+
+### SOLVER STUFF
+# non-linear stuff
+set Nonlinear solver scheme                = single Advection, iterated Stokes
+set Nonlinear solver tolerance             = 1.0e-4
+set Max nonlinear iterations               = 20
+set Max nonlinear iterations in pre-refinement = 20
+set CFL number                             = 0.5   #0.25
+# set Maximum relative increase in time step = 50    #50
+set Resume computation			               = false 
+set Timing output frequency                = 1
+
+# linear solver stuff 
+subsection Solver parameters
+  subsection Stokes solver parameters
+    set Linear solver tolerance  		= 1.0e-4
+    set Number of cheap Stokes solver steps     = 200
+  end
+  set Temperature solver tolerance        = 1e-10
+  set Composition solver tolerance        = 1e-10
+end
+subsection Discretization
+ set Temperature polynomial degree       = 2
+ set Composition polynomial degree       = 2
+end
+
+#------ domain and meshing -----------
+subsection Geometry model
+  set Model name = box with lithosphere boundary indicators
+
+  subsection Box with lithosphere boundary indicators
+    set Y extent =  660e3
+    set X extent = 1320.e3
+    set Lithospheric thickness = 100.e3
+    #set X repetitions = 4
+    #set Y repetitions = 1
+  end
+
+end
+
+subsection Mesh refinement
+  ## at 5 (6 levels) will be 5 km.
+
+  set Initial global refinement                = 4
+  set Initial adaptive refinement              = 5 #3
+  set Time steps between mesh refinement       = 1
+  set Refinement fraction                      = 0.7   #0.4
+  set Coarsening fraction                      = 0.2  #0.2
+  set Strategy                                 = viscosity, composition, minimum refinement function
+  set Refinement criteria scaling factors      = 2, 1, 1
+  set Refinement criteria merge operation      = max
+  set Run postprocessors on initial refinement = false
+
+  subsection Composition threshold
+    set Compositional field thresholds         = 0.1
+  end
+
+#   subsection Maximum refinement function
+#     set Coordinate system   = cartesian
+#     set Variable names      = x, z
+#     set Function constants  = zd = 1280e3, xd = 3760e3, xgap = 400e3
+#     set Function expression = if(x>150e3 && x<350e3 && z>230e3, 5, 3)
+#   end
+
+   subsection Minimum refinement function
+     set Coordinate system   = cartesian
+     set Variable names      = x,y 
+     set Function constants  = H=660.e3
+     set Function expression = if(y>H-100.e3, 7, 0)
+   end
+
+#   subsection Composition
+#     set Oceanic crust refinement = 0, 5, 5
+#     set Overriding plate refinement = 1, 2, 3
+#     set Continental crust refinement = 2, 2, 5
+#     set Background refinement = 7, 0, 3
+#     set Oceanic crust weak refinement = 1, 2, 3
+#   end
+
+#   subsection Isosurfaces
+#     set Isosurfaces = 3,    3,    Temperature : 1225 | 1335
+#   end
+
+
+### Add in ISOTHERM ###
+
+
+end
+#-------------------------------------
+
+#---- initial temp and comp fields ---
+subsection Initial temperature model
+  set Model name = ascii data
+
+   #subsection Function
+   #    set Function expression           = 0;
+   # end
+   
+   subsection Ascii data model
+     set Data directory = /home/vxt195/work/inputs/text_file_inputs/whole_domain/
+     set Data file name = temp_base.txt
+   end
+end
+
+subsection Compositional fields
+   set Number of fields = 1
+   set Names of fields  = ocrust
+end
+
+subsection Initial composition model
+  set Model name = ascii data
+
+  subsection Ascii data model
+     set Data directory = /home/vxt195/work/inputs/text_file_inputs/whole_domain/
+     set Data file name = base_comp.txt
+   end
+  
+#  subsection Function
+#    set Variable names = x,y
+#    set Function constants = H=2.0e5, eps = 5.e3
+#    set Function expression = if ((x >= 0 && x<=0.1) && (y >= H-eps) , 1, 0)
+#  end
+end
+
+
+
+#-------------------------------------
+
+#------- boundary conditions -------------
+
+subsection Boundary temperature model
+  set Fixed temperature boundary indicators = top, left 
+  set List of model names = initial temperature
+end
+
+subsection Boundary heat flux model
+  set Fixed heat flux boundary indicators = bottom, right
+  set Model name = function
+
+  subsection Function
+    set Function expression = 0
+  end
+end
+
+subsection Boundary composition model
+  set Model name = initial composition
+  set Fixed composition boundary indicators = left
+end
+
+#subsection Boundary traction model
+#  set Prescribed traction boundary indicators = left y:zero traction, right y:zero traction
+#end
+
+
+
+subsection Boundary traction model
+  set Prescribed traction boundary indicators = right:initial lithostatic pressure, left y:initial lithostatic pressure
+
+  subsection Initial lithostatic pressure
+    set Representative point = 660e3,0
+  end
+end
+
+
+
+subsection Boundary velocity model
+  set Tangential velocity boundary indicators = bottom #left, bnottom
+  #set Zero velocity boundary indicators = right
+  set Prescribed velocity boundary indicators = left:function, top y: zero velocity, right lithosphere: zero velocity
+
+  subsection Function
+    set Coordinate system   = cartesian
+    set Variable names      = x,y
+    set Function constants  = H =660.e3, plen=50.e3, v = 0.05, xmax=1320.e3, x1=200.e3, y1=250.e3, rad=1250.e3i, es=200.e3       	 # Change Entire Model Thickness Here
+    set Function expression = if(y>H-100.e3 && x < plen, v, \
+                                if(y>=H-es && (x<plen), v + (v/200.e3)*(y-H+100.e3),0)); \
+                              0 
+  end
+end
+
+# # Apply a free surface with diffusion for stabilization
+# subsection Mesh deformation
+#   set Mesh deformation boundary indicators = top: free surface & diffusion
+#   set Additional tangential mesh velocity boundary indicators = left,right
+
+#   subsection Free surface
+#     set Free surface stabilization theta = 1
+#     set Surface velocity projection = vertical #normal
+#   end
+  
+#   subsection Diffusion
+#     set Hillslope transport coefficient = 1e-8  # in m/s
+#   end
+# end
+
+
+
+## Turn prescribed velocities on
+# set Prescribe internal velocities = true
+
+# subsection Prescribed velocities
+#   subsection Indicator function
+#     set Variable names      = x,y
+#     set Function constants  = H = 200.e3         # Change Entire Model Thickness Here
+#     set Function expression = if(y>H-100.e3 && x < 50.e3, 1, \
+#                                 if (y>H-100.e3 && x>350.e3, 1, 0)); \
+#                               0 
+#   end
+
+#   subsection Velocity function
+#     set Variable names      = x,y
+#     set Function constants  = H = 200.e3         # Change Entire Model Thickness Here
+#     set Function expression = if(y>H-100.e3 && x < 50.e3, 0.04, \
+#                                 if (y>H-100.e3 && x>350.e3, -0.04, 0)); \
+#                               0 
+#   end
+
+# end
+  
+ 
+#-------------------------------------
+
+#-------- material model -------------
+subsection Material model
+  set Model name = visco plastic
+
+  subsection Visco Plastic 
+
+    # reference stuff
+    set Reference temperature =   1694.4
+    #set Reference viscosity   =   2.5e20
+    set Reference strain rate =   1e-20
+    set Minimum strain rate   =   1.e-20
+    set Adiabat temperature gradient for viscosity =   9.24e-09 # 0.3 K/km
+
+    # set Pore fluid cutoff depth = 30e3
+    # set Fluid ratio = 0, 0.6, 0, 0, 0
+    # set Include pore fluid pressure = true
+    
+    
+    # Set up phase transitions so that crust becomes background material past 100 km, and
+    # # dislocation becomes inactive in the lower mantle for all fields.
+     set Phase transition depths           =   background: 400e3,   ocrust: 80e3|400e3
+     set Phase transition widths           =   background: 1e3,   ocrust: 1e3|1e3
+     set Phase transition temperatures     =   background: 1694.5,   ocrust: 1694.5|1694.5
+     set Phase transition Clapeyron slopes =   background: 0,   ocrust: 0|0
+    
+    
+    # Viscosity cut offs
+    set Minimum viscosity   =   background: 2.5e18|2.5e18, ocrust:1.95e20|2.5e18|2.5e18
+    set Maximum viscosity   =   background: 2.5e23|2.5e23, ocrust:2.05e20|2.5e23|2.5e23
+
+    
+    # density-related parameters (crust has mantle density = 3300 at T = 273 K)
+    set Thermal diffusivities  =   1e-6
+    set Heat capacities        =   750
+
+    # Densities are set so that at surface temperatures they will be at 3300, 3175, 3175, and 2800.
+    set Densities              =   3300
+    set Thermal expansivities  =   3e-5
+    
+    
+    # viscosity-related parameters (mantle, crust)
+    # at ref conditions (1e-15s-1,330km,1573K + adiabatic): 
+    # ... visc diff = visc disl = 5e20. thus, composition visc = 2.5e20
+    set Viscous flow law            =   composite
+    set Viscosity averaging scheme  =   geometric
+
+    # dislocation creep (just z < 660 km)
+    # We set the prefactor to a very low value in the lower mantle to effectively turn off dislocation creep.
+    set Prefactors for dislocation creep          =   1e-45
+    set Stress exponents for dislocation creep    =   3.5
+    set Activation energies for dislocation creep =   540.e3
+    set Activation volumes for dislocation creep  =   12e-6
+
+    # diffusion creep (lm/um viscosity >= 20), in the lower mantle (gives lower/upper mantle viscosity = 20)
+    set Prefactors for diffusion creep              =   1.199915e-11
+    set Stress exponents for diffusion creep        =   1
+    set Grain size exponents for diffusion creep    =   0
+    set Activation energies for diffusion creep     =   300e3
+    set Activation volumes for diffusion creep      =   4e-6
+
+    # Plasticity parameters using drucker-prager, with cohesions set to mimic 60e6 in byerlee.
+    set Cohesions                   =   150e10
+
+
+    # Friction angle set to mimic byerlee's law with a coefficient of friction of 0.6 and a prefactor of 0.15
+    set Angles of internal friction =  0
+    #set Maximum yield stress = 0.5e9
+  end
+
+
+
+end
+#-------------------------------------
+
+# --------- other stuff -------------
+set Pressure normalization            = no
+set Surface pressure                  = 0
+set Adiabatic surface temperature     = 1694.5
+
+subsection Gravity model
+  set Model name = vertical
+
+  subsection Vertical
+    set Magnitude = 9.81
+  end
+end
+
+subsection Formulation
+  set Formulation = Boussinesq approximation
+end
+#-------------------------------------
+
+#--------- postprocessing ------------
+subsection Postprocess
+  set List of postprocessors = visualization, basic statistics, velocity statistics
+
+  subsection Visualization
+    set List of output variables = viscosity, strain rate, nonadiabatic pressure, shear stress, stress, named additional outputs, density, adiabat
+    set Output format                 = vtu
+    set Time between graphical output = 0.1e6
+    set Interpolate output = true
+    set Point-wise stress and strain = true
+    set Write higher order output = true
+    set Number of grouped files = 2
+  end
+end
+#-------------------------------------
+
+#--------- checkpointing -------------
+subsection Checkpointing
+  set Steps between checkpoint = 10
+end
+#-------------------------------------
+
+
+
+
+
+
+
+
+
