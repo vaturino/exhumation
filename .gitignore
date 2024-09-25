@@ -1,9 +1,9 @@
-gz_output/
+gz_outputs/
 irreversible_pht_test/
 lit_review/
 plots/
-support_particles/
-step_kinem/
-raw_outputs/
 pyInput/
+raw_outputs/
+step_kinem/
+support_particles/
 inputs/*/*/*/text_files/*.txt
