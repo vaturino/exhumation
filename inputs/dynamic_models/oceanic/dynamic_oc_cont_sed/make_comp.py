@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+import numpy as np
+from tqdm import tqdm
+
+ofile="text_files/comp_base.txt"
+
+# box dimensions (i.e. "extent" in ASPECC input)
+ymin=0;ymax=900.e3
+xmin=0;xmax=6*ymax
+
+
+# number of cells in input geometry
+ynum=1200
+xnum=6*ynum
+
+# box dimensions (make sure consistent with "X extent" and "Y extent" in ASPECT input)
+xmin=0;xmax=5400.e3
+ymin=0;ymax=900.e3
+# number of points (should be a multiple of xmax and ymax)
+xnum=5400; znum=900
+# geometry parameters
+x_gap = 400.e3;    # distance between plate edge and box edge
+x_SP  = 3000.e3;    # subducting plate length
+depth_notch  = 200.e3; # initial depth of crust
+radius_outer = 245e3;       # initial radius of curvature of crust
+x_box = 100.e3;     # low yielding box width
+z_box = 50.e3;     # low yielding box heigth
+y_coreSP = 20.e3; # depth of strong core in SP
+core_thick = 15.e3; # core thickness
+opcthick = 20.e3
+oplthick = 80.e3 - opcthick
+wz_cutoff = 200.e3; # cutoff of weak zone
+slab_dip = 45.;         # slab dip
+cthick = 7.5e3
+cutoff = 100.e3
+sed = 2.e3
+
+
+
+
+# empty array to store geometry
+No_nodes= (xnum + 1) * (ynum + 1)
+C=np.zeros([No_nodes,9],float)
+ 
+ind=0
+print("writing text file...")
+for j in range(ynum + 1): 
+
+	for i in range(xnum + 1):
+
+		x = xmin + i * ((xmax - xmin)/xnum)
+		y = ymin + j * ((ymax - ymin)/ynum) 
+  
+		C[ind,0] = x
+		C[ind,1] = y
+
+		### flat portion of all compositions ###
+		# SP crust
+		if x >= (x_gap) and x <= (x_gap + x_SP - radius_outer) and y >= (ymax -cthick - sed) and y <= (ymax - sed):
+			C[ind,2]=1
+		# overiding plate (OP) 
+		if x >= (x_gap + x_SP) and x <= (xmax - x_gap) and y >= (ymax -opcthick - oplthick) and y <= (ymax -opcthick):
+			C[ind,3]= 1
+		# sediments
+		elif x >= (x_gap) and x <= (x_gap + x_SP - radius_outer) and y >= (ymax - sed) and y <= (ymax):
+			C[ind,4]=1
+		# overriding plate crust
+		if x >= (x_gap + x_SP) and x <= (xmax - x_gap) and y >= (ymax -opcthick):
+			C[ind,5]= 1
+		# core of SP
+		if x > (x_gap) and x <= (x_gap + x_SP - radius_outer) and y >= (ymax - y_coreSP - core_thick) and y <= (ymax - y_coreSP):
+			C[ind,6]=1
+		
+
+		### curved portion of all compositions - trench area ###
+		if x > (x_gap + x_SP - radius_outer) and x < (x_gap + x_SP):
+			x1 = x_gap + x_SP - radius_outer; 
+			y1 = ymax - radius_outer;
+			# weak zone
+			if ((x-x1)**2 + (y-y1)**2) < (radius_outer)**2 and ((x-x1)**2 + (y-y1)**2) >= (radius_outer - cthick)**2 and y > (ymax - wz_cutoff): 
+				C[ind,7]= 1
+				angle=np.arctan((y-y1)/(x-x1));
+				if angle > np.radians(90. - slab_dip):
+					ynotch = radius_outer - np.sqrt((x-x1)**2 + (y-y1)**2)
+					C[ind,7]=0
+			#subducting plate crust
+			if ((x-x1)**2 + (y-y1)**2) < (radius_outer - sed)**2 and ((x-x1)**2 + (y-y1)**2) >= (radius_outer - cthick - sed)**2 and y > (ymax - cutoff): 
+				C[ind,2]= 0
+				angle=np.arctan((y-y1)/(x-x1));
+				if angle > np.radians(90. - slab_dip):
+					ynotch = radius_outer - np.sqrt((x-x1)**2 + (y-y1)**2)
+					C[ind,2]=1
+			# sediments
+			if ((x-x1)**2 + (y-y1)**2) < (radius_outer)**2 and ((x-x1)**2 + (y-y1)**2) >= (radius_outer - sed)**2 and y > (ymax - cutoff): 
+				C[ind,4]= 0
+				angle=np.arctan((y-y1)/(x-x1));
+				if angle > np.radians(90. - slab_dip):
+					ynotch = radius_outer - np.sqrt((x-x1)**2 + (y-y1)**2)
+					C[ind,4]=1
+			# strong core
+			elif ((x-x1)**2 + (y-y1)**2) < radius_outer**2 and ((x-x1)**2 + (y-y1)**2) < (radius_outer-y_coreSP)**2 and ((x-x1)**2 + (y-y1)**2) > (radius_outer-y_coreSP - core_thick)**2 and y > (ymax - cutoff): 
+				C[ind,6]= 0
+				angle=np.arctan((y-y1)/(x-x1))
+				if angle > np.radians(90. - slab_dip):
+					ynotch = radius_outer - np.sqrt((x-x1)**2 + (y-y1)**2)
+					C[ind,6]=1
+			# overriding plate crust
+			elif ((x-x1)**2 + (y-y1)**2) >= (radius_outer)**2 and  y >= (ymax -opcthick):
+				C[ind,5]=1
+			# overriding plate
+			elif ((x-x1)**2 + (y-y1)**2) >= (radius_outer)**2 and  y >= ymax - (opcthick + oplthick):
+				C[ind,3]=1
+			
+		
+        # low yielding boxes
+		if x > (x_gap - x_box) and x <= (x_gap) and y > (ymax - z_box):  
+			C[ind,8]=1
+		if x > (xmax - x_gap) and x <= (xmax - x_gap + x_box) and y > (ymax - z_box):
+			C[ind,8]=1
+		
+
+		
+		
+			
+
+		
+			
+		ind=ind+1;
+ 
+# write to file in ASPECC format
+f= open(ofile,"w+")
+f.write("# POINTS: %s %s\n" % (str(xnum+1),str(ynum+1)))
+f.write("# Columns: x y oc op sed opc core wz box\n")
+for k in range(0,ind):
+	f.write("%.4f %.4f %.2f %.2f %.2f %.2f %.2f %.2f %.2f\n" % (C[k,0],C[k,1],C[k,2],C[k,3],C[k,4],C[k,5],C[k,6], C[k,7], C[k,8]))
+f.close() 
