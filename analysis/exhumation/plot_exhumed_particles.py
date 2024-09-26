@@ -76,10 +76,10 @@ def main():
 
 
      # Get the time array and the number of time steps
-    time_array = np.zeros((len(os.listdir(f"{csvs_loc}{m}/particles")),2))   
-    stat = pd.read_csv(f"{models_loc}{m}/statistics",skiprows=configs['head_lines'],sep='\s+',header=None)
-    time_array = grab_dimTime_particles(f"{csvs_loc}{m}/particles", stat, time_array, configs['head_lines']-1)
-    ts = int(len(time_array))
+    # time_array = np.zeros((len(os.listdir(f"{csvs_loc}{m}/particles")),2))   
+    # stat = pd.read_csv(f"{models_loc}{m}/statistics",skiprows=configs['head_lines'],sep='\s+',header=None)
+    # time_array = grab_dimTime_particles(f"{csvs_loc}{m}/particles", stat, time_array, configs['head_lines']-1)
+    # ts = int(len(time_array))
     init = pd.read_csv(f"{txt_loc}/particles_indexes.txt", sep="\s+")
 
     pal1 = plt.get_cmap('viridis')
@@ -87,8 +87,8 @@ def main():
     line_colors = pal1(norm(init["init_x"]/1e3))
 
     # Create the array with the exhumed particles indexes and the colorbar for plotting
-    exh = pd.DataFrame(columns=["id", "maxPP", "maxPT", "maxTP", "maxTT", "lithology"], index=range(npa))
-    stag = pd.DataFrame(columns=["id", "maxPP", "maxPT", "maxTP", "maxTT", "lithology"], index=range(npa))
+    exh = pd.DataFrame(columns=["id", "maxPP", "maxPT", "maxTP", "maxTT", "lithology", "tmax"], index=range(npa))
+    stag = pd.DataFrame(columns=["id", "maxPP", "maxPT", "maxTP", "maxTT", "lithology", "tmax"], index=range(npa))
     pal1 = plt.get_cmap('viridis')
     norm = plt.Normalize(init["init_x"].min()/1e3, init["init_x"].max()/1e3)
     line_colors = pal1(norm(init["init_x"]/1e3))
@@ -111,6 +111,8 @@ def main():
         pt_single = pd.read_csv(f"{pt_files}/pt_part_{p}.txt", sep="\s+")
         pt_single["Plith"] = (pt_single["depth"].max()- pt_single["depth"])*1e3*9.81*3300/1e9
         pt_single["terrain"] = 0
+        # pt_single["tprime"] = pt_single["time"]/pt_single["time"].max()
+        max_depth = (pt_single.depth.max() - pt_single.depth.min())
 
         weight = 0
 
@@ -134,7 +136,7 @@ def main():
             a2.set_ylim(0, 4.5)
             a2.set_xlim(0, 1100)
         else: #check that the distance between the maximum depth and the last depth is at least 5 km
-            if (pt_single.depth.iat[-1] - pt_single.depth.min()) >= 5.:
+            if max_depth >= 10. and (pt_single.depth.iat[-1] - pt_single.depth.min()) >= 0.2*max_depth:
                 exhumed += 1
 
                 exh["id"].iloc[p] = p
@@ -145,6 +147,7 @@ def main():
                 exh["maxTT"].iloc[p] = pt_single["T"].iloc[eidxt] - 273.
                 exh["maxTP"].iloc[p] = pt_single["Plith"].iloc[eidxt]
                 exh["lithology"].iloc[p] = pt_single["lithology"].iloc[eidxp]
+                exh["tmax"].iloc[p] = pt_single["time"].iloc[eidxp]/2
                 
                 a1[0].plot(pt_single["T"]-273., pt_single["Plith"], color=line_colors[p])
                 a1[0].set_xlabel("Temperature (C)")
@@ -160,7 +163,7 @@ def main():
                 
 
             # stagnant particles: particles for thich the distance between the maximum depth and the last depth is less than 5 km
-            elif (pt_single.depth.iat[-1] - pt_single.depth.min()) <= 5. and (pt_single.depth.iat[-1] - pt_single.depth.min()) >= 0.5:
+            elif (pt_single.depth.iat[-1] - pt_single.depth.min()) <= max_depth and (pt_single.depth.iat[-1] - pt_single.depth.min()) >= 0.5:
                 # print("Stagnant particle = ", p)    
                 # print(pt_single["serp"].iloc[-1])
                 stagnant += 1
@@ -173,6 +176,7 @@ def main():
                 stag["maxTT"].iloc[p] = pt_single["T"].iloc[sidxt] - 273.
                 stag["maxTP"].iloc[p] = pt_single["Plith"].iloc[sidxt]
                 stag["lithology"].iloc[p] = pt_single["lithology"].iloc[sidxp]
+                stag["tmax"].iloc[p] = pt_single["time"].iloc[sidxp]/2
 
                 a3[0].plot(pt_single["T"]-273., pt_single["Plith"], color=line_colors[p])
                 a3[0].set_xlabel("Temperature (C)")
@@ -235,42 +239,50 @@ def main():
     
 
     # Plot the maximum conditions of the exhumed particles
-    f4, a4 = plt.subplots(1, 3, figsize = (15,6))
-    sns.scatterplot(ax=a4[0], data = exh, x = "maxPT", y = "maxPP", hue = "lithology", linewidth=0.2)
-    a4[0].set_xlabel("T ($^\circ$C)")
-    a4[0].set_ylabel("P (GPa)")
-    a4[0].set_title("Max P")
+    f4, a4 = plt.subplots(2, 2, figsize = (10,10))
+    sns.scatterplot(ax=a4[0,0], data = exh, x = "maxPT", y = "maxPP", hue = "lithology", linewidth=0.2, size="tmax")
+    a4[0,0].set_xlabel("T ($^\circ$C)")
+    a4[0,0].set_ylabel("P (GPa)")
+    a4[0,0].set_title("Max P")
     
-    sns.scatterplot(ax=a4[1], data = exh, x = "maxTT", y = "maxTP", hue = "lithology", linewidth=0.2)
-    a4[1].set_xlabel("T ($^\circ$C)")
-    a4[1].set_ylabel("P (GPa)")
-    a4[1].set_title("Max T")
+    sns.scatterplot(ax=a4[0,1], data = exh, x = "maxTT", y = "maxTP", hue = "lithology", linewidth=0.2, size="tmax")
+    a4[0,1].set_xlabel("T ($^\circ$C)")
+    a4[0,1].set_ylabel("P (GPa)")
+    a4[0,1].set_title("Max T")
 
-    a4[2].pie(exh.lithology.value_counts(), labels = exh.lithology.unique(), autopct='%1.1f%%')
-    a4[2].set_title("Exhumed lithology")
+    a4[1,0].pie(exh.lithology.value_counts(), labels = exh.lithology.unique(), autopct='%1.1f%%')
+    a4[1,0].set_title("Exhumed lithology")
+
+    sns.histplot(ax=a4[1,1], data = exh, x = "tmax", bins = 20, hue = "lithology", element="step")
+    a4[1,1].set_xlabel("Peak pressure Time (Ma)")
+
     f4.suptitle(f"Total number of exhumed particles = {len(exh)} - {(len(exh)/npa) * 100 :.1f}%")
-    f4.text(0.8, 0.1, exh_title_str, ha='center', va='center')
+    f4.text(0.2, 0.05, exh_title_str, ha='center', va='center')
     f4.tight_layout()
     plt.savefig(f"{plot_loc}/max_PT_conditions.png", dpi = 1000)
     plt.close()
    
 
     # Plot the maximum conditions of the stagnant particles
-    f5, a5 = plt.subplots(1, 3, figsize = (15,6))
-    sns.scatterplot(ax=a5[0], data = stag, x = "maxPT", y = "maxPP", hue = "lithology", linewidth=0.2)
-    a5[0].set_xlabel("T ($^\circ$C)")
-    a5[0].set_ylabel("P (GPa)")
-    a5[0].set_title("Max P")
+    f5, a5 = plt.subplots(2, 2, figsize = (10,10))
+    sns.scatterplot(ax=a5[0,0], data = stag, x = "maxPT", y = "maxPP", hue = "lithology", linewidth=0.2, size="tmax")
+    a5[0,0].set_xlabel("T ($^\circ$C)")
+    a5[0,0].set_ylabel("P (GPa)")
+    a5[0,0].set_title("Max P")
 
-    sns.scatterplot(ax=a5[1], data = stag, x = "maxTT", y = "maxTP", hue = "lithology", linewidth=0.2)
-    a5[1].set_xlabel("T ($^\circ$C)")
-    a5[1].set_ylabel("P (GPa)")
-    a5[1].set_title("Max T")
+    sns.scatterplot(ax=a5[0,1], data = stag, x = "maxTT", y = "maxTP", hue = "lithology", linewidth=0.2, size="tmax")
+    a5[0,1].set_xlabel("T ($^\circ$C)")
+    a5[0,1].set_ylabel("P (GPa)")
+    a5[0,1].set_title("Max T")
 
-    a5[2].pie(stag.lithology.value_counts(), labels = stag.lithology.unique(), autopct='%1.1f%%')
-    a5[2].set_title("Stagnant lithology")
+    a5[1,0].pie(stag.lithology.value_counts(), labels = stag.lithology.unique(), autopct='%1.1f%%')
+    a5[1,0].set_title("Stagnant lithology")
+
+    sns.histplot(ax=a5[1,1], data = stag, x = "tmax", bins = 20, hue = "lithology", element="step")
+    a5[1,1].set_xlabel("Peak pressure Time (Ma)")
+
     f5.suptitle(f"Total number of stagnant particles = {len(stag)} - {(len(stag)/npa) * 100 :.1f} %")
-    f5.text(0.8, 0.1, stag_title_str, ha='center', va='center')
+    f5.text(0.2, 0.05, stag_title_str, ha='center', va='center')
     f5.tight_layout()
     plt.savefig(f"{plot_loc}/max_PT_conditions_stagnant.png", dpi = 1000)
     plt.close()
@@ -282,7 +294,54 @@ def main():
     stag.to_csv(f"{txt_loc}/stagnant_particles.txt", sep="\t", index=False)
 
 
+    # Plot the maximum conditions of the exhumed particles
+    f4, a4 = plt.subplots(2, 2, figsize = (10,10))
+    sns.scatterplot(ax=a4[0,0], data = exh, x = "maxPT", y = "maxPP", style = "lithology", linewidth=0.2, hue="tmax")
+    a4[0,0].set_xlabel("T ($^\circ$C)")
+    a4[0,0].set_ylabel("P (GPa)")
+    a4[0,0].set_title("Max P")
+    
+    sns.scatterplot(ax=a4[0,1], data = exh, x = "maxTT", y = "maxTP", style = "lithology", linewidth=0.2, hue="tmax")
+    a4[0,1].set_xlabel("T ($^\circ$C)")
+    a4[0,1].set_ylabel("P (GPa)")
+    a4[0,1].set_title("Max T")
 
+    a4[1,0].pie(exh.lithology.value_counts(), labels = exh.lithology.unique(), autopct='%1.1f%%')
+    a4[1,0].set_title("Exhumed lithology")
+
+    sns.histplot(ax=a4[1,1], data = exh, x = "tmax", bins = 20, hue = "lithology", element="step")
+    a4[1,1].set_xlabel("Peak pressure Time (Ma)")
+
+    f4.suptitle(f"Total number of exhumed particles = {len(exh)} - {(len(exh)/npa) * 100 :.1f}%")
+    f4.text(0.2, 0.05, exh_title_str, ha='center', va='center')
+    f4.tight_layout()
+    plt.savefig(f"{plot_loc}/max_PT_conditions_time.png", dpi = 1000)
+    plt.close()
+   
+
+    # Plot the maximum conditions of the stagnant particles
+    f5, a5 = plt.subplots(2, 2, figsize = (10,10))
+    sns.scatterplot(ax=a5[0,0], data = stag, x = "maxPT", y = "maxPP", style = "lithology", linewidth=0.2, hue="tmax")
+    a5[0,0].set_xlabel("T ($^\circ$C)")
+    a5[0,0].set_ylabel("P (GPa)")
+    a5[0,0].set_title("Max P")
+
+    sns.scatterplot(ax=a5[0,1], data = stag, x = "maxTT", y = "maxTP", style = "lithology", linewidth=0.2, hue="tmax")
+    a5[0,1].set_xlabel("T ($^\circ$C)")
+    a5[0,1].set_ylabel("P (GPa)")
+    a5[0,1].set_title("Max T")
+
+    a5[1,0].pie(stag.lithology.value_counts(), labels = stag.lithology.unique(), autopct='%1.1f%%')
+    a5[1,0].set_title("Stagnant lithology")
+
+    sns.histplot(ax=a5[1,1], data = stag, x = "tmax", bins = 20, hue = "lithology", element="step")
+    a5[1,1].set_xlabel("Peak pressure Time (Ma)")
+
+    f5.suptitle(f"Total number of stagnant particles = {len(stag)} - {(len(stag)/npa) * 100 :.1f} %")
+    f5.text(0.2, 0.05, stag_title_str, ha='center', va='center')
+    f5.tight_layout()
+    plt.savefig(f"{plot_loc}/max_PT_conditions_stagnant_time.png", dpi = 1000)
+    plt.close()
       
 
 
