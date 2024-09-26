@@ -44,6 +44,7 @@ def main():
 
     X_low, Y_low, X_vels, Y_vels, X_crust, Y_crust = create_grid_velocities_crust (xmin_plot, xmax_plot, ymin_plot, ymax_plot, grid_res, grid_low_res, grid_high_res)
 
+    file_count = 0
 
     for ind_m, m in tqdm(enumerate(configs['models'])):    
         time_array = np.zeros((len(os.listdir(f"{csvs_loc}{m}/fields")),2)) 
@@ -57,8 +58,11 @@ def main():
         plot_loc = f"{plot_loc_mod}/P_zoom/"
         if not os.path.exists(plot_loc):
             os.mkdir(plot_loc)
+        else:
+            # Count the files in the fields_loc directory
+            file_count = len(os.listdir(plot_loc))
 
-        for t in tqdm(range(0, len(time_array))):
+        for t in tqdm(range(2*file_count, len(time_array))):
         # for t in tqdm(range(5)):
             fig=plt.figure()
             gs=GridSpec(1,1)
