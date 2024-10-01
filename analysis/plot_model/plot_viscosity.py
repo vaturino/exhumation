@@ -41,7 +41,7 @@ def main():
 
     # compositions = configs['compositions']
     # cutoff = configs['cutoff']
-
+    file_count=0
 
 
     for ind_m, m in tqdm(enumerate(configs['models'])):    
@@ -54,9 +54,12 @@ def main():
         plot_loc = f"{plot_loc_mod}/Viscosity/"
         if not os.path.exists(plot_loc):
             os.mkdir(plot_loc)
+        else:
+            # Count the files in the fields_loc directory
+            file_count = len(os.listdir(plot_loc))
 
         
-        for t in tqdm(range(0, len(time_array), 2)):
+        for t in tqdm(range(2*file_count, len(time_array), 2)):
         # for t in tqdm(range(2,3)):
 
             fig=plt.figure()

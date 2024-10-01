@@ -1,0 +1,184 @@
+#! /usr/bin/python3
+
+### Script that loops through all of the particles and identifies and plots the exhumed particles ###
+
+import pandas as pd
+import numpy as np
+import json
+from tqdm import tqdm
+import matplotlib.pyplot as plt
+import argparse
+import os
+import sys
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from pathlib import Path
+import seaborn as sns
+from matplotlib.cm import get_cmap
+
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+pd.options.mode.chained_assignment = None  # default='warn'
+
+path = str(Path(Path(__file__).parent.absolute()).parent.absolute())
+sys.path.insert(0, path)
+from libraries.functions import *
+from libraries.particles import *
+from libraries.exhumation import *  
+
+def process_particle(p, pt_files, line_colors, compositions, composition_mapping, ymax=900.):
+    pt_single = pd.read_csv(f"{pt_files}/pt_part_{p}.txt", sep="\s+")
+    pt_single["Plith"] = (ymax - pt_single["depth"]) * 1e3 * 9.81 * 3300 / 1e9
+    pt_single["terrain"] = sum((ind_c + 1) * pt_single[c].round() for ind_c, c in enumerate(compositions))
+    pt_single["terrain"] = pt_single["terrain"].round()
+    pt_single["lithology"] = pt_single["terrain"].map(composition_mapping)
+    pt_single["lithology"] = pt_single["lithology"].iloc[-1]
+
+    max_depth = ymax - pt_single["depth"].min()
+    result = {
+        "p": p,
+        "subducted": pt_single["P"].max() > 3.0,
+        "exhumed": max_depth >= 10. and (pt_single.depth.iat[-1] - pt_single.depth.min()) >= 0.25 * max_depth,
+        "stagnant": (pt_single.depth.iat[-1] - pt_single.depth.min()) <= 0.25*max_depth and (pt_single.depth.iat[-1] - pt_single.depth.min()) >= 0.5,
+        "pt_single": pt_single,
+        "max_depth": max_depth,
+        "line_color": line_colors[p]
+    }
+
+    if not result["subducted"] and not result["exhumed"] and not result["stagnant"]:
+        result["subducted"] = True
+
+    return result
+
+def main(): 
+    parser = argparse.ArgumentParser(description='Script that gets some models and gives the kinematic indicators')
+    parser.add_argument('json_file', help='json file with model name, time at the end of computation, folder where to save the plots, legend')
+    args = parser.parse_args()
+
+    models_loc = '/home/vturino/Vale_nas/exhumation/raw_outputs/'
+    csvs_loc = '/home/vturino/Vale_nas/exhumation/gz_outputs/'
+    json_loc = '/home/vturino/PhD/projects/exhumation/pyInput/'
+
+    with open(f"{json_loc}{args.json_file}") as json_file:
+        configs = json.load(json_file)
+    compositions = configs['compositions']
+
+    plot_loc = f"/home/vturino/PhD/projects/exhumation/plots/single_models/{configs['models'][0]}"
+    txt_loc = f'{plot_loc}/txt_files'
+    os.makedirs(txt_loc, exist_ok=True)
+
+    eloc = f"{plot_loc}/exhumed"
+    os.makedirs(eloc, exist_ok=True)
+
+    exhloc = f"{txt_loc}/exhumed"
+    os.makedirs(exhloc, exist_ok=True)
+
+    pt_files = f'{txt_loc}/PT'
+    npa = len(os.listdir(pt_files))
+    print("Total number of particles = ", npa)
+
+    init = pd.read_csv(f"{txt_loc}/particles_indexes.txt", sep="\s+")
+    pal1 = plt.get_cmap('viridis')
+    norm = plt.Normalize(init["init_x"].min() / 1e3, init["init_x"].max() / 1e3)
+    line_colors = pal1(norm(init["init_x"] / 1e3))
+
+    exh = pd.DataFrame(columns=["id", "maxPP", "maxPT", "maxTP", "maxTT", "lithology", "tmax"], index=range(npa))
+    stag = pd.DataFrame(columns=["id", "maxPP", "maxPT", "maxTP", "maxTT", "lithology", "tmax"], index=range(npa))
+    s_m = plt.cm.ScalarMappable(cmap=pal1, norm=norm)
+    s_m.set_array([])
+
+    subducted = 0
+    exhumed = 0
+    stagnant = 0
+    ymax = 900.
+
+    composition_mapping = {ind_c + 1: c for ind_c, c in enumerate(compositions)}
+
+    f1, a1 = plt.subplots(1, 2, figsize=(15, 5))
+    f2, a2 = plt.subplots(1, 1)
+    f3, a3 = plt.subplots(1, 2, figsize=(15, 5))
+
+    with ProcessPoolExecutor() as executor:
+        futures = [executor.submit(process_particle, p, pt_files, line_colors, compositions, composition_mapping) for p in range(npa)]
+        for future in tqdm(as_completed(futures), total=npa):
+            result = future.result()
+            p = result["p"]
+            pt_single = result["pt_single"]
+            line_color = result["line_color"]
+
+            if result["subducted"]:
+                subducted += 1
+                a2.plot(pt_single["T"] - 273., pt_single["P"], color=line_color)
+            elif result["exhumed"]:
+                exhumed += 1
+                exh.loc[p] = [p, pt_single["Plith"].max(), pt_single["T"].max() - 273., pt_single["Plith"].iloc[pt_single["T"].idxmax()], pt_single["T"].iloc[pt_single["T"].idxmax()] - 273., pt_single["lithology"].iloc[-1], pt_single["time"].iloc[pt_single["Plith"].idxmax()] / 2]
+                a1[0].plot(pt_single["T"] - 273., pt_single["Plith"], color=line_color)
+                a1[1].plot(pt_single["x"] / 1.e3, ymax - pt_single["depth"], color=line_color)
+                a1[1].invert_yaxis()
+            elif result["stagnant"]:
+                stagnant += 1
+                stag.loc[p] = [p, pt_single["Plith"].max(), pt_single["T"].max() - 273., pt_single["Plith"].iloc[pt_single["T"].idxmax()], pt_single["T"].iloc[pt_single["T"].idxmax()] - 273., pt_single["lithology"].iloc[-1], pt_single["time"].iloc[pt_single["Plith"].idxmax()] / 2]
+                a3[0].plot(pt_single["T"] - 273., pt_single["Plith"], color=line_color)
+                a3[1].plot(pt_single["x"] / 1.e3, ymax - pt_single["depth"], color=line_color)
+                a3[1].invert_yaxis()
+
+    for ax, title in zip([a1[0], a1[1], a2, a3[0], a3[1]], ["Exhumed particles", "Exhumed particles trajectory", "Subducted particles", "Stagnant particles", "Stagnant particles trajectory"]):
+        ax.set_title(title)
+    a1[0].set_xlabel("Temperature (C)")
+    a1[0].set_ylabel("Pressure (GPa)")
+    a1[1].set_xlabel("Distance (km)")
+    a1[1].set_ylabel("Depth (km)")
+    a2.set_xlabel("Temperature (C)")
+    a2.set_ylabel("Pressure (GPa)")
+    a2.set_ylim(0, 4.5)
+    a2.set_xlim(0, 1100)
+    a3[0].set_xlabel("Temperature (C)")
+    a3[0].set_ylabel("Pressure (GPa)")
+    a3[1].set_xlabel("Distance (km)")
+    a3[1].set_ylabel("Depth (km)")
+
+    for fig, ax in zip([f1, f2, f3], [a1[1], a2, a3[1]]):
+        plt.colorbar(s_m, ax=ax).set_label('Initial X Position (km)')
+        fig.tight_layout()
+
+    f1.savefig(f"{plot_loc}/possibly_exhumed.png")
+    f3.savefig(f"{plot_loc}/stagnant.png")
+    f2.savefig(f"{plot_loc}/filtered_out.png")
+    plt.close()
+
+    exh.dropna(inplace=True)
+    stag.dropna(inplace=True)
+    print("Subducted particles = ", subducted)
+    print("Exhumed particles = ", len(exh))
+    print("Stagnant particles = ", len(stag))
+
+    def plot_max_conditions(df, title_str, plot_file):
+        f, a = plt.subplots(2, 2, figsize=(10, 10))
+        sns.scatterplot(ax=a[0, 0], data=df, x="maxPT", y="maxPP", hue="lithology", linewidth=0.2, size="tmax")
+        a[0, 0].set_xlabel("T ($^\circ$C)")
+        a[0, 0].set_ylabel("P (GPa)")
+        a[0, 0].set_title("Max P")
+
+        sns.scatterplot(ax=a[0, 1], data=df, x="maxTT", y="maxTP", hue="lithology", linewidth=0.2, size="tmax")
+        a[0, 1].set_xlabel("T ($^\circ$C)")
+        a[0, 1].set_ylabel("P (GPa)")
+        a[0, 1].set_title("Max T")
+
+        a[1, 0].pie(df.lithology.value_counts(), labels=df.lithology.unique(), autopct='%1.1f%%')
+        a[1, 0].set_title("Lithology")
+
+        sns.histplot(ax=a[1, 1], data=df, x="tmax", bins=20, hue="lithology", element="step")
+        a[1, 1].set_xlabel("Peak pressure Time (Ma)")
+
+        f.suptitle(title_str)
+        f.tight_layout()
+        plt.savefig(plot_file, dpi=1000)
+        plt.close()
+
+    plot_max_conditions(exh, f"Total number of exhumed particles = {len(exh)} - {(len(exh) / npa) * 100:.1f}%", f"{plot_loc}/max_PT_conditions.png")
+    plot_max_conditions(stag, f"Total number of stagnant particles = {len(stag)} - {(len(stag) / npa) * 100:.1f}%", f"{plot_loc}/max_PT_conditions_stagnant.png")
+
+    exh.to_csv(f"{txt_loc}/exhumed_particles.txt", sep="\t", index=False)
+    stag.to_csv(f"{txt_loc}/stagnant_particles.txt", sep="\t", index=False)
+
+if __name__ == "__main__":
+    main()

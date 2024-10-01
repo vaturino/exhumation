@@ -76,7 +76,7 @@ def main():
         initial = load_data(csvs_loc+m, '/particles/full.1.gzip', compositions, tr)
         final = load_data(csvs_loc+m, f'/particles/full.{last}.gzip', compositions, tr)
         trench= get_trench_position_from_op(initial)
-        dataset = collect_particles(trench, 50.e3, 350.e3, initial, final)
+        dataset = collect_particles(trench, 20.e3, 350.e3, initial, final)
         dataset["lithology"] = [0]*len(dataset)
 
         # create lithology classes
@@ -91,7 +91,7 @@ def main():
         dataset["lithology"] = dataset["lithology"].round().astype(int)
 
         # sample 5% of the dataset
-        msk = np.random.rand(len(dataset)) <= 0.1
+        msk = np.random.rand(len(dataset)) <= 0.2
         sample = dataset[msk]
 
         # get the count of each class

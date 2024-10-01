@@ -106,11 +106,6 @@ def main():
                 
             pt.write("\n")
             pt.close()             
-
-            # for i in range(npart):
-            #     pt = open(f"{pt_files}/pt_part_{i}.txt", "a+")
-            #     pt.write("%.0f %.0f %.3f %.3f  %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f\n" % (conds["id"].iloc[i], t, conds["position:0"].iloc[i], conds["position:1"].iloc[i], conds["p"].iloc[i]/1e9, conds["T"].iloc[i], conds["position:1"].iloc[i]/1.e3, conds["velocity:1"].iloc[i]*cmyr, conds["oc"].iloc[i], conds["sed"].iloc[i], conds["opc"].iloc[i], conds["ecl"].iloc[i], conds["serp"].iloc[i]))
-            # pt.close()
      
 
 

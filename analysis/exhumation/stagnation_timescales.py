@@ -40,6 +40,9 @@ def main():
     models_loc = '/home/vturino/Vale_nas/exhumation/raw_outputs/'
     csvs_loc = '/home/vturino/Vale_nas/exhumation/gz_outputs/'
     json_loc = '/home/vturino/PhD/projects/exhumation/pyInput/'
+    rocks_loc = '/home/vturino/PhD/projects/exhumation/rock_record/'
+
+    rocks = pd.read_excel(f"{rocks_loc}rocks_agard2018.xlsx")
 
     # Read the json file
     with open(f"{json_loc}{args.json_file}") as json_file:
@@ -64,6 +67,10 @@ def main():
 
     pt_files = f'{txt_loc}/PT'
     npa = len(os.listdir(pt_files))
+
+     #convergence rate
+    cr = pd.read_csv(f"{txt_loc}/2D_v.txt", sep="\s+")
+    cr["conv_rate"].iloc[0]= np.nan
 
     init = pd.read_csv(f"{txt_loc}/stagnant_particles.txt", sep="\s+")
     stag = pd.DataFrame(columns=["id", "maxP", "maxT", "lithology", "tin", "tmax", "tfin", "burial", "stag", "maxdepth", "stagdepth", "vbur", "vstag"], index=range(len(init)))
@@ -101,16 +108,21 @@ def main():
     stag.to_csv(f"{txt_loc}/timing_stagnant_particles.txt", sep=" ", index=False)  
 
     f1, a1 = plt.subplots(2, 2, figsize=(10, 10))      
-    sns.scatterplot(data=stag, x="maxT", y="maxP", hue="lithology", size = "vstag", ax=a1[0,0])
+    sns.scatterplot(data=stag, x="maxT", y="maxP", hue="lithology", size = "vstag", ax=a1[0,0], zorder=10)
     a1[0,0].set_ylabel("Pressure (GPa)")
     a1[0,0].set_xlabel("T ($^\circ$C)")
     a1[0,0].set_title("Peak pressure")
+    sns.kdeplot(data=rocks, x="T", y="P", ax=a1[0,0], fill = True, cbar = False, alpha = .7, zorder=1, color='grey')
 
     sns.histplot(x = "tmax", bins = 20, hue = "lithology", element="step", data=stag, ax=a1[0,1])
     a1[0,1].set_title("Time at peak pressure")
     a1[0,1].set_xlabel("Time (Ma)")
     a1[0,1].set_ylabel("Number of particles")
-    # a1[0,1].set_yscale('log')
+    ax1 = a1[0,1].twinx()
+    ax1.plot(cr["time"]/1e6, cr["conv_rate"], color="grey", linewidth=2)
+    ax1.set_ylabel("Convergence rate (cm/yr)", color="grey", fontweight='bold')
+    a1[0,1].patch.set_visible(False) 
+    a1[0,1].set_zorder(10)   
     
 
     sns.histplot(x = "vbur", bins = 20, hue = "lithology", element="step", data=stag, ax=a1[1,0])
