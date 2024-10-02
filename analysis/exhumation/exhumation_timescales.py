@@ -113,6 +113,8 @@ def main():
             
     exh.to_csv(f"{txt_loc}/timing_exhumed_particles.txt", sep=" ", index=False)  
 
+    sns.set_palette("colorblind")
+
     f1, a1 = plt.subplots(2, 2, figsize=(10, 10))      
     sns.scatterplot(data=exh, x="maxT", y="maxP", hue="lithology", size = "vexh",ax=a1[0,0], zorder=10)
     a1[0,0].set_ylabel("Pressure (GPa)")
@@ -145,30 +147,30 @@ def main():
     plt.savefig(f"{plot_loc}/timing_exhumed_particles.png", dpi = 1000)
 
 
-    f2, a2 = plt.subplots(2, 2, figsize=(10, 10))      
-    sns.scatterplot(data=exh, x="maxT", y="maxP", hue="vexh", style = "lithology",ax=a2[0,0])
-    a2[0,0].set_ylabel("Pressure (GPa)")
-    a2[0,0].set_xlabel("T ($^\circ$C)")
-    a2[0,0].set_title("Peak pressure")
+    # f2, a2 = plt.subplots(2, 2, figsize=(10, 10))      
+    # sns.scatterplot(data=exh, x="maxT", y="maxP", hue="vexh", style = "lithology",ax=a2[0,0])
+    # a2[0,0].set_ylabel("Pressure (GPa)")
+    # a2[0,0].set_xlabel("T ($^\circ$C)")
+    # a2[0,0].set_title("Peak pressure")
 
-    sns.histplot(x = "tmax", bins = 20, hue = "lithology", element="step", data=exh, ax=a2[0,1])
-    a2[0,1].set_title("Time at peak pressure")
-    a2[0,1].set_xlabel("Time (Ma)")
-    a2[0,1].set_ylabel("Number of particles")
+    # sns.histplot(x = "tmax", bins = 20, hue = "lithology", element="step", data=exh, ax=a2[0,1])
+    # a2[0,1].set_title("Time at peak pressure")
+    # a2[0,1].set_xlabel("Time (Ma)")
+    # a2[0,1].set_ylabel("Number of particles")
     
 
-    sns.histplot(x = "vbur", bins = 20, hue = "lithology", element="step", data=exh, ax=a2[1,0])
-    a2[1,0].set_title("Burial rate")
-    a2[1,0].set_xlabel("Rate (cm/yr)")
-    a2[1,0].set_ylabel("Number of particles")
+    # sns.histplot(x = "vbur", bins = 20, hue = "lithology", element="step", data=exh, ax=a2[1,0])
+    # a2[1,0].set_title("Burial rate")
+    # a2[1,0].set_xlabel("Rate (cm/yr)")
+    # a2[1,0].set_ylabel("Number of particles")
 
-    sns.histplot(x = "vexh", bins = 20, hue = "lithology", element="step", data=exh, ax=a2[1,1])
-    a2[1,1].set_title("Exhumation rate")
-    a2[1,1].set_xlabel("Rate (cm/yr)")
-    a2[1,1].set_ylabel("Number of particles")
+    # sns.histplot(x = "vexh", bins = 20, hue = "lithology", element="step", data=exh, ax=a2[1,1])
+    # a2[1,1].set_title("Exhumation rate")
+    # a2[1,1].set_xlabel("Rate (cm/yr)")
+    # a2[1,1].set_ylabel("Number of particles")
 
-    f2.tight_layout()
-    plt.savefig(f"{plot_loc}/timing_exhumed_particles_rate.png", dpi = 1000)
+    # f2.tight_layout()
+    # plt.savefig(f"{plot_loc}/timing_exhumed_particles_rate.png", dpi = 1000)
 
 
     plt.close()

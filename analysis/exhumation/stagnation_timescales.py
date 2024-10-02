@@ -107,6 +107,8 @@ def main():
             
     stag.to_csv(f"{txt_loc}/timing_stagnant_particles.txt", sep=" ", index=False)  
 
+    sns.set_palette("colorblind")
+
     f1, a1 = plt.subplots(2, 2, figsize=(10, 10))      
     sns.scatterplot(data=stag, x="maxT", y="maxP", hue="lithology", size = "vstag", ax=a1[0,0], zorder=10)
     a1[0,0].set_ylabel("Pressure (GPa)")

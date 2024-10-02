@@ -151,31 +151,62 @@ def main():
     print("Exhumed particles = ", len(exh))
     print("Stagnant particles = ", len(stag))
 
-    def plot_max_conditions(df, title_str, plot_file):
+     #Titles 
+    exh_title_str = ""
+    for j in range(len(exh.lithology.value_counts())):
+        lithology = exh.lithology.value_counts().index[j]
+        count = exh.lithology.value_counts().values[j]
+        percentage = (count / npa) * 100
+        exh_title_str += f"{lithology}: count = {count}, percentage = {percentage:.1f}%\n"
+
+    stag_title_str = ""
+    for j in range(len(stag.lithology.value_counts())):
+        lithology = stag.lithology.value_counts().index[j]
+        count = stag.lithology.value_counts().values[j]
+        percentage = (count / npa) * 100
+        stag_title_str += f"{lithology}: count = {count}, percentage = {percentage:.1f}%\n"
+
+
+    def plot_max_conditions(df, title_str, plot_file, lith_count):
         f, a = plt.subplots(2, 2, figsize=(10, 10))
-        sns.scatterplot(ax=a[0, 0], data=df, x="maxPT", y="maxPP", hue="lithology", linewidth=0.2, size="tmax")
+
+        # Get unique lithologies and assign a color palette
+        unique_lithologies = df.lithology.unique()
+        colors = sns.color_palette("colorblind", len(unique_lithologies))
+
+        # Create a mapping of lithologies to colors
+        color_mapping = {lithology: color for lithology, color in zip(unique_lithologies, colors)}
+
+        # Scatterplot with consistent colors
+        sns.scatterplot(ax=a[0, 0], data=df, x="maxPT", y="maxPP", hue="lithology", palette=color_mapping, linewidth=0.2, size="tmax")
         a[0, 0].set_xlabel("T ($^\circ$C)")
         a[0, 0].set_ylabel("P (GPa)")
         a[0, 0].set_title("Max P")
 
-        sns.scatterplot(ax=a[0, 1], data=df, x="maxTT", y="maxTP", hue="lithology", linewidth=0.2, size="tmax")
+        sns.scatterplot(ax=a[0, 1], data=df, x="maxTT", y="maxTP", hue="lithology", palette=color_mapping, linewidth=0.2, size="tmax")
         a[0, 1].set_xlabel("T ($^\circ$C)")
         a[0, 1].set_ylabel("P (GPa)")
         a[0, 1].set_title("Max T")
 
-        a[1, 0].pie(df.lithology.value_counts(), labels=df.lithology.unique(), autopct='%1.1f%%')
+        # Pie chart with consistent colors
+        lithology_counts = df.lithology.value_counts()
+        a[1, 0].pie(lithology_counts, labels=lithology_counts.index, autopct='%1.1f%%', 
+                    colors=[color_mapping[lithology] for lithology in lithology_counts.index])
         a[1, 0].set_title("Lithology")
 
-        sns.histplot(ax=a[1, 1], data=df, x="tmax", bins=20, hue="lithology", element="step")
+        # Histogram with hue based on lithology
+        sns.histplot(ax=a[1, 1], data=df, x="tmax", bins=20, hue="lithology", element="step", palette=color_mapping)
         a[1, 1].set_xlabel("Peak pressure Time (Ma)")
 
         f.suptitle(title_str)
+        f.text(0.2, 0.05, lith_count, ha='center', va='center')
         f.tight_layout()
         plt.savefig(plot_file, dpi=1000)
         plt.close()
 
-    plot_max_conditions(exh, f"Total number of exhumed particles = {len(exh)} - {(len(exh) / npa) * 100:.1f}%", f"{plot_loc}/max_PT_conditions.png")
-    plot_max_conditions(stag, f"Total number of stagnant particles = {len(stag)} - {(len(stag) / npa) * 100:.1f}%", f"{plot_loc}/max_PT_conditions_stagnant.png")
+
+    plot_max_conditions(exh, f"Total number of exhumed particles = {len(exh)} - {(len(exh) / npa) * 100:.1f}%", f"{plot_loc}/max_PT_conditions.png", exh_title_str)
+    plot_max_conditions(stag, f"Total number of stagnant particles = {len(stag)} - {(len(stag) / npa) * 100:.1f}%", f"{plot_loc}/max_PT_conditions_stagnant.png", stag_title_str)
 
     exh.to_csv(f"{txt_loc}/exhumed_particles.txt", sep="\t", index=False)
     stag.to_csv(f"{txt_loc}/stagnant_particles.txt", sep="\t", index=False)

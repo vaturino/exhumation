@@ -76,7 +76,7 @@ def main():
         initial = load_data(csvs_loc+m, '/particles/full.1.gzip', compositions, tr)
         final = load_data(csvs_loc+m, f'/particles/full.{last}.gzip', compositions, tr)
         trench= get_trench_position_from_op(initial)
-        dataset = collect_particles(trench, 20.e3, 350.e3, initial, final)
+        dataset = collect_particles(trench, 0.e3, 350.e3, initial, final)
         dataset["lithology"] = [0]*len(dataset)
 
         # create lithology classes
@@ -96,6 +96,7 @@ def main():
 
         # get the count of each class
         lithology_classes = sample.lithology.unique()
+        
 
         # # create a custom colormap
         colors_for_compositions = ['pink', 'magenta', 'purple', 'darkviolet', 'indigo', 'mediumblue', 'navy']  # Adjust the number of colors
