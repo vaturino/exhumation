@@ -112,13 +112,13 @@ def main():
                 a2.plot(pt_single["T"] - 273., pt_single["P"], color=line_color)
             elif result["exhumed"]:
                 exhumed += 1
-                exh.loc[p] = [p, pt_single["Plith"].max(), pt_single["T"].max() - 273., pt_single["Plith"].iloc[pt_single["T"].idxmax()], pt_single["T"].iloc[pt_single["T"].idxmax()] - 273., pt_single["lithology"].iloc[-1], pt_single["time"].iloc[pt_single["Plith"].idxmax()] / 2]
+                exh.loc[p] = [p, pt_single["Plith"].max(), pt_single["T"].iloc[pt_single["Plith"].idxmax()] - 273., pt_single["Plith"].iloc[pt_single["T"].idxmax()], pt_single["T"].iloc[pt_single["T"].idxmax()] - 273., pt_single["lithology"].iloc[-1], pt_single["time"].iloc[pt_single["Plith"].idxmax()] / 2]
                 a1[0].plot(pt_single["T"] - 273., pt_single["Plith"], color=line_color)
                 a1[1].plot((pt_single["x"] )/ 1.e3, ymax - pt_single["depth"], color=line_color)
                 a1[1].invert_yaxis()
             elif result["stagnant"]:
                 stagnant += 1
-                stag.loc[p] = [p, pt_single["Plith"].max(), pt_single["T"].max() - 273., pt_single["Plith"].iloc[pt_single["T"].idxmax()], pt_single["T"].iloc[pt_single["T"].idxmax()] - 273., pt_single["lithology"].iloc[-1], pt_single["time"].iloc[pt_single["Plith"].idxmax()] / 2]
+                stag.loc[p] = [p, pt_single["Plith"].max(), pt_single["T"].iloc[pt_single["Plith"].idxmax()] - 273., pt_single["Plith"].iloc[pt_single["T"].idxmax()], pt_single["T"].iloc[pt_single["T"].idxmax()] - 273., pt_single["lithology"].iloc[-1], pt_single["time"].iloc[pt_single["Plith"].idxmax()] / 2]
                 a3[0].plot(pt_single["T"] - 273., pt_single["Plith"], color=line_color)
                 a3[1].plot(pt_single["x"] / 1.e3, ymax - pt_single["depth"], color=line_color)
                 a3[1].set_ylim(72,-2)
