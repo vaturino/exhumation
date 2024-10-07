@@ -38,7 +38,7 @@ def process_particle(p, pt_files, line_colors, compositions, composition_mapping
         "p": p,
         "subducted": pt_single["P"].max() > 3.0,
         "exhumed": max_depth >= 10. and (pt_single.depth.iat[-1] - pt_single.depth.min()) >= 0.25 * max_depth,
-        "stagnant": (pt_single.depth.iat[-1] - pt_single.depth.min()) <= 0.25*max_depth and (pt_single.depth.iat[-1] - pt_single.depth.min()) >= 0.5,
+        "stagnant": (pt_single.depth.iat[-1] - pt_single.depth.min()) <= 0.25*max_depth and (pt_single.depth.iat[-1] - pt_single.depth.min()) >= 0.1,
         "pt_single": pt_single,
         "max_depth": max_depth,
         "line_color": line_colors[p]
@@ -76,6 +76,8 @@ def main():
     npa = len(os.listdir(pt_files))
     print("Total number of particles = ", npa)
 
+    # trench_pos = pd.read_csv(f"{txt_loc}/trench_pos.txt", sep="\s+")
+
     init = pd.read_csv(f"{txt_loc}/particles_indexes.txt", sep="\s+")
     pal1 = plt.get_cmap('viridis')
     norm = plt.Normalize(init["init_x"].min() / 1e3, init["init_x"].max() / 1e3)
@@ -112,14 +114,15 @@ def main():
                 exhumed += 1
                 exh.loc[p] = [p, pt_single["Plith"].max(), pt_single["T"].max() - 273., pt_single["Plith"].iloc[pt_single["T"].idxmax()], pt_single["T"].iloc[pt_single["T"].idxmax()] - 273., pt_single["lithology"].iloc[-1], pt_single["time"].iloc[pt_single["Plith"].idxmax()] / 2]
                 a1[0].plot(pt_single["T"] - 273., pt_single["Plith"], color=line_color)
-                a1[1].plot(pt_single["x"] / 1.e3, ymax - pt_single["depth"], color=line_color)
+                a1[1].plot((pt_single["x"] )/ 1.e3, ymax - pt_single["depth"], color=line_color)
                 a1[1].invert_yaxis()
             elif result["stagnant"]:
                 stagnant += 1
                 stag.loc[p] = [p, pt_single["Plith"].max(), pt_single["T"].max() - 273., pt_single["Plith"].iloc[pt_single["T"].idxmax()], pt_single["T"].iloc[pt_single["T"].idxmax()] - 273., pt_single["lithology"].iloc[-1], pt_single["time"].iloc[pt_single["Plith"].idxmax()] / 2]
                 a3[0].plot(pt_single["T"] - 273., pt_single["Plith"], color=line_color)
                 a3[1].plot(pt_single["x"] / 1.e3, ymax - pt_single["depth"], color=line_color)
-                a3[1].invert_yaxis()
+                a3[1].set_ylim(72,-2)
+                # a3[1].invert_yaxis()
 
     for ax, title in zip([a1[0], a1[1], a2, a3[0], a3[1]], ["Exhumed particles", "Exhumed particles trajectory", "Subducted particles", "Stagnant particles", "Stagnant particles trajectory"]):
         ax.set_title(title)
@@ -157,14 +160,14 @@ def main():
         lithology = exh.lithology.value_counts().index[j]
         count = exh.lithology.value_counts().values[j]
         percentage = (count / npa) * 100
-        exh_title_str += f"{lithology}: count = {count}, percentage = {percentage:.1f}%\n"
+        exh_title_str += f"{lithology}: count = {count}, percentage = {percentage:.5f}%\n"
 
     stag_title_str = ""
     for j in range(len(stag.lithology.value_counts())):
         lithology = stag.lithology.value_counts().index[j]
         count = stag.lithology.value_counts().values[j]
         percentage = (count / npa) * 100
-        stag_title_str += f"{lithology}: count = {count}, percentage = {percentage:.1f}%\n"
+        stag_title_str += f"{lithology}: count = {count}, percentage = {percentage:.5f}%\n"
 
 
     def plot_max_conditions(df, title_str, plot_file, lith_count):
