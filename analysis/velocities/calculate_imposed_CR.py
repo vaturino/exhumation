@@ -30,7 +30,7 @@ v3 = m3 * t3 + b3
 v3[-1] = v4_sp[0]  # Ensure v3's last value matches v4's first value
 
 # Define an array of percentages for the linear decrease after t4
-percentages = [0.0, 0.5, 1.0]  # 0%, 50%, 100%
+percentages = [0.0, 0.1, 0.5, 1.0]  # 0%, 10%, 50%, 100%
 t5 = 50e6
 
 # Prepare the output file
@@ -68,7 +68,7 @@ plt.plot(t3, v3, label=r"$v_{3,sp} = -1.11833 \times 10^{-8} t + 0.231524$", col
 plt.plot(t4, v4_sp, label=r"$v_{4,sp} = 0.034222$", color='orange')
 
 # After v4, plot linear decreases for each percentage
-colors = ['purple', 'cyan', 'magenta']  # Define a set of colors for each percentage
+colors = plt.cm.Dark2(np.arange(len(percentages)))
 
 for i, percentage in enumerate(percentages):
     v5 = percentage * v4_value  # Final velocity value for this percentage

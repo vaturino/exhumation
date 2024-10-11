@@ -43,6 +43,7 @@ def main():
     rocks_loc = '/home/vturino/PhD/projects/exhumation/rock_record/'
 
     rocks = pd.read_excel(f"{rocks_loc}rocks_agard2018.xlsx")
+    rocks = rocks[rocks["AREA"] != "Metamorphic Soles"]
 
     # Read the json file
     with open(f"{json_loc}{args.json_file}") as json_file:
@@ -116,61 +117,75 @@ def main():
     sns.set_palette("colorblind")
 
     f1, a1 = plt.subplots(2, 2, figsize=(10, 10))      
-    sns.scatterplot(data=exh, x="maxT", y="maxP", hue="lithology", size = "vexh",ax=a1[0,0], zorder=10)
+    sns.scatterplot(data=exh, 
+                    x="maxT", 
+                    y="maxP", 
+                    hue="lithology", 
+                    hue_order=exh["lithology"].value_counts(ascending=True).index, 
+                    size = "vexh",ax=a1[0,0], 
+                    alpha=1, 
+                    )
     a1[0,0].set_ylabel("Pressure (GPa)")
     a1[0,0].set_xlabel("T ($^\circ$C)")
     a1[0,0].set_title("Peak pressure")
     sns.kdeplot(data=rocks, x="T", y="P", ax=a1[0,0], fill = True, cbar = False, alpha = .7, zorder=1, color='grey')
 
-    sns.histplot(x = "tmax", bins = 20, hue = "lithology", element="step", data=exh, ax=a1[0,1])
+    sns.histplot(x = "tmax", 
+                 bins = 20, hue = "lithology", 
+                 hue_order=exh["lithology"].value_counts(ascending=True).index, 
+                 element="step", 
+                 data=exh, 
+                 ax=a1[0,1], 
+                 alpha=1,
+                 edgecolor = "black",
+                 linewidth = 1,
+                 zorder=1)
     a1[0,1].set_title("Time at peak pressure")
     a1[0,1].set_xlabel("Time (Ma)")
     a1[0,1].set_ylabel("Number of particles")
     ax1 = a1[0,1].twinx()
-    ax1.plot(cr["time"]/1e6, cr["conv_rate"], color="grey", linewidth=2)
+    ax1.plot(cr["time"]/1e6, cr["conv_rate"], color="grey", linewidth=2, zorder = 10)
     ax1.set_ylabel("Convergence rate (cm/yr)", color="grey", fontweight='bold')
     a1[0,1].patch.set_visible(False) 
-    a1[0,1].set_zorder(10)   
+    a1[0,1].set_zorder(1)   
+    ax1.set_zorder(10)
+
+    # Bring the line to the front
+    for artist in a1[0, 1].get_children():
+        if isinstance(artist, plt.Line2D):  # Ensure only lines are affected
+            artist.set_zorder(0)  # Move histogram lines behind
     
 
-    sns.histplot(x = "vbur", bins = 20, hue = "lithology", element="step", data=exh, ax=a1[1,0])
+    sns.histplot(x = "vbur", 
+                 bins = 20,
+                hue = "lithology", 
+                hue_order=exh["lithology"].value_counts(ascending=True).index, 
+                element="step", 
+                data=exh, 
+                ax=a1[1,0], 
+                alpha=1,
+                edgecolor = "black",
+                linewidth = 1)
     a1[1,0].set_title("Burial rate")
     a1[1,0].set_xlabel("Rate (cm/yr)")
     a1[1,0].set_ylabel("Number of particles")
 
-    sns.histplot(x = "vexh", bins = 20, hue = "lithology", element="step", data=exh, ax=a1[1,1])
+    sns.histplot(x = "vexh", 
+                 bins = 20, 
+                 hue = "lithology", 
+                 hue_order=exh["lithology"].value_counts(ascending=True).index, 
+                 element="step", 
+                 data=exh, 
+                 ax=a1[1,1], 
+                 alpha=1,
+                 edgecolor = "black",
+                 linewidth = 1)
     a1[1,1].set_title("Exhumation rate")
     a1[1,1].set_xlabel("Rate (cm/yr)")
     a1[1,1].set_ylabel("Number of particles")
 
     f1.tight_layout()
     plt.savefig(f"{plot_loc}/timing_exhumed_particles.png", dpi = 1000)
-
-
-    # f2, a2 = plt.subplots(2, 2, figsize=(10, 10))      
-    # sns.scatterplot(data=exh, x="maxT", y="maxP", hue="vexh", style = "lithology",ax=a2[0,0])
-    # a2[0,0].set_ylabel("Pressure (GPa)")
-    # a2[0,0].set_xlabel("T ($^\circ$C)")
-    # a2[0,0].set_title("Peak pressure")
-
-    # sns.histplot(x = "tmax", bins = 20, hue = "lithology", element="step", data=exh, ax=a2[0,1])
-    # a2[0,1].set_title("Time at peak pressure")
-    # a2[0,1].set_xlabel("Time (Ma)")
-    # a2[0,1].set_ylabel("Number of particles")
-    
-
-    # sns.histplot(x = "vbur", bins = 20, hue = "lithology", element="step", data=exh, ax=a2[1,0])
-    # a2[1,0].set_title("Burial rate")
-    # a2[1,0].set_xlabel("Rate (cm/yr)")
-    # a2[1,0].set_ylabel("Number of particles")
-
-    # sns.histplot(x = "vexh", bins = 20, hue = "lithology", element="step", data=exh, ax=a2[1,1])
-    # a2[1,1].set_title("Exhumation rate")
-    # a2[1,1].set_xlabel("Rate (cm/yr)")
-    # a2[1,1].set_ylabel("Number of particles")
-
-    # f2.tight_layout()
-    # plt.savefig(f"{plot_loc}/timing_exhumed_particles_rate.png", dpi = 1000)
 
 
     plt.close()
