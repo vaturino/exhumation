@@ -1,0 +1,47 @@
+{
+   "velocity":[
+       "kinematic_mu0.13_basalt7.5km_sed1km_cttV",
+        "kinematic_mu0.13_basalt7.5km_sed1km_Vto50pc",
+        "kinematic_mu0.13_basalt7.5km_sed1km_Vto10pc",
+        "kinematic_mu0.13_basalt7.5km_sed1km_Vto0"
+    ],
+    "velocity_names":[
+       "Constant Velocity",
+       "50% velocity",
+       "10% velocity",
+       "0% velocity"
+    ],
+    "viscosity":[
+        "kinematic_mu0.13_basalt7.5km_sed1km_upto35Myr_SR1.8e-12",
+        "kinematic_mu0.13_basalt7.5km_sed1km_upto35Myr",
+        "kinematic_mu0.13_basalt7.5km_sed1km_upto35Myr_SR4.5e-13"
+    ],
+    "viscosity_names":[
+        "Weaker interface",
+        "Reference",
+        "Stronger interface"
+    ],
+    "friction":[
+        "kinematic_mu0.05_basalt7.5km_sed1km_upto35Myr",
+        "kinematic_mu0.13_basalt7.5km_sed1km_upto35Myr",
+        "kinematic_mu0.2_basalt7.5km_sed1km_upto35Myr",
+        "kinematic_basalt7.5kmMu0.13_sed1kmMu0.025_upto35Myr"
+    ],
+    "friction_names":[
+        "Lower friction coefficient",
+        "Reference",
+        "Higher friction coefficient",
+        "Mixed friction"
+    ],
+    "serpentinization":[
+        "kinematic_mu0.13_basalt7.5km_sed1km_upto35Myr",
+        "kinematic_mu0.13_basalt7.5km_sed1km_serp1km_upto35Myr",
+        "kinematic_mu0.13_basalt7.5km_sed1km_serp_patch_upto35Myr"
+    ],
+    "serpentinization_names":[
+        "Reference",
+        "1km uniform serpentinite",
+        "Serpentinite patches"
+    ]
+   
+ }
