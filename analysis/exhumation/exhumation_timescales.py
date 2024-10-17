@@ -76,7 +76,8 @@ def main():
 
     init = pd.read_csv(f"{txt_loc}/exhumed_particles.txt", sep="\s+")
     exh = pd.DataFrame(columns=["id", "maxP", "maxT", "lithology", "tin", "tmax", "tfin", "burial", "exhum", "maxdepth", "exdepth", "vbur", "vexh"], index=range(len(init)))
-    
+
+
     for p in tqdm(range(len(init))):
     # for p in range(10):
         id = init["id"].iloc[p]
@@ -91,26 +92,40 @@ def main():
         exh["maxdepth"].iloc[p] = (part["depth"].max() - part["depth"].min())
         exh["exdepth"].iloc[p] = 0.2*exh["maxdepth"].iloc[p]
 
+        # print(part.depth.min())
 
-        # exh["tin"].iloc[p] = part.loc[part["Plith"] >= 0.1, "time"].min()/2.
-        
+
+        # exh["tin"].iloc[p] = part.loc[part["Plith"] >= 0.2, "time"].min()/2.
+        idx = 0
+        ide = 0
 
         for i in range(len(part)):
-            if part.depth.iloc[0] - part.depth.iat[i] >= 2.:
+            if (part.depth.iloc[0] - part.depth.iloc[i]) >= 2.:
                 exh["tin"].iloc[p] = part["time"].iat[i]/2.
+                idx = i
                 break
         for i in range(len(part)): 
             idxmin = part.depth.idxmin()
             if i > idxmin:
                 if part.depth.iat[i] - part.depth.min() >= exh["exdepth"].iloc[p]:
                     exh["tfin"].iloc[p] = part["time"].iat[i]/2.
+                    ide = i
                     break
-    
-    
-    exh["burial"] = exh["tmax"] - exh["tin"]    
+
+        # vel = math.sqrt(part.vx.iloc[idx]**2 + part.vy.iloc[idx]**2)
+        # vel_bur = part.loc[idx:part.depth.idxmin(), ["vx", "vy"]].apply(lambda row: math.sqrt(row["vx"]**2 + row["vy"]**2)*np.sin(np.deg2rad(45)), axis=1).values
+        # vel_exh = part.loc[part.depth.idxmin():, ["vx", "vy"]].apply(lambda row: math.sqrt(row["vx"]**2 + row["vy"]**2)*np.sin(np.deg2rad(45)), axis=1).values
+        # vel_bur = part.loc[idx:part.depth.idxmin(), ["vy"]].apply(lambda row: math.sqrt(row["vy"]**2)/np.sin(np.deg2rad(45)), axis=1).values
+        # vel_exh = part.loc[part.depth.idxmin():, ["vy"]].apply(lambda row: math.sqrt(row["vy"]**2), axis=1).values
+        # exh["vbur"].iloc[p] = np.mean(vel_bur)
+        # exh["vexh"].iloc[p] = np.mean(vel_exh)
+            
+
+
+    exh["burial"] = exh["tmax"] - exh["tin"]   
     exh["exhum"] = exh["tfin"] - exh["tmax"]
-    exh["vbur"] = exh["maxdepth"]*1e5/(exh["burial"]*1e6)
-    exh["vexh"] = exh["exdepth"]*1e5/(exh["exhum"]*1e6)
+    exh["vbur"] = (exh["maxdepth"]/exh["burial"])*0.1
+    exh["vexh"] = (exh["exdepth"]/exh["exhum"])*0.1
             
     exh.to_csv(f"{txt_loc}/timing_exhumed_particles.txt", sep=" ", index=False)  
 
@@ -123,12 +138,16 @@ def main():
                     hue="lithology", 
                     hue_order=exh["lithology"].value_counts(ascending=True).index, 
                     size = "vexh",ax=a1[0,0], 
-                    alpha=1, 
+                    alpha=1,
+                    zorder = 10 
                     )
     a1[0,0].set_ylabel("Pressure (GPa)")
     a1[0,0].set_xlabel("T ($^\circ$C)")
     a1[0,0].set_title("Peak pressure")
-    sns.kdeplot(data=rocks, x="T", y="P", ax=a1[0,0], fill = True, cbar = False, alpha = .7, zorder=1, color='grey')
+    a1[0,0].set_xlim(0, 900)
+    a1[0,0].set_ylim(0, 3.5)
+    sns.kdeplot(data=rocks, x="T", y="P", ax=a1[0,0], fill = True, cbar = False, alpha = .7, zorder=2, color='grey')
+    
 
     sns.histplot(x = "tmax", 
                  bins = 20, hue = "lithology", 

@@ -58,13 +58,20 @@ def main():
             # Count the files in the fields_loc directory
             file_count = len(os.listdir(plot_loc))
 
+       
+
+        
+        trench = pd.read_csv(f"{plot_loc_mod}/txt_files/trench_pos.txt", sep='\s+')
+        # trench["x"] = trench["x"]/1.e3
+        # trench["y"] = (ymax_plot - trench["y"])/1.e3
+
 
         # exhumed_file = np.random.choice(os.listdir(f"{plot_loc_mod}/txt_files/exhumed/"))
         # exhumed_data = pd.read_csv(f"{plot_loc_mod}/txt_files/exhumed/{exhumed_file}", sep='\s+')
-        # exhumed_data = pd.read_csv(f"{plot_loc_mod}/txt_files/exhumed/exhumed_4431.txt", sep='\s+')
-        # print("exhumed particle: ", exhumed_file)
+        exhumed_data = pd.read_csv(f"{plot_loc_mod}/txt_files/PT/pt_part_1266.txt", sep='\s+')
+
         
-        for t in tqdm(range(2*file_count, len(time_array), 2)):
+        for t in tqdm(range(0, len(time_array), 2)):
         # for t in tqdm(range(2,3)):
 
             fig=plt.figure()
@@ -85,15 +92,12 @@ def main():
                 
             data["lithology"] = data["lithology"].astype(int)
             
+        
+            xmin_plot = trench["x"].iloc[t] -100.e3
+            xmax_plot = trench["x"].iloc[t] + 200.e3
+            ymin_plot = trench["y"].iloc[t] - 160.e3
+            ymax_plot = trench["y"].iloc[t] + 2.e3
             
-            
-            
-            pts = get_points_with_y_in(data, 15.e3, 2.e3, ymax = 900.e3)
-            trench= get_trench_position(pts,threshold = 0.13e7)
-            xmin_plot = trench -100.e3
-            xmax_plot = trench + 200.e3
-            ymin_plot = 740.e3
-            ymax_plot = 900.e3
 
             x = data["Points:0"].to_numpy()/1.e3
             y = (ymax_plot - data["Points:1"].to_numpy())/1.e3
@@ -113,11 +117,12 @@ def main():
             triang.set_mask(np.logical_and(maxi > max_radius, y[triangles][:,1] < 90.))
 
             
-            # row = exhumed_data[exhumed_data['time'] == t]
-            
+
+            # print(exhumed_data["x"].iloc[t]/1.e3, (ymax_plot - exhumed_data["y"].iloc[t])/1.e3)
             
             plt.tripcolor(triang, data["lithology"], cmap=colors, shading='gouraud', vmax=len(compositions), vmin=0)
-            # plt.scatter(row["x"].to_numpy()/1.e3, (ymax_plot - row["depth"].to_numpy())/1.e3, color='red', marker='x', zorder = 1)
+            # plt.plot(trench["x"].iloc[t]/1.e3, (ymax_plot - trench["y"].iloc[t])/1.e3, color='k', marker='v', zorder =2, markersize=5)
+            plt.scatter(exhumed_data["x"].iloc[t]/1.e3, (ymax_plot - exhumed_data["y"].iloc[t])/1.e3, color='red', marker='x', zorder = 1)
             plt.colorbar(orientation='horizontal', label='Composition')
             plt.ylim([(ymax_plot-ymin_plot)/1.e3,-5])
             plt.xlim([xmin_plot/1.e3,xmax_plot/1.e3])

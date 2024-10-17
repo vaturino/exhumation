@@ -25,20 +25,33 @@ from libraries.functions import *
 from libraries.particles import *
 from libraries.exhumation import *  
 
-def process_particle(p, pt_files, line_colors, compositions, composition_mapping, ymax=900.):
+
+import numpy as np
+
+def process_particle(p, pt_files, line_colors, compositions, composition_mapping, ymax = 900.):
     pt_single = pd.read_csv(f"{pt_files}/pt_part_{p}.txt", sep="\s+")
-    pt_single["Plith"] = (ymax - pt_single["depth"]) * 1e3 * 9.81 * 3300 / 1e9
+
+    pt_single["Plith"] = (ymax - pt_single["depth"]) * 1e3 * 9.81 * 3100 / 1e9
+    pt_single["T"] = (pt_single["T"] + 0.6*(pt_single["depth"].max() - pt_single["depth"])) - 273.
     pt_single["terrain"] = sum((ind_c + 1) * pt_single[c].round() for ind_c, c in enumerate(compositions))
     pt_single["terrain"] = pt_single["terrain"].round()
     pt_single["lithology"] = pt_single["terrain"].map(composition_mapping)
     pt_single["lithology"] = pt_single["lithology"].iloc[-1]
 
     max_depth = ymax - pt_single["depth"].min()
+   
+
+    # Check if depth increases by at least 25% after the minimum depth
+    # exhumed = (max_depth >= 5) and any(pt_single.depth[min_depth_idx:] >= (min_depth + 0.25 * max_depth))
+
+    stagnant = ((pt_single.depth.iat[-1] - pt_single.depth.min()) > 0.01) and ((pt_single.depth.iat[-1] - pt_single.depth.min()) < 0.25 * max_depth) and (max_depth > 10.)
+    exhumed = ((pt_single.depth.iat[-1] - pt_single.depth.min()) >= 0.25 * max_depth) and (max_depth > 10.)
+
     result = {
         "p": p,
         "subducted": pt_single["P"].max() > 3.0,
-        "exhumed": max_depth >= 10. and (pt_single.depth.iat[-1] - pt_single.depth.min()) >= 0.25 * max_depth,
-        "stagnant": (pt_single.depth.iat[-1] - pt_single.depth.min()) <= 0.25*max_depth and (pt_single.depth.iat[-1] - pt_single.depth.min()) >= 0.1,
+        "exhumed": exhumed, 
+        "stagnant": stagnant,
         "pt_single": pt_single,
         "max_depth": max_depth,
         "line_color": line_colors[p]
@@ -48,6 +61,8 @@ def process_particle(p, pt_files, line_colors, compositions, composition_mapping
         result["subducted"] = True
 
     return result
+
+
 
 def main(): 
     parser = argparse.ArgumentParser(description='Script that gets some models and gives the kinematic indicators')
@@ -85,13 +100,14 @@ def main():
 
     exh = pd.DataFrame(columns=["id", "maxPP", "maxPT", "maxTP", "maxTT", "lithology", "tmax"], index=range(npa))
     stag = pd.DataFrame(columns=["id", "maxPP", "maxPT", "maxTP", "maxTT", "lithology", "tmax"], index=range(npa))
+    subd = pd.DataFrame(columns=["id"], index=range(npa))
     s_m = plt.cm.ScalarMappable(cmap=pal1, norm=norm)
     s_m.set_array([])
 
     subducted = 0
     exhumed = 0
     stagnant = 0
-    ymax = 900.
+    
 
     composition_mapping = {ind_c + 1: c for ind_c, c in enumerate(compositions)}
 
@@ -107,19 +123,22 @@ def main():
             pt_single = result["pt_single"]
             line_color = result["line_color"]
 
+            ymax = 900.
+
             if result["subducted"]:
                 subducted += 1
-                a2.plot(pt_single["T"] - 273., pt_single["P"], color=line_color)
+                a2.plot(pt_single["T"] , pt_single["Plith"], color=line_color)
+                subd.iloc[p] = [p]
             elif result["exhumed"]:
                 exhumed += 1
-                exh.loc[p] = [p, pt_single["Plith"].max(), pt_single["T"].iloc[pt_single["Plith"].idxmax()] - 273., pt_single["Plith"].iloc[pt_single["T"].idxmax()], pt_single["T"].iloc[pt_single["T"].idxmax()] - 273., pt_single["lithology"].iloc[-1], pt_single["time"].iloc[pt_single["Plith"].idxmax()] / 2]
-                a1[0].plot(pt_single["T"] - 273., pt_single["Plith"], color=line_color)
+                exh.loc[p] = [p, pt_single["Plith"].max(), pt_single["T"].iloc[pt_single["Plith"].idxmax()]  , pt_single["Plith"].iloc[pt_single["T"].idxmax()], pt_single["T"].iloc[pt_single["T"].idxmax()] , pt_single["lithology"].iloc[-1], pt_single["time"].iloc[pt_single["Plith"].idxmax()] / 2]
+                a1[0].plot(pt_single["T"] , pt_single["Plith"], color=line_color)
                 a1[1].plot((pt_single["x"] )/ 1.e3, ymax - pt_single["depth"], color=line_color)
                 a1[1].invert_yaxis()
             elif result["stagnant"]:
                 stagnant += 1
-                stag.loc[p] = [p, pt_single["Plith"].max(), pt_single["T"].iloc[pt_single["Plith"].idxmax()] - 273., pt_single["Plith"].iloc[pt_single["T"].idxmax()], pt_single["T"].iloc[pt_single["T"].idxmax()] - 273., pt_single["lithology"].iloc[-1], pt_single["time"].iloc[pt_single["Plith"].idxmax()] / 2]
-                a3[0].plot(pt_single["T"] - 273., pt_single["Plith"], color=line_color)
+                stag.loc[p] = [p, pt_single["Plith"].max(), pt_single["T"].iloc[pt_single["Plith"].idxmax()] , pt_single["Plith"].iloc[pt_single["T"].idxmax()], pt_single["T"].iloc[pt_single["T"].idxmax()] , pt_single["lithology"].iloc[-1], pt_single["time"].iloc[pt_single["Plith"].idxmax()] / 2]
+                a3[0].plot(pt_single["T"] , pt_single["Plith"], color=line_color)
                 a3[1].plot(pt_single["x"] / 1.e3, ymax - pt_single["depth"], color=line_color)
                 a3[1].set_ylim(72,-2)
                 # a3[1].invert_yaxis()
@@ -145,7 +164,7 @@ def main():
 
     f1.savefig(f"{plot_loc}/possibly_exhumed.png")
     f3.savefig(f"{plot_loc}/stagnant.png")
-    f2.savefig(f"{plot_loc}/filtered_out.png")
+    f2.savefig(f"{plot_loc}/filtered_out.png", dpi = 500)
     plt.close()
 
     exh.dropna(inplace=True)
@@ -213,6 +232,7 @@ def main():
 
     exh.to_csv(f"{txt_loc}/exhumed_particles.txt", sep="\t", index=False)
     stag.to_csv(f"{txt_loc}/stagnant_particles.txt", sep="\t", index=False)
+    subd.to_csv(f"{txt_loc}/subducted_particles.txt", sep="\t", index=False)
 
 if __name__ == "__main__":
     main()

@@ -115,13 +115,6 @@ def main():
             ridge_data_tmax_stagnant = pad_data(ridge_data_tmax_stagnant)
             ridge_data_tfin_stagnant = pad_data(ridge_data_tfin_stagnant)
 
-            # Determine height ratios based on unique lithologies
-            unique_exhumed_lithologies = exhumed["lithology"].unique()
-            unique_stagnant_lithologies = stagnant["lithology"].unique()
-
-            # Adjust height ratios: taller for more stagnant lithologies
-            height_ratios = [1, len(unique_stagnant_lithologies)]  # First row normal height, second row based on stagnant lithologies
-
             # Create a final figure for this test with gridspec for dynamic row heights
             fig = plt.figure(figsize=(15, 8))
             gs = gridspec.GridSpec(2, 3)  # 2 rows, 3 columns with custom heights
@@ -149,21 +142,21 @@ def main():
 
 
             # Create joy plots for exhumed particles
-            joy_output_file_tin_exhumed = f"{output_dir}/single_exhumed/ridge_plot_tin_{test}.png"
+            joy_output_file_tin_exhumed = f"{output_dir}/single_exhumed/ridge_plot_tin_{test}.eps"
             create_joy_plot(ridge_data_tin_exhumed, labels_tin_exhumed, f"Ridge Plot of Exhumed Particles by Lithology and Model (tin) - {test}", joy_output_file_tin_exhumed)
             ax_tin_exhumed = fig.add_subplot(gs[0, 0])
             ax_tin_exhumed.imshow(Image.open(joy_output_file_tin_exhumed))
             ax_tin_exhumed.axis('off')
             ax_tin_exhumed.set_title(f"{test} - tin", fontsize=14)
 
-            joy_output_file_tmax_exhumed = f"{output_dir}/single_exhumed/ridge_plot_tmax_{test}.png"
+            joy_output_file_tmax_exhumed = f"{output_dir}/single_exhumed/ridge_plot_tmax_{test}.eps"
             create_joy_plot(ridge_data_tmax_exhumed, labels_tmax_exhumed, f"Ridge Plot of Exhumed Particles by Lithology and Model (tmax) - {test}", joy_output_file_tmax_exhumed)
             ax_tmax_exhumed = fig.add_subplot(gs[0, 1])
             ax_tmax_exhumed.imshow(Image.open(joy_output_file_tmax_exhumed))
             ax_tmax_exhumed.axis('off')
             ax_tmax_exhumed.set_title(f"{test} - tmax", fontsize=14)
 
-            joy_output_file_tfin_exhumed = f"{output_dir}/single_exhumed/ridge_plot_tfin_{test}.png"
+            joy_output_file_tfin_exhumed = f"{output_dir}/single_exhumed/ridge_plot_tfin_{test}.eps"
             create_joy_plot(ridge_data_tfin_exhumed, labels_tfin_exhumed, f"Ridge Plot of Exhumed Particles by Lithology and Model (tfin) - {test}", joy_output_file_tfin_exhumed)
             ax_tfin_exhumed = fig.add_subplot(gs[0, 2])
             ax_tfin_exhumed.imshow(Image.open(joy_output_file_tfin_exhumed))
@@ -171,21 +164,21 @@ def main():
             ax_tfin_exhumed.set_title(f"{test} - tfin", fontsize=14)
 
             # Create joy plots for stagnant particles
-            joy_output_file_tin_stagnant = f"{output_dir}/single_stagnant/ridge_plot_tin_{test}.png"
+            joy_output_file_tin_stagnant = f"{output_dir}/single_stagnant/ridge_plot_tin_{test}.eps"
             create_joy_plot(ridge_data_tin_stagnant, labels_tin_stagnant, f"Ridge Plot of Stagnant Particles by Lithology and Model (tin) - {test}", joy_output_file_tin_stagnant)
             ax_tin_stagnant = fig.add_subplot(gs[1, 0])
             ax_tin_stagnant.imshow(Image.open(joy_output_file_tin_stagnant))
             ax_tin_stagnant.axis('off')
             ax_tin_stagnant.set_title(f"{test} - tin (stagnant)", fontsize=14)
 
-            joy_output_file_tmax_stagnant = f"{output_dir}/single_stagnant/ridge_plot_tmax_{test}.png"
+            joy_output_file_tmax_stagnant = f"{output_dir}/single_stagnant/ridge_plot_tmax_{test}.eps"
             create_joy_plot(ridge_data_tmax_stagnant, labels_tmax_stagnant, f"Ridge Plot of Stagnant Particles by Lithology and Model (tmax) - {test}", joy_output_file_tmax_stagnant)
             ax_tmax_stagnant = fig.add_subplot(gs[1, 1])
             ax_tmax_stagnant.imshow(Image.open(joy_output_file_tmax_stagnant))
             ax_tmax_stagnant.axis('off')
             ax_tmax_stagnant.set_title(f"{test} - tmax (stagnant)", fontsize=14)
 
-            joy_output_file_tfin_stagnant = f"{output_dir}/single_stagnant/ridge_plot_tfin_{test}.png"
+            joy_output_file_tfin_stagnant = f"{output_dir}/single_stagnant/ridge_plot_tfin_{test}.eps"
             create_joy_plot(ridge_data_tfin_stagnant, labels_tfin_stagnant, f"Ridge Plot of Stagnant Particles by Lithology and Model (tfin) - {test}", joy_output_file_tfin_stagnant)
             ax_tfin_stagnant = fig.add_subplot(gs[1, 2])
             ax_tfin_stagnant.imshow(Image.open(joy_output_file_tfin_stagnant))
@@ -194,7 +187,7 @@ def main():
 
             # Adjust layout for better spacing and save the final figure for this test
             plt.tight_layout()
-            final_output_file = f"{output_dir}/ridge_plot_grid_{test}.png"
+            final_output_file = f"{output_dir}/ridge_plot_grid_{test}.eps"
             plt.savefig(final_output_file)
             plt.close()  # Close the figure after saving to free up memory
 

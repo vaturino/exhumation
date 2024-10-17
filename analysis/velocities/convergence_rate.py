@@ -79,7 +79,7 @@ def main():
         points_cr = get_points_with_y_in(data, 40.e3, 1.e3, 900.e3)
 
         # extract the velocities around the trench ###
-        left[t], right[t] = get_V_around_trench(points_cr, trench, 1300.e3)
+        left[t], right[t] = get_V_around_trench(points_cr, trench, 1600.e3)
         left[t] *= 1e2
         right[t] *= 1e2
         conv_rate[t] = abs(left[t]-right[t])

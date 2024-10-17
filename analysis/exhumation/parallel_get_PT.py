@@ -44,10 +44,10 @@ def setup_directories(plot_loc):
 def initialize_particle_files(pt_files, npart, compositions):
     for i in range(npart):
         with open(f"{pt_files}/pt_part_{i}.txt", "w+") as pt:
-            pt.write("id time x y P T depth vy " + " ".join(compositions) + "\n")
+            pt.write("id time x y P T depth vx vy " + " ".join(compositions) + "\n")
 
 def process_time_step(t, csvs_loc, m, compositions, tr, idx, cmyr):
-    fcol = ["id", "position:0", "position:1", "p", "T", "position:1", "velocity:1"]
+    fcol = ["id", "position:0", "position:1", "p", "T", "position:1", "velocity:0", "velocity:1"]
     df = pd.read_parquet(f"{csvs_loc}{m}/particles/full.{t}.gzip", columns=fcol + compositions)
     fil = (df[compositions] > tr).any(axis=1)
     df = df[fil]
@@ -58,6 +58,7 @@ def process_time_step(t, csvs_loc, m, compositions, tr, idx, cmyr):
         row = [
             conds["id"].iloc[i], t, conds["position:0"].iloc[i], conds["position:1"].iloc[i],
             conds["p"].iloc[i] / 1e9, conds["T"].iloc[i], conds["position:1"].iloc[i] / 1.e3,
+            conds["velocity:0"].iloc[i] * cmyr,
             conds["velocity:1"].iloc[i] * cmyr
         ]
         row.extend(conds[col].iloc[i] for col in compositions)

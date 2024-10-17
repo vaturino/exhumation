@@ -25,11 +25,11 @@ from libraries.exhumation import *
 
 
 
-def get_trench_position_from_op(p, threshold = 2.7e7):
-    if {"opc"}.issubset(p.columns):
-        tr =  p.loc[(p['Points:0']< threshold) & (p["opc"] > 0.3) & (p["Points:1"] >=  p["Points:1"].max() - 2.e3),['Points:0', 'Points:1']].min()
+def get_trench_position_from_sed(p, threshold = 1.5e7):
+    if {"sed"}.issubset(p.columns):
+        tr =  p.loc[(p["sed"] > 0.3) & (p["Points:1"] >= p["Points:1"].max() - 10.e3),['Points:0', 'Points:1']].max()
     else:
-        tr =  p.loc[(p['Points:0']< threshold) & (p['op'] > 0.3) & (p["Points:1"] >=  p["Points:1"].max() - 2.e3),['Points:0', 'Points:1']].min()
+        tr =  p.loc[(p['Points:0']> threshold) & (p['oc'] > 0.3),['Points:0', 'Points:1']].max()
     return tr
 
 
@@ -54,11 +54,12 @@ def main():
     time_array = np.zeros((len(os.listdir(f"{csvs_loc}{m}/fields")),2)) 
     stat = pd.read_csv(f"{models_loc}{m}/statistics",skiprows=configs['head_lines'],sep='\s+',header=None)
     time_array = grab_dimTime_fields(f"{csvs_loc}{m}/fields", stat, time_array, configs['head_lines']-1)
-    trench = pd.DataFrame(np.zeros((len(time_array)-1,3)), columns=['time', 'x', 'y'])
-    for t in tqdm(range(1, len(time_array))):
+    trench = pd.DataFrame(np.zeros((len(time_array),3)), columns=['time', 'x', 'y'])
+    for t in tqdm(range(0, len(time_array))):
         p = pd.read_parquet(f"{csvs_loc}{m}/fields/full.{int(t)}.gzip") 
-        trench.loc[t-1, 'time'] = time_array[t, 1]/1.e6
-        trench.loc[t-1, 'x'], trench.loc[t-1, 'y'] = get_trench_position_from_op(p)
+        trench.loc[t, 'time'] = time_array[t, 1]/1.e6
+        trench.loc[t, 'x'], trench.loc[t, 'y'] = get_trench_position_from_sed(p)
+        print(trench.loc[t, 'time'], trench.loc[t, 'x'], trench.loc[t, 'y'])
         
     trench.to_csv(f"{txt_loc}/trench_pos.txt", sep=' ', index=False)
 

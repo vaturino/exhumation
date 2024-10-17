@@ -59,15 +59,35 @@ def main():
             # Count the files in the fields_loc directory
             file_count = len(os.listdir(plot_loc))
 
+        compositions = configs['compositions']
+        cutoff = configs['cutoff']
+
+
         
-        for t in tqdm(range(2*file_count, len(time_array), 2)):
+        for t in tqdm(range(0, len(time_array), 2)):
         # for t in tqdm(range(2,3)):
 
             fig=plt.figure()
             gs=GridSpec(2,1)
             plotname = f"{plot_loc}{int(t/2)}.png" 
             data = pd.read_parquet(f"{csvs_loc}{m}/fields/full.{int(t)}.gzip") 
+            data["lithology"] = 0
             data["logvisc"] = np.log10(data["viscosity"])
+            for ind, c in enumerate(compositions):
+                data[c][data["Points:1"] < cutoff[ind]] = 0
+                data[c][data[c] >= 0.5] = 1
+                data[c][data[c] < 0.5] = 0
+
+            for ind_c, c in enumerate(compositions):
+                weight = ind_c + 1
+                data["lithology"] += weight * data[c]
+            
+            data["lithology"] = data["lithology"].astype(int)
+            composition_mapping = {ind_c + 1: c for ind_c, c in enumerate(compositions)}
+            data["terrain"] = data["lithology"].map(composition_mapping)
+            data["terrain"].fillna("mantle", inplace=True)
+            filter_mask = (data["terrain"] != "mantle") & (data["terrain"] != "opc")
+            data_filtered_comp = data[filter_mask]
 
             
             pts = get_points_with_y_in(data, 15.e3, 2.e3, ymax = 900.e3)
@@ -96,6 +116,19 @@ def main():
 
           
             plt.tripcolor(triang, data["logvisc"], shading='gouraud', vmin=18, vmax=24)
+            vel_plot_thresh = 0.0001  # don't plot velocity vectors smaller than this (cm/yr)
+            step = 500  # plot every 100th vector to reduce the number of vectors plotted
+            # Filter out small velocity vectors and downsample data for plotting
+            mask = (100. * np.sqrt(data["velocity:0"]**2 + data["velocity:1"]**2)) >= vel_plot_thresh
+            mask = mask.reindex(data_filtered_comp.index, fill_value=False)
+            data_filtered = data_filtered_comp[mask].iloc[::step]
+
+            vel_vects = plt.quiver(data_filtered["Points:0"].to_numpy() / 1.e3, 
+                                     (ymax_plot - data_filtered["Points:1"].to_numpy()) / 1.e3, 
+                                     data_filtered["velocity:0"].to_numpy() * 100, 
+                                     data_filtered["velocity:1"].to_numpy() * 100, 
+                                     scale=50, color='black', width=0.0015)
+            plt.quiverkey(vel_vects, 0.15, 0.1, 1, '1 cm/yr', labelpos='W', fontproperties={'size': '7'}, color='white', labelcolor='white')
             # plt.scatter(row["x"].to_numpy()/1.e3, (ymax_plot - row["depth"].to_numpy())/1.e3, color='red', marker='x', zorder = 1)
             plt.colorbar(orientation='horizontal', label='Log(Viscosity) [Pa s]')
             plt.ylim([(ymax_plot-ymin_plot)/1.e3,-5])
