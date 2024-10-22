@@ -11,6 +11,12 @@
        "10% velocity",
        "0% velocity"
     ],
+    "vel_percentages":[
+        100,
+        50,
+        10,
+        0
+    ],
     "viscosity":[
         "kinematic_mu0.13_basalt7.5km_sed1km_upto35Myr_SR1.8e-12",
         "kinematic_mu0.13_basalt7.5km_sed1km_upto35Myr",

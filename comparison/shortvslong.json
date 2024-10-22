@@ -1,0 +1,16 @@
+{
+    "models":[
+        "kinematic_mu0.13_basalt7.5km_sed1km_upto35Myr",
+        "kinematic_mu0.13_basalt7.5km_sed1km_cttV",
+        "kinematic_mu0.13_basalt7.5km_sed1km_Vto50pc",
+        "kinematic_mu0.13_basalt7.5km_sed1km_Vto10pc",
+        "kinematic_mu0.13_basalt7.5km_sed1km_Vto0"
+    ],
+    "models_names":[
+        "Dynamic slowdown",
+       "Constant Velocity",
+       "50% velocity",
+       "10% velocity",
+       "0% velocity"
+    ]
+}

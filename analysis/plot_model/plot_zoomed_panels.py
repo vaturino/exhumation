@@ -149,17 +149,17 @@ def main():
             p3 = a1[2].tripcolor(triang, data["logvisc"], shading='gouraud', vmin=18, vmax=24)
             vel_plot_thresh = 0.0001  # don't plot velocity vectors smaller than this (cm/yr)
             step = 500  # plot every 100th vector to reduce the number of vectors plotted
-            # Filter out small velocity vectors and downsample data for plotting
-            mask = (100. * np.sqrt(data["velocity:0"]**2 + data["velocity:1"]**2)) >= vel_plot_thresh
-            mask = mask.reindex(data_filtered_comp.index, fill_value=False)
-            data_filtered = data_filtered_comp[mask].iloc[::step]
+            # # Filter out small velocity vectors and downsample data for plotting
+            # mask = (100. * np.sqrt(data["velocity:0"]**2 + data["velocity:1"]**2)) >= vel_plot_thresh
+            # mask = mask.reindex(data_filtered_comp.index, fill_value=False)
+            # data_filtered = data_filtered_comp[mask].iloc[::step]
 
-            vel_vects = a1[2].quiver(data_filtered["Points:0"].to_numpy() / 1.e3, 
-                                     (ymax_plot - data_filtered["Points:1"].to_numpy()) / 1.e3, 
-                                     data_filtered["velocity:0"].to_numpy() * 100, 
-                                     data_filtered["velocity:1"].to_numpy() * 100, 
-                                     scale=50, color='black', width=0.0015)
-            a1[2].quiverkey(vel_vects, 0.15, 0.1, 1, '1 cm/yr', labelpos='W', fontproperties={'size': '7'}, color='white', labelcolor='white')
+            # vel_vects = a1[2].quiver(data_filtered["Points:0"].to_numpy() / 1.e3, 
+            #                          (ymax_plot - data_filtered["Points:1"].to_numpy()) / 1.e3, 
+            #                          data_filtered["velocity:0"].to_numpy() * 100, 
+            #                          data_filtered["velocity:1"].to_numpy() * 100, 
+            #                          scale=50, color='black', width=0.0015)
+            # a1[2].quiverkey(vel_vects, 0.15, 0.1, 1, '1 cm/yr', labelpos='W', fontproperties={'size': '7'}, color='white', labelcolor='white')
             a1[2].spines[['top']].set_visible(False)
             plt.colorbar(p3, orientation='horizontal', label='Log(Viscosity) [Pa s]', ax=a1[2])
             a1[2].set_ylim([(ymax_plot - ymin_plot) / 1.e3, -5])

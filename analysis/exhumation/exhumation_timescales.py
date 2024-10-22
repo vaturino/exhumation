@@ -45,6 +45,13 @@ def main():
     rocks = pd.read_excel(f"{rocks_loc}rocks_agard2018.xlsx")
     rocks = rocks[rocks["AREA"] != "Metamorphic Soles"]
 
+    colors_tin = {
+        "sed": "midnightblue",
+        "oc": "saddlebrown",
+        "ecl": "darkgreen",
+        "serp": "maroon"
+    }
+
     # Read the json file
     with open(f"{json_loc}{args.json_file}") as json_file:
             configs = json.load(json_file)
@@ -75,21 +82,22 @@ def main():
     print("Total number of particles = ", npa)
 
     init = pd.read_csv(f"{txt_loc}/exhumed_particles.txt", sep="\s+")
-    exh = pd.DataFrame(columns=["id", "maxP", "maxT", "lithology", "tin", "tmax", "tfin", "burial", "exhum", "maxdepth", "exdepth", "vbur", "vexh"], index=range(len(init)))
+    exh = pd.DataFrame(columns=["id", "maxP", "maxT", "lithology", "tin", "tmax", "tfin", "burial", "exhum", "maxdepth", "exdepth", "vbur", "vexh", "Pin", "Pexh"], index=range(len(init)))
 
+    ymax = 900.
 
     for p in tqdm(range(len(init))):
     # for p in range(10):
         id = init["id"].iloc[p]
         part = pd.read_csv(f"{pt_files}/pt_part_{id}.txt", sep="\s+")
-        part["Plith"] = (part["depth"].max()- part["depth"])*1e3*9.81*3300/1e9
+        part["Plith"] = (ymax- part["depth"])*1e3*9.81*3300/1e9
 
         exh["id"].iloc[p] = id
         exh["maxP"].iloc[p] = init["maxPP"].iloc[p]
         exh["maxT"].iloc[p] = init["maxPT"].iloc[p]
         exh["lithology"].iloc[p] = init["lithology"].iloc[p]
         exh["tmax"].iloc[p] = init["tmax"].iloc[p]
-        exh["maxdepth"].iloc[p] = (part["depth"].max() - part["depth"].min())
+        exh["maxdepth"].iloc[p] = (ymax - part["depth"].min())
         exh["exdepth"].iloc[p] = 0.2*exh["maxdepth"].iloc[p]
 
         # print(part.depth.min())
@@ -102,6 +110,7 @@ def main():
         for i in range(len(part)):
             if (part.depth.iloc[0] - part.depth.iloc[i]) >= 2.:
                 exh["tin"].iloc[p] = part["time"].iat[i]/2.
+                exh["Pin"].iloc[p] = part["Plith"].iat[i]
                 idx = i
                 break
         for i in range(len(part)): 
@@ -109,6 +118,7 @@ def main():
             if i > idxmin:
                 if part.depth.iat[i] - part.depth.min() >= exh["exdepth"].iloc[p]:
                     exh["tfin"].iloc[p] = part["time"].iat[i]/2.
+                    exh["Pexh"].iloc[p] = part["Plith"].iat[i]
                     ide = i
                     break
 
@@ -129,7 +139,7 @@ def main():
             
     exh.to_csv(f"{txt_loc}/timing_exhumed_particles.txt", sep=" ", index=False)  
 
-    sns.set_palette("colorblind")
+    
 
     f1, a1 = plt.subplots(2, 2, figsize=(10, 10))      
     sns.scatterplot(data=exh, 
@@ -137,7 +147,7 @@ def main():
                     y="maxP", 
                     hue="lithology", 
                     hue_order=exh["lithology"].value_counts(ascending=True).index, 
-                    size = "vexh",ax=a1[0,0], 
+                    ax=a1[0,0], 
                     alpha=1,
                     zorder = 10 
                     )

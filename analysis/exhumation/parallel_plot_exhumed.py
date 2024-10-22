@@ -49,7 +49,7 @@ def process_particle(p, pt_files, line_colors, compositions, composition_mapping
 
     result = {
         "p": p,
-        "subducted": pt_single["P"].max() > 3.0,
+        "subducted": pt_single["P"].max() > 3.,
         "exhumed": exhumed, 
         "stagnant": stagnant,
         "pt_single": pt_single,

@@ -56,6 +56,13 @@ def main():
     rocks = pd.read_excel(f"{rocks_loc}rocks_agard2018.xlsx")
     rocks = rocks[rocks["AREA"] != "Metamorphic Soles"]
 
+    colors_tin = {
+        "sed": "midnightblue",
+        "oc": "saddlebrown",
+        "ecl": "darkgreen",
+        "serp": "maroon"
+    }
+
     # Read the json file
     with open(f"{json_loc}{args.json_file}") as json_file:
             configs = json.load(json_file)
@@ -88,15 +95,18 @@ def main():
     subd = pd.read_csv(f"{txt_loc}/subducted_particles.txt", sep="\s+")
     subd = subd.dropna()
 
-    stag = pd.DataFrame(columns=["id", "maxP", "maxT", "lithology", "tin", "tmax", "tfin", "burial", "stag", "maxdepth", "stagdepth", "vbur", "vstag"], index=range(len(init)))
+    stag = pd.DataFrame(columns=["id", "maxP", "maxT", "lithology", "tin", "tmax", "tfin", "burial", "stag", "maxdepth", "stagdepth", "vbur", "vstag", "Pin", "Pstag"], index=range(len(init)))
 
     print("Number of stagnant particles = ", len(init)) 
+
+    ymax = 900.
     
     for p in tqdm(range(len(init))):
     # for p in range(10):
         id = init["id"].iloc[p]
         part = pd.read_csv(f"{pt_files}/pt_part_{id}.txt", sep="\s+")
-        part["Plith"] = (part["depth"].max()- part["depth"])*1e3*9.81*3300/1e9
+        # part["Plith"] = (part["depth"].max()- part["depth"])*1e3*9.81*3300/1e9
+        part["Plith"] = (ymax- part["depth"])*1e3*9.81*3100/1e9
         # print(part["Plith"])
 
         stag["id"].iloc[p] = id
@@ -104,7 +114,8 @@ def main():
         stag["maxT"].iloc[p] = init["maxPT"].iloc[p]
         stag["lithology"].iloc[p] = init["lithology"].iloc[p]
         stag["tmax"].iloc[p] = init["tmax"].iloc[p]
-        stag["maxdepth"] = part["depth"].max() - part["depth"].min()
+        # stag["maxdepth"] = part["depth"].max() - part["depth"].min()
+        stag["maxdepth"].iloc[p] = (ymax - part["depth"].min())
         stag["stagdepth"] = 0.2*stag["maxdepth"]
 
         idx = 0
@@ -113,14 +124,17 @@ def main():
         finidx = find_first_stable_gradient_threshold(part["depth"], stag["tmax"].iloc[p], threshold=0.1)
         if finidx is not None:
             stag["tfin"].iloc[p] = part["time"].iat[finidx]/2.
+            stag["Pstag"].iloc[p] = part["Plith"].iat[finidx]
             ide = finidx
         else:
-            stag["tfin"].iloc[p] = part["time"].iat[-1]/2.
+            stag["tfin"].iloc[p] = part["time"].iat[-2]/2.
+            stag["Pstag"].iloc[p] = part["Plith"].iat[-2]
             ide = len(part)
 
         for i in range(len(part)):
             if (part.depth.iloc[0] - part.depth.iloc[i]) >= 2.:
                 stag["tin"].iloc[p] = part["time"].iat[i]/2.
+                stag["Pin"].iloc[p] = part["Plith"].iat[i]
                 idx = i
                 break
 
@@ -167,8 +181,7 @@ def main():
                     x="maxT", 
                     y="maxP", 
                     hue="lithology", 
-                    hue_order=stag["lithology"].value_counts(ascending=True).index, 
-                    size = "vstag", 
+                    hue_order=stag["lithology"].value_counts(ascending=True).index,  
                     ax=a1[0,0], 
                     zorder = 10,
                     alpha=1)
