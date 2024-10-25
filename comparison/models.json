@@ -1,4 +1,5 @@
 {
+"velocity_label": "Steady state velocity percentage",
    "velocity":[
        "kinematic_mu0.13_basalt7.5km_sed1km_cttV",
         "kinematic_mu0.13_basalt7.5km_sed1km_Vto50pc",
@@ -6,48 +7,64 @@
         "kinematic_mu0.13_basalt7.5km_sed1km_Vto0"
     ],
     "velocity_names":[
-       "Constant Velocity",
-       "50% velocity",
-       "10% velocity",
-       "0% velocity"
+       "100% ",
+       "50% ",
+       "10% ",
+       "0% "
     ],
-    "vel_percentages":[
+    "velocity_values":[
         100,
         50,
         10,
         0
     ],
+    "viscosity_label": "Interface strength",
     "viscosity":[
-        "kinematic_mu0.13_basalt7.5km_sed1km_upto35Myr_SR1.8e-12",
-        "kinematic_mu0.13_basalt7.5km_sed1km_upto35Myr",
-        "kinematic_mu0.13_basalt7.5km_sed1km_upto35Myr_SR4.5e-13"
+        "kinematic_mu0.13_basalt7.5km_sed1km_cttV",
+        "kinematic_mu0.13_basalt7.5km_sed1km_SR1.8e-12_cttV",
+        "kinematic_mu0.13_basalt7.5km_sed1km_SR4.5e-13_cttV"
     ],
     "viscosity_names":[
-        "Weaker interface",
         "Reference",
-        "Stronger interface"
+        "Weaker",
+        "Stronger"
     ],
+    "viscosity_values":[
+        1.3e-12,
+        1.8e-12,
+        4.5e-13
+    ],
+    "friction_label": "Friction coefficient",
     "friction":[
-        "kinematic_mu0.05_basalt7.5km_sed1km_upto35Myr",
-        "kinematic_mu0.13_basalt7.5km_sed1km_upto35Myr",
-        "kinematic_mu0.2_basalt7.5km_sed1km_upto35Myr",
-        "kinematic_basalt7.5kmMu0.13_sed1kmMu0.025_upto35Myr"
-    ],
+        "kinematic_mu0.13_basalt7.5km_sed1km_cttV",
+        "kinematic_mu0.05_basalt7.5km_sed1km_cttV",
+        "kinematic_mu0.2_basalt7.5km_sed1km_cttV"
+        ],
     "friction_names":[
-        "Lower friction coefficient",
-        "Reference",
-        "Higher friction coefficient",
-        "Mixed friction"
+        "0.13",
+        "0.05",
+        "0.2"
     ],
+    "friction_values":[
+        0.13,
+        0.05,
+        0.2
+    ],
+    "serpentinization_label": "Serpentinization",
     "serpentinization":[
-        "kinematic_mu0.13_basalt7.5km_sed1km_upto35Myr",
-        "kinematic_mu0.13_basalt7.5km_sed1km_serp1km_upto35Myr",
-        "kinematic_mu0.13_basalt7.5km_sed1km_serp_patch_upto35Myr"
+        "kinematic_mu0.13_basalt7.5km_sed1km_serp1km_cttV",
+        "kinematic_mu0.13_basalt7.5km_sed1km_serp_patch_cttV",
+        "kinematic_mu0.13_basalt7.5km_sed1km_cttV"
     ],
     "serpentinization_names":[
-        "Reference",
-        "1km uniform serpentinite",
-        "Serpentinite patches"
+        "1km uniform",
+        "Patches",
+        "Absent"
+    ],
+    "serpentinization_values":[
+        0,
+        1,
+        2
     ]
    
  }

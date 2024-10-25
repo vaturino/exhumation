@@ -95,16 +95,13 @@ def main():
             # Collect unique lithologies across all models
             lithologies_exhumed_all = sorted(set().union(*lithologies_exhumed))
             lithologies_stagnant_all = sorted(set().union(*lithologies_stagnant))
+        
 
-            # Create a color palette for lithologies
-            colors_exhumed = sns.color_palette("colorblind", len(lithologies_exhumed_all))
-            colors_stagnant = sns.color_palette("colorblind", len(lithologies_stagnant_all))
-            lithology_colors_exhumed = dict(zip(lithologies_exhumed_all, colors_exhumed))  # Map lithologies to their colors
-            lithology_colors_stagnant = dict(zip(lithologies_stagnant_all, colors_stagnant))  # Map lithologies to their colors
-
+          
             # Set up the plot
             fig, ax = plt.subplots(1, 3, figsize=(15, 5))
             fig.suptitle(f"Test: {test}")
+            xlabel = models[test + "_label"]
 
             # Bar plot for percentage of exhumed and stagnant particles by model
             x = np.arange(len(model_names))  # X-axis locations for the models
@@ -115,9 +112,6 @@ def main():
            # Prepare for scatter plot for weighted average peak P conditions (ax[0])
             yerr_exhumed = []
             yerr_stagnant = []
-
-            # Ensure x is same length as the averages for exhumed and stagnant
-            x_weighted = np.arange(len(weighted_avg_maxPP_exhumed))
 
             # Calculate error bars (min and max) for each weighted average
             for ind_m, m in enumerate(models[test]):
@@ -133,14 +127,20 @@ def main():
                 max_maxPP_stagnant = np.max(stagnant['maxPP'])
                 yerr_stagnant.append([weighted_avg_maxPP_stagnant[ind_m] - min_maxPP_stagnant, max_maxPP_stagnant - weighted_avg_maxPP_stagnant[ind_m]])
 
-            vel_percentages = models["vel_percentages"]
-            if len(vel_percentages) != len(model_names):
-                raise ValueError("The number of velocity percentages does not match the number of models")
+            test_values = models[f"{test}_values"]
+            if len(test_values) != len(model_names):
+                raise ValueError("The number of test values does not match the number of models")
             
-            x= np.array(vel_percentages)
+
+
+            # Update the x-axis values with the sorted test_values
+            x = np.array(test_values)
+
+            # Offset calculation for the plot
+            offset = (max(test_values) - min(test_values)) / 50
 
             # Define offsets for the points
-            offset = 2 # Adjust this value as needed
+            offset = (max(test_values) - min(test_values))/50 # Adjust this value as needed
 
             # Plot weighted averages with error bars
             ax[0].errorbar(x - offset, weighted_avg_maxPP_exhumed, 
@@ -156,9 +156,8 @@ def main():
             # Configure ax[0]
             ax[0].set_xticks(x)
             ax[0].invert_xaxis()
-            # ax[0].set_xticks(x_weighted)
-            ax[0].set_xticklabels(x, ha="center")
-            ax[0].set_xlabel("Steady state velocity percentage (%)")
+            ax[0].set_xticklabels(model_names, ha="center")
+            ax[0].set_xlabel(xlabel)
             ax[0].set_ylabel("Weighted Average Peak P")
             ax[0].set_title("Weighted Average Peak P Conditions")
             ax[0].legend()
@@ -205,17 +204,16 @@ def main():
                         max_maxPP_by_lithology[lithology].append(np.nan)
 
             # Prepare data for plotting
-            offset_lith = 2  # Adjust this value as needed
             for j, lithology in enumerate(lithologies_exhumed_all):
                 yerr = [np.array(weighted_avg_maxPP_by_lithology[lithology]) - np.array(min_maxPP_by_lithology[lithology]), 
                         np.array(max_maxPP_by_lithology[lithology]) - np.array(weighted_avg_maxPP_by_lithology[lithology])]
-                ax[1].errorbar(x + j * offset_lith, weighted_avg_maxPP_by_lithology[lithology], 
+                ax[1].errorbar(x + j * offset, weighted_avg_maxPP_by_lithology[lithology], 
                             yerr=yerr, fmt='o', label=lithology, capsize=5, c=colors_tmax[lithology])
-                ax[1].plot(x + j * offset_lith, weighted_avg_maxPP_by_lithology[lithology], '--o', color=colors_tmax[lithology], linewidth=1)
+                ax[1].plot(x + j * offset, weighted_avg_maxPP_by_lithology[lithology], '--o', color=colors_tmax[lithology], linewidth=1)
             ax[1].set_xticks(x)
             ax[1].invert_xaxis()
-            ax[1].set_xticklabels(x, ha="center")
-            ax[1].set_xlabel("Steady state velocity percentage (%)")
+            ax[1].set_xticklabels(model_names, ha="center")
+            ax[1].set_xlabel(xlabel)
             ax[1].set_ylabel("Weighted Average MaxPP")
             ax[1].set_title("Weighted Average MaxPP by Lithology")
             ax[1].legend(title="Lithology")
@@ -263,13 +261,13 @@ def main():
             for j, lithology in enumerate(lithologies_stagnant_all):
                 yerr = [np.array(weighted_avg_maxPP_by_lithology_stagnant[lithology]) - np.array(min_maxPP_by_lithology_stagnant[lithology]), 
             np.array(max_maxPP_by_lithology_stagnant[lithology]) - np.array(weighted_avg_maxPP_by_lithology_stagnant[lithology])]
-                ax[2].errorbar(x + j * offset_lith, weighted_avg_maxPP_by_lithology_stagnant[lithology], 
+                ax[2].errorbar(x + j * offset, weighted_avg_maxPP_by_lithology_stagnant[lithology], 
                             yerr=yerr, fmt='o', label=lithology, capsize=5, c=colors_tmax[lithology])  
-                ax[2].plot(x + j * offset_lith, weighted_avg_maxPP_by_lithology_stagnant[lithology], '--o', color=colors_tmax[lithology], linewidth=1)
+                ax[2].plot(x + j * offset, weighted_avg_maxPP_by_lithology_stagnant[lithology], '--o', color=colors_tmax[lithology], linewidth=1)
             ax[2].set_xticks(x)
             ax[2].invert_xaxis()
-            ax[2].set_xticklabels(x, ha="center")
-            ax[2].set_xlabel("Steady state velocity percentage (%)")
+            ax[2].set_xticklabels(model_names, ha="center")
+            ax[2].set_xlabel(xlabel)
             ax[2].set_ylabel("Weighted Average MaxPP")
             ax[2].set_title("Weighted Average MaxPP by Lithology")
             ax[2].legend(title="Lithology")
@@ -287,7 +285,7 @@ def main():
             # Plotting the figure
             plt.tight_layout()
             plt.subplots_adjust(top=0.88)  # Adjust for the main title
-            plt.savefig(f"{test}/{test}_peak_P.png")
+            plt.savefig(f"plots/{test}/{test}_peak_P.png")
             plt.close()
 
 if __name__ == "__main__":

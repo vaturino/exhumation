@@ -58,22 +58,22 @@ def main():
     }
 
     # Categorize 'vbur' and 'vexh' into 3 groups and capture bin edges
-    exhumed_list["vbur_category"], e_bin_edges_bur = pd.qcut(exhumed_list["vbur"], q=3, labels=["low", "mid", "high"], retbins=True)
-    e_bin_edges_bur = np.round(e_bin_edges_bur, 2)
+    # exhumed_list["vbur_category"], e_bin_edges_bur = pd.qcut(exhumed_list["vbur"], q=3, labels=["low", "mid", "high"], retbins=True)
+    # e_bin_edges_bur = np.round(e_bin_edges_bur, 2)
 
-    exhumed_list["vexh_category"], e_bin_edges_exh = pd.qcut(exhumed_list['vexh'], q=3, labels=["low", "mid", "high"], retbins=True)
-    e_bin_edges_exh = np.round(e_bin_edges_exh, 2)
+    # exhumed_list["vexh_category"], e_bin_edges_exh = pd.qcut(exhumed_list['vexh'], q=3, labels=["low", "mid", "high"], retbins=True)
+    # e_bin_edges_exh = np.round(e_bin_edges_exh, 2)
 
-    stagnant_list["vbur_category"], s_bin_edges_bur = pd.qcut(stagnant_list["vbur"], q=3, labels=["low", "mid", "high"], retbins=True)
-    s_bin_edges_bur = np.round(s_bin_edges_bur, 2)
+    # stagnant_list["vbur_category"], s_bin_edges_bur = pd.qcut(stagnant_list["vbur"], q=3, labels=["low", "mid", "high"], retbins=True)
+    # s_bin_edges_bur = np.round(s_bin_edges_bur, 2)
 
-    stagnant_list["vstag_category"], s_bin_edges_stag = pd.qcut(stagnant_list['vstag'], q=3, labels=["low", "mid", "high"], retbins=True)
-    s_bin_edges_stag = np.round(s_bin_edges_stag, 2)
+    # stagnant_list["vstag_category"], s_bin_edges_stag = pd.qcut(stagnant_list['vstag'], q=3, labels=["low", "mid", "high"], retbins=True)
+    # s_bin_edges_stag = np.round(s_bin_edges_stag, 2)
 
 
-    # Define marker sizes for each category
-    sizes = {"low": 20, "mid": 50, "high": 80}  # Adjust sizes for clarity
-    markers = {"low": "s", "mid": "X", "high": "d"}
+    # # Define marker sizes for each category
+    # sizes = {"low": 20, "mid": 50, "high": 80}  # Adjust sizes for clarity
+    # markers = {"low": "s", "mid": "X", "high": "d"}
 
     # Create the plot
     fig, ax = plt.subplots(2, 1, figsize=(15, 10))
@@ -96,7 +96,7 @@ def main():
     ax[0].set_xlabel("Time (Ma)")
     ax[0].set_ylabel("Pressure (GPa)")
     ax[0].set_title("Exhumed particles")
-    ax[0].set_ylim(0, 2)
+    ax[0].set_ylim(0, stagnant_list["maxP"].max()+0.2)
 
     # Create a custom legend for marker sizes
     handles, labels = ax[0].get_legend_handles_labels()
@@ -144,7 +144,7 @@ def main():
     ax[1].set_xlabel("Time (Ma)")
     ax[1].set_ylabel("Pressure (GPa)")
     ax[1].set_title("Stagnant particles")
-    ax[1].set_ylim(0, 2)
+    ax[1].set_ylim(0, stagnant_list["maxP"].max()+0.2)   
     ax[1].legend(loc='upper center')
 
     # Create a custom legend for marker sizes
