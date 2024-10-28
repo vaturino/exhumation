@@ -38,23 +38,23 @@ def main():
      # Define color palettes
     colors_tin = {
         "sed": "midnightblue",
-        "oc": "saddlebrown",
-        "ecl": "darkgreen",
-        "serp": "maroon"
+        "oc": "#733A11",
+        "ecl": "#003300",
+        "serp": "#3b0000"
     }
 
     colors_tmax = {
         "sed": "mediumblue",
-        "oc": "darkorange",
-        "ecl": "forestgreen",
-        "serp": "firebrick"
+        "oc": "#B06D1A",
+        "ecl": "#45701C",
+        "serp": "brown"
     }
 
     colors_tfin = {
         "sed": "cornflowerblue",
-        "oc": "goldenrod",
-        "ecl": "olivedrab",
-        "serp": "indianred"
+        "oc": "#E3B64F",
+        "ecl": "#A0C93D",
+        "serp": "lightsalmon"
     }
 
     # Categorize 'vbur' and 'vexh' into 3 groups and capture bin edges
@@ -178,9 +178,11 @@ def main():
     
     # ax[1].legend(handles=new_handles, labels=new_labels, title="Lithology and velocities", loc=(0.5, 0.37))
 
-    
-
-    plt.savefig(f"{plot_loc}/pressure_time.png", dpi=500)
+    format = ['png', 'eps']
+    for f in format:
+        plt.savefig(f"{plot_loc}/pressure_time.{f}", dpi=500)
+    # plt.savefig(f"{plot_loc}/pressure_time.{format}", dpi=500)
+    plt.close()
 
 if __name__ == "__main__":
     main()

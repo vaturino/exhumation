@@ -56,11 +56,25 @@ def main():
     rocks = pd.read_excel(f"{rocks_loc}rocks_agard2018.xlsx")
     rocks = rocks[rocks["AREA"] != "Metamorphic Soles"]
 
+    colors_tin = {
+        "sed": "midnightblue",
+        "oc": "#733A11",
+        "ecl": "#003300",
+        "serp": "#3b0000"
+    }
+
+    colors_tmax = {
+        "sed": "mediumblue",
+        "oc": "#B06D1A",
+        "ecl": "#45701C",
+        "serp": "brown"
+    }
+
     colors_tfin = {
         "sed": "cornflowerblue",
-        "oc": "goldenrod",
-        "ecl": "olivedrab",
-        "serp": "indianred"
+        "oc": "#E3B64F",
+        "ecl": "#A0C93D",
+        "serp": "lightsalmon"
     }
 
     # Read the json file
@@ -156,9 +170,9 @@ def main():
     a1[0,2].set_ylim(0, 3.5)
     a1[0,2].set_xlim(0, 900)
     # Bring the line to the front
-    for artist in a1[0,2].get_children():
-        if isinstance(artist, plt.Line2D):  # Ensure only lines are affected
-            artist.set_zorder(0)  # Move histogram lines behind
+    # for artist in a1[0,2].get_children():
+    #     if isinstance(artist, plt.Line2D):  # Ensure only lines are affected
+    #         artist.set_zorder(0)  # Move histogram lines behind
     
     
     # Pie chart with lithology distribution for exhumed particles

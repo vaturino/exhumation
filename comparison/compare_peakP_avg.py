@@ -22,11 +22,25 @@ def main():
     tests = ["velocity", "viscosity", "friction", "serpentinization"]
     names = ["velocity_names", "viscosity_names", "friction_names", "serpentinization_names"]
 
+    colors_tin = {
+        "sed": "midnightblue",
+        "oc": "#733A11",
+        "ecl": "#003300",
+        "serp": "#3b0000"
+    }
+
     colors_tmax = {
         "sed": "mediumblue",
-        "oc": "chocolate",
-        "ecl": "forestgreen",
-        "serp": "firebrick"
+        "oc": "#B06D1A",
+        "ecl": "#45701C",
+        "serp": "brown"
+    }
+
+    colors_tfin = {
+        "sed": "cornflowerblue",
+        "oc": "#E3B64F",
+        "ecl": "#A0C93D",
+        "serp": "lightsalmon"
     }
 
     for test in tests:

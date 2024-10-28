@@ -8,9 +8,16 @@
     ],
     "models_names":[
         "Dynamic slowdown",
-       "Constant Velocity",
-       "50% velocity",
-       "10% velocity",
-       "0% velocity"
+       "100%",
+       "50%",
+       "10%",
+       "0% "
+    ],
+    "velocity_values":[
+        1000,
+        100,
+        50,
+        10,
+        0
     ]
 }

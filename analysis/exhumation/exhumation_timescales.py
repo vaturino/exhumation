@@ -47,9 +47,23 @@ def main():
 
     colors_tin = {
         "sed": "midnightblue",
-        "oc": "saddlebrown",
-        "ecl": "darkgreen",
-        "serp": "maroon"
+        "oc": "#733A11",
+        "ecl": "#003300",
+        "serp": "#3b0000"
+    }
+
+    colors_tmax = {
+        "sed": "mediumblue",
+        "oc": "#B06D1A",
+        "ecl": "#45701C",
+        "serp": "brown"
+    }
+
+    colors_tfin = {
+        "sed": "cornflowerblue",
+        "oc": "#E3B64F",
+        "ecl": "#A0C93D",
+        "serp": "lightsalmon"
     }
 
     # Read the json file

@@ -131,7 +131,10 @@ def main():
 
 
     plt.tight_layout()
-    plt.savefig(f"{plot_loc}/timeline_exhumed_stagnant_particles.png", dpi = 500)
+    format = ['png', 'eps']
+    for f in format:
+        plt.savefig(f"{plot_loc}/timing_exhumed_stagnant_particles.{f}", dpi = 500)
+    # plt.savefig(f"{plot_loc}/timeline_exhumed_stagnant_particles.png", dpi = 500)
     plt.close()
 
 if __name__ == "__main__":

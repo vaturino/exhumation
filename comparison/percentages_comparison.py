@@ -18,9 +18,23 @@ def main():
 
     colors_tin = {
         "sed": "midnightblue",
-        "oc": "saddlebrown",
-        "ecl": "darkgreen",
-        "serp": "maroon"
+        "oc": "#733A11",
+        "ecl": "#003300",
+        "serp": "#3b0000"
+    }
+
+    colors_tmax = {
+        "sed": "mediumblue",
+        "oc": "#B06D1A",
+        "ecl": "#45701C",
+        "serp": "brown"
+    }
+
+    colors_tfin = {
+        "sed": "cornflowerblue",
+        "oc": "#E3B64F",
+        "ecl": "#A0C93D",
+        "serp": "lightsalmon"
     }
 
     # Load json file
@@ -122,10 +136,16 @@ def main():
             for lith in lithologies_stagnant[0]:
                 combined_data_stagnant[lith + suffix] = (combined_data_stagnant[lith] - combined_data_stagnant[lith].iloc[0]) / combined_data_stagnant[lith].iloc[0] * 100
             
-            # print(test)
-            # print(combined_data_stagnant)
-            # print("\n")
-            # print(combined_data_stagnant)
+            # Find the overall maximum value of combined_data_exhumed[lith+suffix] and combined_data_stagnant[lith+suffix]
+            overall_max_value = max(
+                max(combined_data_exhumed[lith + suffix].max() for lith in lithologies_exhumed[0]),
+                max(combined_data_stagnant[lith + suffix].max() for lith in lithologies_stagnant[0])
+            )
+
+            overall_min_value = min(
+                 min(combined_data_exhumed[lith + suffix].min() for lith in lithologies_exhumed[0]),
+                 min(combined_data_stagnant[lith + suffix].min() for lith in lithologies_stagnant[0])
+            )
             
 
             # Plot the results
@@ -185,6 +205,7 @@ def main():
             a1[1,0].set_xticklabels(model_names)
             a1[1,0].set_title(f"Percentage of exhumed particles with respect to {model_names[0]} model", fontsize=12)
             a1[1,0].legend(lithologies_exhumed[0], fontsize=12)
+            a1[1,0].set_ylim(overall_min_value - 5, overall_max_value +5)
 
             #plot the stagnant particles with respect to reference by lithology
             for i, lith in enumerate(lithologies_stagnant[0]):
@@ -198,6 +219,7 @@ def main():
             a1[1,1].set_xticklabels(model_names)
             a1[1,1].set_title(f"Percentage of recovered particles with respect to {model_names[0]} model", fontsize=12)
             a1[1,1].legend(lithologies_stagnant[0], fontsize=12)
+            a1[1,1].set_ylim(overall_min_value - 5, overall_max_value +5)
 
 
             # Overall title

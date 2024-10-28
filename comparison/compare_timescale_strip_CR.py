@@ -25,23 +25,23 @@ def main():
      # Define color palettes
     colors_tin = {
         "sed": "midnightblue",
-        "oc": "saddlebrown",
-        "ecl": "darkgreen",
-        "serp": "maroon"
+        "oc": "#733A11",
+        "ecl": "#003300",
+        "serp": "#3b0000"
     }
 
     colors_tmax = {
         "sed": "mediumblue",
-        "oc": "darkorange",
-        "ecl": "forestgreen",
-        "serp": "firebrick"
+        "oc": "#B06D1A",
+        "ecl": "#45701C",
+        "serp": "brown"
     }
 
     colors_tfin = {
         "sed": "cornflowerblue",
-        "oc": "goldenrod",
-        "ecl": "olivedrab",
-        "serp": "indianred"
+        "oc": "#E3B64F",
+        "ecl": "#A0C93D",
+        "serp": "lightsalmon"
     }
 
 
@@ -49,11 +49,9 @@ def main():
     output_dir = "combined/timing/strip_plots"
     os.makedirs(output_dir, exist_ok=True)
 
-    k = 0.1
-
     # Loop through each test to create a grid plot
     for idx, test in enumerate(tests):
-        fig, ax = plt.subplots(1, 2, figsize=(17, 8))
+        fig, ax = plt.subplots(1, 2, figsize=(20, 8), gridspec_kw={'width_ratios': [1, 1.8]})
 
         if test in models:
             model_names = models[names[tests.index(test)]]
@@ -76,60 +74,70 @@ def main():
             combined_data_stagnant = pd.concat(all_data_stagnant)
 
             alpha = 0.2
-            size = 6
-            marker = 's'
+            size = 15
+            marker = '$\u25AC$'
+            jitter = False
+            lw = 0
 
         
             sns.stripplot(data=combined_data_exhumed, 
                           x='model', y='tin', 
                           hue = "lithology", palette = colors_tin, 
                           ax=ax[0], 
-                          dodge=True, jitter=True, 
+                          dodge=True, jitter=jitter, 
                           alpha=alpha, size=size,
                           legend=False,
-                          marker= marker)
+                          marker= marker,
+                          linewidth=lw)
             sns.stripplot(data=combined_data_exhumed, 
                           x='model', y='tmax', 
                           hue = "lithology", palette = colors_tmax, 
                           ax=ax[0], 
-                          dodge=True, jitter=True, 
+                          dodge=True, jitter=jitter, 
                           alpha=alpha, size=size, 
                           legend=False,
-                          marker= marker)
+                          marker= marker,
+                          linewidth=lw)
             sns.stripplot(data=combined_data_exhumed, 
                           x='model', y='tfin', 
                           hue = "lithology", palette = colors_tfin, 
                           ax=ax[0], 
-                          dodge=True, jitter=True, 
+                          dodge=True, jitter=jitter, 
                           alpha=alpha, size=size, 
                           legend=False,
-                          marker= marker)
+                          marker= marker,
+                          linewidth=lw)
+
+            
 
 
             sns.stripplot(data=combined_data_stagnant, 
                           x='model', y='tin', 
                           hue = "lithology", palette = colors_tin, 
                           ax=ax[1], 
-                          dodge=True, jitter=True, 
+                          dodge=True, jitter=jitter, 
                           alpha=alpha, size=size, 
                           legend=False,
-                          marker= marker)
+                          marker= marker,
+                          linewidth=lw)
             sns.stripplot(data=combined_data_stagnant, 
                           x='model', y='tmax', 
                           hue = "lithology", palette = colors_tmax, 
                           ax=ax[1], 
-                          dodge=True, jitter=True, 
+                          dodge=True, jitter=jitter, 
                           alpha=alpha, size=size, 
                           legend=False,
-                          marker= marker)
+                          marker= marker,
+                          linewidth=lw)
             sns.stripplot(data=combined_data_stagnant, 
                           x='model', y='tfin', 
                           hue = "lithology", palette = colors_tfin, 
                           ax=ax[1], 
-                          dodge=True, jitter=True, 
+                          dodge=True, jitter=jitter, 
                           alpha=alpha, size=size, 
                           legend=False,
-                          marker= marker)
+                          marker= marker,
+                          linewidth=lw)
 
             ax[0].axhline(y=35, color='k', linestyle='--', linewidth=2)
             ax[1].axhline(y=35, color='k', linestyle='--', linewidth=2)
@@ -139,7 +147,11 @@ def main():
                 ax[0].axvline(x=i + 0.5, color='grey', linestyle='--', linewidth=1)
                 ax[1].axvline(x=i + 0.5, color='grey', linestyle='--', linewidth=1)
 
-
+            # Calculate the number of unique lithologies
+            num_lithologies = len(combined_data_exhumed['lithology'].unique())
+            
+            # Adjust k proportionally to the number of lithologies
+            k = 0.1 / num_lithologies
             for i, artist in enumerate(ax[0].collections[1:]):  # Skip the first collection (tin)
                 for path in artist.get_paths():
                     path.vertices[:, 0] += (i + 1) * k
@@ -195,7 +207,7 @@ def main():
             
             # Save the plot
             plt.tight_layout()
-            format = ["png", "pdf"]
+            format = ["png", "svg"]
             for form in format:
                 plt.savefig(f"{output_dir}/{form}/timing_combined_{test}.{form}", dpi = 500, format = form)
             # plt.savefig(f"{output_dir}/exhumed_timing_combined_{test}.eps", dpi = 500, format = "eps")

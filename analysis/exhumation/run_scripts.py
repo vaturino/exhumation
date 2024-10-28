@@ -3,10 +3,13 @@
 import subprocess
 
 #List of model names
-model_list = ['sed_bas', 'sed_bas_cttV', 'sed_bas_Vto0', 'sed_bas_Vto10pc', 'sed_bas_Vto50pc', 'sed_bas_halfd', 'sed_bas_doubled', 'sed_bas_mu0.2', 'sed_bas_mu0.05', 'sed_bas_diffFric', 'sed_bas_serp1km', 'sed_bas_serp_patch']
+model_list = ['sed_bas_cttV', 'sed_bas_Vto0', 'sed_bas_Vto10pc', 'sed_bas_Vto50pc', 'sed_bas_halfd', 'sed_bas_doubled', 'sed_bas_mu0.2', 'sed_bas_mu0.05', 'sed_bas_diffFric', 'sed_bas_serp1km', 'sed_bas_serp_patch']
 
 # List of programs to run
-program_list = ['exhumation_timescales.py', 'stagnation_timescales.py', 'time_exh_stag.py']
+# program_list = ['exhumation_timescales.py', 'stagnation_timescales.py', 'time_exh_stag.py', 'pressure_time.py', 'peak_P_comparison.py']
+program_list = ['stagnation_timescales.py', 'peak_P_comparison.py']
+
+
 
 # Loop through each program and call it with the JSON file
 for model in model_list:
