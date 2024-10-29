@@ -26,7 +26,7 @@ from libraries.exhumation import *
 def plot_particle(case, p, elist, slist, pt_files, ymax, eloc, name, location):
     id = eval(case)['id'].iloc[p]
     pt_single = pd.read_csv(f"{pt_files}/pt_part_{id}.txt", sep="\s+")
-    pt_single["Plith"] = (ymax - pt_single["depth"]) * 1e3 * 9.81 * 3300 / 1e9
+    pt_single["Plith"] = (ymax - pt_single["depth"]) * 1e3 * 9.81 * 3100 / 1e9
     eval(case)["tin"] = 0
 
     k = -100
@@ -38,17 +38,18 @@ def plot_particle(case, p, elist, slist, pt_files, ymax, eloc, name, location):
             break
 
     fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-    ax[0].plot(pt_single["T"]-273, pt_single["Plith"], label='Pressure')
+    ax[0].plot(pt_single["T"] + 0.6 * (pt_single["depth"].max() - pt_single["depth"]) - 273, pt_single["Plith"], label='Pressure')
+    # ax[0].plot(pt_single["T"] + 0.6 * (pt_single["depth"].max() - pt_single["depth"]) - 273, pt_single["Plith"].rolling(window=2).mean(), label='Smoothed Pressure', linestyle='--')
     ax[0].scatter(eval(case)['maxPT'].iloc[p], eval(case)['maxPP'].iloc[p], color='red')
     ax[0].annotate(f"tmax = {eval(case)['tmax'].iloc[p]} Myr", (eval(case)['maxPT'].iloc[p], eval(case)['maxPP'].iloc[p]))
-    ax[0].scatter(pt_single["T"].iloc[k]-273, pt_single["Plith"].iloc[k], color='green')
+    ax[0].scatter(pt_single["T"].iloc[k]+ 0.6*(pt_single["depth"].max() - pt_single["depth"].iloc[k])-273, pt_single["Plith"].iloc[k], color='green')
     ax[0].annotate(f"tin = {eval(case)['tin'].iloc[p]} Myr", (pt_single["T"].iloc[k]-273, pt_single["Plith"].iloc[k]))
     ax[0].set_xlabel("Temperature (°C)")
     ax[0].set_ylabel("Pressure (GPa)")
 
-    ax[1].plot(pt_single["x"], ymax - pt_single["depth"], label='Trajectory')
-    ax[1].set_xlabel("x (km)")
-    ax[1].set_ylabel("Depth (km)")
+    ax[1].plot(pt_single["time"], pt_single["Plith"], label='Trajectory')
+    ax[1].set_xlabel("Time (Myr)")
+    ax[1].set_ylabel("Pressure (GPa)")
     ax[1].invert_yaxis()
     plt.suptitle(f"Particle {id} - {name} lithology: {eval(case)['lithology'].iloc[p]}")
     plt.savefig(f"{location}/{name}_particle_{id}.png", dpi=500)
@@ -93,7 +94,7 @@ def main():
     with ProcessPoolExecutor() as executor:
         futures = []
         for case, name, location in zip(cases, names, locations):
-            for p in range(0, len(eval(case)), 10):
+            for p in range(0, len(eval(case)), 100):
                 futures.append(executor.submit(plot_particle, case, p, elist, slist, pt_files, ymax, eloc, name, location))
 
         for future in tqdm(as_completed(futures), total=len(futures)):

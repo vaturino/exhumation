@@ -7,7 +7,7 @@ model_list = ['sed_bas_cttV', 'sed_bas_Vto0', 'sed_bas_Vto10pc', 'sed_bas_Vto50p
 
 # List of programs to run
 # program_list = ['exhumation_timescales.py', 'stagnation_timescales.py', 'time_exh_stag.py', 'pressure_time.py', 'peak_P_comparison.py']
-program_list = ['stagnation_timescales.py', 'peak_P_comparison.py']
+program_list = ['peak_P_comparison.py']
 
 
 

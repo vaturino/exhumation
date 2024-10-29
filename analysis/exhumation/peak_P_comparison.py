@@ -194,7 +194,11 @@ def main():
     
 
     f1.tight_layout()
-    plt.savefig(f"{plot_loc}/percentages.png", dpi = 500)
+    
+    format = ["png", "eps"]
+    for f in format:
+        plt.savefig(f"{plot_loc}/peak_P_comparison.{f}", dpi = 500)
+    # plt.savefig(f"{plot_loc}/percentages.png", dpi = 500)
     plt.close()
          
 
