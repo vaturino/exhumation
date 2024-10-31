@@ -47,7 +47,7 @@ def plot_particle(case, p, elist, slist, pt_files, ymax, eloc, name, location):
     ax[0].set_xlabel("Temperature (°C)")
     ax[0].set_ylabel("Pressure (GPa)")
 
-    ax[1].plot(pt_single["time"], pt_single["Plith"], label='Trajectory')
+    ax[1].plot(pt_single["time"]/2., pt_single["Plith"], label='Trajectory')
     ax[1].set_xlabel("Time (Myr)")
     ax[1].set_ylabel("Pressure (GPa)")
     ax[1].invert_yaxis()
