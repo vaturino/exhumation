@@ -133,7 +133,7 @@ def main():
             plt.xlabel("Time (Myr)")
             plt.ylabel("Pressure (GPa)")
             plt.title(f"Particle {id} - Lithology: {part['lithology'].iloc[p]} - Direction: {data['direction'].iloc[0]}")
-            # plt.ylim(0, 1.8)
+            plt.ylim(0, 2.0)
             plt.savefig(f"{sloc}/stagnant_maxima_{id}.png")
             plt.close()
 

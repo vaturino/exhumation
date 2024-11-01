@@ -73,22 +73,25 @@ def main():
             combined_data_exhumed = pd.concat(all_data_exhumed)
             combined_data_stagnant = pd.concat(all_data_stagnant)
 
-            alpha = 0.2
+            alpha = 0.05
             size = 15
             marker = '$\u25AC$'
             jitter = False
             lw = 0
 
         
-            sns.stripplot(data=combined_data_exhumed, 
-                          x='model', y='tin', 
-                          hue = "lithology", palette = colors_tin, 
-                          ax=ax[0], 
-                          dodge=True, jitter=jitter, 
-                          alpha=alpha, size=size,
-                          legend=False,
-                          marker= marker,
-                          linewidth=lw)
+            # sns.stripplot(data=combined_data_exhumed, 
+            #               x='model', y='tin', 
+            #               hue = "lithology", palette = colors_tin, 
+            #               ax=ax[0], 
+            #               dodge=True, jitter=jitter, 
+            #               alpha=alpha, size=size,
+            #               legend=False,
+            #               marker= marker,
+            #               linewidth=lw)
+            # Plot a grey box for all x and y between 0 and 10
+            rect = mpatches.Rectangle((-0.75, 0), 5, 10, linewidth=1, edgecolor='grey', facecolor='powderblue', alpha=0.3, zorder = 1)
+            ax[0].add_patch(rect)
             sns.stripplot(data=combined_data_exhumed, 
                           x='model', y='tmax', 
                           hue = "lithology", palette = colors_tmax, 
@@ -107,19 +110,22 @@ def main():
                           legend=False,
                           marker= marker,
                           linewidth=lw)
+            ax[0].set_xlim(-0.75, 3.75)
 
             
 
 
-            sns.stripplot(data=combined_data_stagnant, 
-                          x='model', y='tin', 
-                          hue = "lithology", palette = colors_tin, 
-                          ax=ax[1], 
-                          dodge=True, jitter=jitter, 
-                          alpha=alpha, size=size, 
-                          legend=False,
-                          marker= marker,
-                          linewidth=lw)
+            # sns.stripplot(data=combined_data_stagnant, 
+            #               x='model', y='tin', 
+            #               hue = "lithology", palette = colors_tin, 
+            #               ax=ax[1], 
+            #               dodge=True, jitter=jitter, 
+            #               alpha=alpha, size=size, 
+            #               legend=False,
+            #               marker= marker,
+            #               linewidth=lw)
+            rect2 = mpatches.Rectangle((-0.75, 0), 10, 10, linewidth=1, edgecolor='grey', facecolor='powderblue', alpha=0.3, zorder = 1)
+            ax[1].add_patch(rect2)
             sns.stripplot(data=combined_data_stagnant, 
                           x='model', y='tmax', 
                           hue = "lithology", palette = colors_tmax, 
@@ -138,6 +144,8 @@ def main():
                           legend=False,
                           marker= marker,
                           linewidth=lw)
+            ax[1].set_xlim(-0.75, 3.75)
+            
 
             ax[0].axhline(y=35, color='k', linestyle='--', linewidth=2)
             ax[1].axhline(y=35, color='k', linestyle='--', linewidth=2)
