@@ -31,8 +31,8 @@ import numpy as np
 def process_particle(p, pt_files, line_colors, compositions, composition_mapping, ymax = 900.):
     pt_single = pd.read_csv(f"{pt_files}/pt_part_{p}.txt", sep="\s+")
 
-    pt_single["Plith"] = (ymax - pt_single["depth"]) * 1e3 * 9.81 * 3100 / 1e9
-    pt_single["T"] = (pt_single["T"] + 0.6*(pt_single["depth"].max() - pt_single["depth"])) - 273.
+    # pt_single["Plith"] = (ymax - pt_single["depth"]) * 1e3 * 9.81 * 3100 / 1e9
+    pt_single["T"] = (pt_single["T"]) # + 0.6*(ymax - pt_single["depth"])) - 273.
     pt_single["terrain"] = sum((ind_c + 1) * pt_single[c].round() for ind_c, c in enumerate(compositions))
     pt_single["terrain"] = pt_single["terrain"].round()
     pt_single["lithology"] = pt_single["terrain"].map(composition_mapping)
@@ -40,10 +40,6 @@ def process_particle(p, pt_files, line_colors, compositions, composition_mapping
 
     max_depth = ymax - pt_single["depth"].min()
    
-
-    # Check if depth increases by at least 25% after the minimum depth
-    # exhumed = (max_depth >= 5) and any(pt_single.depth[min_depth_idx:] >= (min_depth + 0.25 * max_depth))
-
     stagnant = ((pt_single.depth.iat[-1] - pt_single.depth.min()) > 0.01) and ((pt_single.depth.iat[-1] - pt_single.depth.min()) < 0.25 * max_depth) and (max_depth > 10.)
     exhumed = ((pt_single.depth.iat[-1] - pt_single.depth.min()) >= 0.25 * max_depth) and (max_depth > 10.)
 

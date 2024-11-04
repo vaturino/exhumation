@@ -44,9 +44,9 @@ def setup_directories(plot_loc):
 def initialize_particle_files(pt_files, npart, compositions):
     for i in range(npart):
         with open(f"{pt_files}/pt_part_{i}.txt", "w+") as pt:
-            pt.write("id time x y P T depth vx vy " + " ".join(compositions) + "\n")
+            pt.write("id time x y P Plith T depth vx vy " + " ".join(compositions) + "\n")
 
-def process_time_step(t, csvs_loc, m, compositions, tr, idx, cmyr):
+def process_time_step(t, csvs_loc, m, compositions, tr, idx, cmyr, rhog, ymax=900.e3):
     fcol = ["id", "position:0", "position:1", "p", "T", "position:1", "velocity:0", "velocity:1"]
     df = pd.read_parquet(f"{csvs_loc}{m}/particles/full.{t}.gzip", columns=fcol + compositions)
     fil = (df[compositions] > tr).any(axis=1)
@@ -57,7 +57,8 @@ def process_time_step(t, csvs_loc, m, compositions, tr, idx, cmyr):
     for i in range(len(idx)):
         row = [
             conds["id"].iloc[i], t, conds["position:0"].iloc[i], conds["position:1"].iloc[i],
-            conds["p"].iloc[i] / 1e9, conds["T"].iloc[i], conds["position:1"].iloc[i] / 1.e3,
+            conds["p"].iloc[i] / 1e9, (ymax - conds["position:1"].iloc[i])*rhog/1.e9, (conds["T"].iloc[i] + 0.6*(ymax - conds["position:1"].iloc[i])/1.e3) - 273.,
+            conds["position:1"].iloc[i] / 1.e3,
             conds["velocity:0"].iloc[i] * cmyr,
             conds["velocity:1"].iloc[i] * cmyr
         ]
@@ -72,6 +73,10 @@ def main():
     csvs_loc = '/home/vturino/Vale_nas/exhumation/gz_outputs/'
     cmyr = 1e2 * (60 * 60 * 24 * 365)
     tr = 1.e-2
+    rho = 3100
+    g = 9.81
+    rhog = rho * g
+    ymax = 900.e3
 
     configs = load_configs(json_loc, args.json_file)
     compositions = configs['compositions']
@@ -93,7 +98,7 @@ def main():
         all_data = [[] for _ in range(npart)]
 
         with ProcessPoolExecutor() as executor:
-            futures = [executor.submit(process_time_step, t, csvs_loc, m, compositions, tr, idx, cmyr) for t in range(1, len(time_array))]
+            futures = [executor.submit(process_time_step, t, csvs_loc, m, compositions, tr, idx, cmyr, rhog, ymax) for t in range(1, len(time_array))]
             for future in tqdm(futures):
                 data = future.result()
                 for i, row in enumerate(data):

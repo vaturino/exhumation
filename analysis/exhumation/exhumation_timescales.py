@@ -104,7 +104,6 @@ def main():
     # for p in range(10):
         id = init["id"].iloc[p]
         part = pd.read_csv(f"{pt_files}/pt_part_{id}.txt", sep="\s+")
-        part["Plith"] = (ymax- part["depth"])*1e3*9.81*3300/1e9
 
         exh["id"].iloc[p] = id
         exh["maxP"].iloc[p] = init["maxPP"].iloc[p]
@@ -112,7 +111,7 @@ def main():
         exh["lithology"].iloc[p] = init["lithology"].iloc[p]
         exh["tmax"].iloc[p] = init["tmax"].iloc[p]
         exh["maxdepth"].iloc[p] = (ymax - part["depth"].min())
-        exh["exdepth"].iloc[p] = 0.2*exh["maxdepth"].iloc[p]
+        exh["exdepth"].iloc[p] = 0.25*exh["maxdepth"].iloc[p]
 
         # print(part.depth.min())
 
