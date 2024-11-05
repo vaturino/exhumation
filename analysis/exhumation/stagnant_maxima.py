@@ -37,18 +37,14 @@ import numpy as np
 
 def load_data(id, txt_loc):
     data = pd.read_csv(f"{txt_loc}/PT/pt_part_{id}.txt", sep="\s+")
-    data["Plith"] = (901.e3 - data["y"]) * 3100 * 9.81 / 1e9
     data["time"] = data["time"] / 2
     data["ts"] = data["time"] * 2
-    data["T"] = (data["T"] + 0.6 * (data["depth"].max() - data["depth"])) - 273.
     return data
 
 def compute_stagnant_maxima(data, Pthresh):
     # Calculate Pdiff using groupby once
     data["Pdiff"] = data.groupby("time_bin")["Plith"].transform(lambda x: abs(x.max() - x.min()))
     data.loc[data["time"] <= 10., "Pdiff"] = np.nan
-
-    # Use groupby median directly instead of apply for efficiency
     Pmaxloc_medians = data[data["Pdiff"] <= Pthresh].groupby("time_bin")["Plith"].median()
     data["Pmaxloc"] = data["time_bin"].map(Pmaxloc_medians)
 
@@ -64,9 +60,11 @@ def compute_stagnant_maxima(data, Pthresh):
     
     # Conditionally update time_bin_consecutive with minimal looping
     mask = data['time_bin_consecutive'].notna() & (data['time_bin_consecutive'] > data['time_bin_consecutive'].shift())
-    for idx in data.index[mask]:
-        if abs(data.at[idx, "Pmaxloc"] - data.at[idx - 1, "Pmaxloc"]) < Pthresh:
-            data.at[idx, "time_bin_consecutive"] = data.at[idx - 1, "time_bin_consecutive"]
+    data.loc[mask, 'time_bin_consecutive'] = np.where(
+        abs(data.loc[mask, "Pmaxloc"].values - data.loc[mask, "Pmaxloc"].shift().values) < Pthresh,
+        data.loc[mask, 'time_bin_consecutive'].shift().values,
+        data.loc[mask, 'time_bin_consecutive'].values
+    )
 
     # Determine particle direction based on last 10 Plith differences
     lastPdata = data["Plith"].iloc[-1] - data["Plith"].iloc[-10]
@@ -95,10 +93,8 @@ def process_particle(p, part, txt_loc):
     data = compute_stagnant_maxima(data, Pthresh)
 
     # Check if the last valid Pmaxloc_new value is in the last time_bin
-    last_numeric_Pmaxloc_new = data["Pmaxloc_new"].dropna().iloc[-1] if not data["Pmaxloc_new"].dropna().empty else None
-    last_numeric_time_bin = data["time_bin"].iloc[data["Pmaxloc_new"].last_valid_index()] if last_numeric_Pmaxloc_new is not None else None
-
-    if last_numeric_time_bin != data["time_bin"].max():
+    last_valid_index = data["Pmaxloc_new"].last_valid_index()
+    if last_valid_index is None or data["time_bin"].iloc[last_valid_index] != data["time_bin"].max():
         return None, None  # Particle does not meet the condition
 
     # Collect particle data
@@ -116,8 +112,8 @@ def process_particle(p, part, txt_loc):
     unique_consecutives = data['time_bin_consecutive'].dropna().unique()
     for k, (pmax, consec) in enumerate(zip(unique_pmaxloc_new, unique_consecutives), start=1):
         particle_data[f"P{k}"] = pmax
-        particle_data[f"timeP{k}"] = data[data["time_bin_consecutive"] == consec]["time"].median()
-        particle_data[f"T{k}"] = data[data["time_bin_consecutive"] == consec]["T"].mean()
+        particle_data[f"timeP{k}"] = data.loc[data["time_bin_consecutive"] == consec, "time"].median()
+        particle_data[f"T{k}"] = data.loc[data["time_bin_consecutive"] == consec, "T"].mean()
 
     return particle_data, data
 
@@ -163,13 +159,13 @@ def main():
             for key, value in particle_data.items():
                 particles.at[p, key] = value
 
-            if p % 10 == 0:
+            if p % 100 == 0:
                 plt.plot(data["time"], data["Plith"], color="grey")
                 plt.plot(data["time"], data["Pmaxloc_new"], color="blue")
                 plt.xlabel("Time (Myr)")
                 plt.ylabel("Pressure (GPa)")
                 plt.title(f"Particle {particle_data['id']} - Lithology: {particle_data['lithology']} - Direction: {particle_data['direction']}")
-                plt.ylim(0, 2.0)
+                plt.ylim(0, data["Plith"].max() + 0.1)
                 plt.savefig(f"{sloc}/stagnant_maxima_{particle_data['id']}.png")
                 plt.close()
 
@@ -177,6 +173,8 @@ def main():
             # Save only the filtered particles
             particles.dropna(subset=["id"], inplace=True)
             particles.to_csv(f"{txt_loc}/stagnant_maxima.txt", sep="\t", index=False, header=True, float_format='%.2f')
+
+    print(f"Number of actually stagnant particles: {len(particles)}")
 
 if __name__ == "__main__":
     main()
