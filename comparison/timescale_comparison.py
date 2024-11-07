@@ -15,8 +15,8 @@ def main():
         models = json.load(f)
 
     plot_loc = "/home/vturino/PhD/projects/exhumation/plots/single_models"
-    tests = ["velocity", "viscosity", "friction", "serpentinization"]
-    names = ["velocity_names", "viscosity_names", "friction_names", "serpentinization_names"]
+    tests = ["velocity"] #, "viscosity", "friction", "serpentinization"]
+    names = ["velocity_names"] #, "viscosity_names", "friction_names", "serpentinization_names"]
 
     # Create a mapping for lithology colors
      # Define color palettes
@@ -87,7 +87,6 @@ def main():
             # Convert the DataFrame to a long format
             long_df_exhumed = tmax_lith_counts_exhumed.reset_index().melt(id_vars=['tmax', 'lithology'], var_name=f'{test}_values', value_name='count')
             exhumed_scale = 1
-            print(long_df_exhumed)
             for l, lith in enumerate(long_df_exhumed['lithology'].unique()):
                 exhumed_scale = long_df_exhumed[long_df_exhumed['lithology'] == lith]['count'].max()
                 # exhumed_scale the lith count by the maximum count across all lithologies
@@ -155,7 +154,8 @@ def main():
             ############# SCATTER PLOT #############
            
             alpha = 1
-            marker = '$\u25AC$'
+            # marker = '$\u25AC$'
+            marker = 'o'
 
             rect = mpatches.Rectangle((-20, 0), 200, 10, linewidth=1, edgecolor='grey', facecolor='powderblue', alpha=0.3, zorder = 1)
             ax[0].add_patch(rect)
@@ -173,7 +173,7 @@ def main():
             )
 
             ax[0].set_ylim(0, 50)
-            ax[0].set_xlim(-15, 120)
+            ax[0].set_xlim(- 0.1*long_df_exhumed["x_dodge"].max(), long_df_exhumed["x_dodge"].max()+ 0.2*long_df_exhumed["x_dodge"].max())
 
             # Set x-axis ticks just for values of `{test}_values`
             unique_test_values = combined_data_exhumed[f'{test}_values'].unique()
@@ -196,7 +196,7 @@ def main():
            
             rect2 = mpatches.Rectangle((-20, 0), 200, 10, linewidth=1, edgecolor='grey', facecolor='powderblue', alpha=0.3, zorder = 1)
             ax[1].add_patch(rect2)
-            ax[1].set_xlim(-15, 120)
+            ax[1].set_xlim(- 0.1*long_df_exhumed["x_dodge"].max(), long_df_exhumed["x_dodge"].max()+ 0.2*long_df_exhumed["x_dodge"].max())
             ax[1].set_ylim(0, 50)
             ax[1].set_xticks(unique_test_values)
             ax[1].set_xticklabels(combined_data_exhumed['model'].unique())

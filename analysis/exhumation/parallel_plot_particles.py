@@ -226,8 +226,17 @@ def main():
                 a1[1].plot((pt_single["time"] ), pt_single["Plith"], color=line_color)
                 a1[1].set_xlim(0,50)
             elif result["stagnant"]:
+                if pt_single["time_bin_consecutive"].iloc[pt_single["Plith"].idxmax()] == pt_single["time_bin_consecutive"].max():
+                    time_bin_consecutive_max = pt_single["time_bin_consecutive"].max()
+                    bin_data = pt_single[pt_single["time_bin_consecutive"] == time_bin_consecutive_max]
+                    median_index = bin_data.index[len(bin_data) // 2]
+                    pmax = pt_single["Plith"].iloc[median_index]
+                    idmax = median_index
+                else:
+                    pmax = pt_single["Plith"].max()
+                    idmax = pt_single["Plith"].idxmax()
                 stagnant += 1
-                stag.loc[p] = [p, pt_single["Plith"].max(), pt_single["T"].iloc[pt_single["Plith"].idxmax()] , pt_single["Plith"].iloc[pt_single["T"].idxmax()], pt_single["T"].iloc[pt_single["T"].idxmax()] , pt_single["lithology"].iloc[-1], pt_single["time"].iloc[pt_single["Plith"].idxmax()]]
+                stag.loc[p] = [p, pmax, pt_single["T"].iloc[idmax] , pt_single["Plith"].iloc[pt_single["T"].idxmax()], pt_single["T"].iloc[pt_single["T"].idxmax()] , pt_single["lithology"].iloc[-1], pt_single["time"].iloc[idmax]]
                 a3[0].plot(pt_single["T"] , pt_single["Plith"], color=line_color)
                 a3[1].plot((pt_single["time"] ), pt_single["Plith"], color=line_color)
                 a3[1].set_xlim(0, 50)
