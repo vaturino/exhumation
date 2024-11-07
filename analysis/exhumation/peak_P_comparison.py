@@ -161,7 +161,7 @@ def main():
         id = subd["id"].iloc[s].astype(int)
         spart = pd.read_csv(f"{pt_files}/pt_part_{id}.txt", sep="\s+")
         spart["Plith"] = (900.- spart["depth"])*1e3*9.81*3100/1e9
-        a1[0,2].plot((spart["T"]-273.) + 0.6*(spart["depth"].max() - spart["depth"]), spart["Plith"], color = 'darkslateblue', alpha = 0.5, linewidth = 0.5, zorder = 20)
+        a1[0,2].plot((spart["T"]), spart["Plith"], color = 'darkslateblue', alpha = 0.5, linewidth = 0.5, zorder = 20)
             # a1[0,2].scatter(spart["T"].iat[-1]-273.15, spart["Plith"].iat[-1], color = 'darkslateblue', s = 10, zorder = 20)
     a1[0,2].set_ylabel("Pressure (GPa)")
     a1[0,2].set_xlabel("Temperature (C)")

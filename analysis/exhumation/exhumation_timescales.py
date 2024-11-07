@@ -122,7 +122,7 @@ def main():
 
         for i in range(len(part)):
             if (part.depth.iloc[0] - part.depth.iloc[i]) >= 2.:
-                exh["tin"].iloc[p] = part["time"].iat[i]
+                exh["tin"].iloc[p] = part["time"].iat[i]/2.
                 exh["Pin"].iloc[p] = part["Plith"].iat[i]
                 idx = i
                 break
@@ -130,7 +130,7 @@ def main():
             idxmin = part.depth.idxmin()
             if i > idxmin:
                 if part.depth.iat[i] - part.depth.min() >= exh["exdepth"].iloc[p]:
-                    exh["tfin"].iloc[p] = part["time"].iat[i]
+                    exh["tfin"].iloc[p] = part["time"].iat[i]/2.
                     exh["Pexh"].iloc[p] = part["Plith"].iat[i]
                     ide = i
                     break

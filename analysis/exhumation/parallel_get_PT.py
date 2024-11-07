@@ -46,7 +46,7 @@ def initialize_particle_files(pt_files, npart, compositions):
         with open(f"{pt_files}/pt_part_{i}.txt", "w+") as pt:
             pt.write("id time x y P Plith T depth vx vy " + " ".join(compositions) + "\n")
 
-def process_time_step(t, csvs_loc, m, compositions, tr, idx, cmyr, rhog, ymax=900.e3):
+def process_time_step(t, csvs_loc, m, compositions, tr, idx, cmyr, rhog, ymax=901.e3):
     fcol = ["id", "position:0", "position:1", "p", "T", "position:1", "velocity:0", "velocity:1"]
     df = pd.read_parquet(f"{csvs_loc}{m}/particles/full.{t}.gzip", columns=fcol + compositions)
     fil = (df[compositions] > tr).any(axis=1)
@@ -76,7 +76,7 @@ def main():
     rho = 3100
     g = 9.81
     rhog = rho * g
-    ymax = 900.e3
+    ymax = 901.e3
 
     configs = load_configs(json_loc, args.json_file)
     compositions = configs['compositions']

@@ -126,27 +126,29 @@ def main():
         stag["lithology"].iloc[p] = init["lithology"].iloc[p]
         stag["tmax"].iloc[p] = init["tmax"].iloc[p]
         stag["maxdepth"].iloc[p] = (ymax - part["depth"].min())
-        stag["stagdepth"] = 0.2*stag["maxdepth"]
+        stag["stagdepth"] = 0.25*stag["maxdepth"]
 
         idx = 0
         ide = 0
 
         finidx = find_first_stable_gradient_threshold(part["depth"], stag["tmax"].iloc[p], threshold=0.1)
         if finidx is not None:
-            stag["tfin"].iloc[p] = part["time"].iat[finidx]
+            stag["tfin"].iloc[p] = part["time"].iat[finidx]/2.
             stag["Pstag"].iloc[p] = part["Plith"].iat[finidx]
             ide = finidx
         else:
-            stag["tfin"].iloc[p] = part["time"].iat[-2]
+            stag["tfin"].iloc[p] = part["time"].iat[-2]/2.
             stag["Pstag"].iloc[p] = part["Plith"].iat[-2]
             ide = len(part)
 
         for i in range(len(part)):
             if (part.depth.iloc[0] - part.depth.iloc[i]) >= 2.:
-                stag["tin"].iloc[p] = part["time"].iat[i]
+                stag["tin"].iloc[p] = part["time"].iat[i]/2.
                 stag["Pin"].iloc[p] = part["Plith"].iat[i]
                 idx = i
                 break
+
+        # print(f"Particle {p} - id {id} - tmax {stag['tmax'].iloc[p]} - tfin {stag['tfin'].iloc[p]} - tin {stag['tin'].iloc[p]}")
 
 
         # vel_bur = part.loc[idx:part.depth.idxmin(), ["vx", "vy"]].apply(lambda row: math.sqrt(row["vx"]**2 + row["vy"]**2)*np.sin(np.deg2rad(45)), axis=1).values

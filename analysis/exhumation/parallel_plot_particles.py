@@ -94,13 +94,17 @@ def process_particle(p, txt_loc, line_colors, compositions, composition_mapping,
     particle_data = None
 
     if stagnant:
-        Pthresh = pt_single["Plith"].max() / 20
+        # Compute data based on stagnant criteria
+        # max_data = pt_single[pt_single["time"] <= 25.]
+        
+        Pthresh = min((pt_single["Plith"].max() / 100) * 5, 0.05)
+
 
         # Bin data by time intervals of 10 Myr
         bins = np.arange(0, 51, 10)
         pt_single["time_bin"] = pd.cut(pt_single["time"], bins)
 
-        # Compute data based on stagnant criteria
+        
         data = compute_stagnant_maxima(pt_single, Pthresh)
 
         # Check if the last valid Pmaxloc_new value is in the last time_bin
@@ -142,6 +146,7 @@ def process_particle(p, txt_loc, line_colors, compositions, composition_mapping,
         "particle_data": particle_data,
         "data": data if stagnant else None
     }
+
 
     return result
 
