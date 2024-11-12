@@ -38,29 +38,6 @@ def load_data(id, txt_loc):
     data["ts"] = data["time"] * 2
     return data
 
-def avg_pressures_and_extremes(data, time_interval):
-    tf = data["time"].max()
-    ts = tf - time_interval
-    Pf = data[data["time"] == tf]["Plith"].values[0]
-    Ps = data[data["time"] == ts]["Plith"].values[0]
-    Pm = (Pf + Ps) / 2
-    return Pm, Pf, Ps, tf, ts
-
-def compute_time_intervals(data, Pthresh, Pm):
-    index = []
-    for k in range(len(data["Plith"]) - 1, -1, -1):
-        if abs(data["Plith"].iloc[k] - Pm) <= Pthresh:
-            index.append(k)
-    
-    for j in range(len(index) - 1):
-        if index[j] - index[j + 1] != 1:
-            index = index[:j + 1]
-            break
-
-    time_interval = pd.DataFrame(data["time"].iloc[index[-1]:index[0]])
-    time_interval["Pm"] = Pm
-
-    return time_interval
 
 
 def main():
@@ -98,51 +75,78 @@ def main():
     particles = pd.DataFrame(columns=["id", "lithology", "Pm", "tm", "time_interval", "ti", "tf"], index=range(len(part)))
 
     for i in range(len(part)):
+    # for i in [18]:
         id = part["id"].iloc[i]
+        # print(id)
         data = load_data(id, txt_loc)
 
-        thresh = min(data["Plith"].max() / 20, 0.05)
-        # thresh = thresh/2.
-        time_interval = 15
-        Pm, Pf, Ps, tf, ts = avg_pressures_and_extremes(data, time_interval)
+        grad_thresh = 0.01
+        time_thresh = 0.5
+        data = data[data["time"] > 10]
+        data['gradient'] = np.gradient(data["Plith"], data["time"])
 
-        time_interval = compute_time_intervals(data, thresh, Pm)
+        # find time intervals where the gradient is below the threshold
+        lowgrad = data[abs(data["gradient"]) < grad_thresh].reset_index(drop=True)
+        
+        # Calculate the duration of each interval (time difference between consecutive rows)
+        lowgrad["duration"] = lowgrad["time"].diff()
 
+        # Initialize the time_bin column
+        lowgrad['time_bin'] = None
 
-        if time_interval["time"].max() - time_interval["time"].min() >= 10:
-            particles.at[i, "id"] = id
-            particles.at[i, "lithology"] = part["lithology"].iloc[i]
-            particles.at[i, "Pm"] = Pm
-            particles.at[i, "tm"] = (tf + ts) / 2
-            particles.at[i, "time_interval"] = time_interval["time"].max() - time_interval["time"].min()
-            particles.at[i, "ti"] = time_interval["time"].min()
-            particles.at[i, "tf"] = time_interval["time"].max()
-        else:
-            continue
+        start_time = None
+        for i, row in lowgrad.iterrows():
+            # If duration == time_thresh, we're still in the same interval
+            if row['duration'] == time_thresh:
+                if start_time is None:
+                    start_time = row['time']  # Mark the start time of the interval
+                end_time = row['time']  # Update the end time (current row's time)
 
-        if i % 100 == 0:
+                # If we reach the last row of consecutive 0.5 intervals or the last row in the bin, assign the time_bin
+                if i == len(lowgrad) - 1 or lowgrad.at[i+1, 'duration'] != time_thresh:
+                    # Assign the time bin to all rows in the current interval
+                    for j in range(i, -1, -1):
+                        if lowgrad.at[j, 'duration'] == time_thresh:
+                            if start_time != end_time:  
+                                lowgrad.at[j, 'time_bin'] = f"[{start_time}, {end_time})"
+                        else:
+                            break
+                    start_time = None  # Reset start_time after assigning the time bin
+                else:
+                    # Continue updating end_time when in a consecutive 0.5 interval
+                    continue
+            else:
+                start_time = None  # Reset when a non-0.5 duration is encountered
+
+        # Group by 'time_bin' and compute the average of 'Plith' and 'time' for each interval
+        avg_values = lowgrad.groupby('time_bin').agg({'Plith': 'mean', 'time': 'mean'}).reset_index()
+        lowgrad["Pm"] = np.nan
+        lowgrad["tm"] = np.nan
+
+        for tint in avg_values["time_bin"]:
+            # Get the average 'Plith' value for the current time bin
+            lowgrad["Pm"] = np.where(lowgrad["time_bin"] == tint, avg_values[avg_values["time_bin"] == tint]["Plith"].values[0], lowgrad["Pm"])
+            lowgrad["tm"] = np.where(lowgrad["time_bin"] == tint, avg_values[avg_values["time_bin"] == tint]["time"].values[0], lowgrad["tm"])
+     
+        
+        if i % 1 == 0:
             fig = plt.figure(figsize=(8, 6))
-            plt.plot(time_interval["time"], time_interval["Pm"], color="green")
-            plt.plot(data["time"], data["Plith"], color="black")
-            plt.scatter(tf, Pf, color="blue")
-            plt.scatter(ts, Ps, color="blue")
-            plt.scatter((tf + ts) / 2, Pm, color="red")
-            plt.axhline(y=Pm + thresh, color='grey', linestyle='--', alpha = 0.5)
-            plt.axhline(y=Pm - thresh, color='grey', linestyle='--', alpha = 0.5)
+            plt.plot(lowgrad["time"], lowgrad["Pm"], color="green", linewidth = 2, zorder = 5)
+            plt.plot(data["time"], data["Plith"], color="grey")
+            plt.scatter(lowgrad["tm"], lowgrad["Pm"], color="red", zorder = 10)
             plt.xlabel("Time (Myr)")
             plt.ylabel("Pressure (GPa)")
             plt.title(f"Particle {id} - Lithology: {part['lithology'].iloc[i]}")
-            # plt.ylim(0, data["Plith"].max() + thresh)
             plt.ylim(0,2.5)
             plt.savefig(f"{sloc}/stagnant_times_{id}.png")
             plt.close()
 
-    particles.dropna(subset=["id"], inplace=True)
-    print("Number of stagnant particles: ", len(particles))
+    # particles.dropna(subset=["id"], inplace=True)
+    # print("Number of stagnant particles: ", len(particles))
 
-    float_cols = particles.columns.difference(["id", "lithology"])
-    particles[float_cols] = particles[float_cols].astype(float)
-    particles.to_csv(f"{txt_loc}/stagnant_times.txt", sep="\t", index=False, header=True, float_format='%.2f')
+    # float_cols = particles.columns.difference(["id", "lithology"])
+    # particles[float_cols] = particles[float_cols].astype(float)
+    # particles.to_csv(f"{txt_loc}/stagnant_times.txt", sep="\t", index=False, header=True, float_format='%.2f')
 
 
 
