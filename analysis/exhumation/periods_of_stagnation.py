@@ -141,16 +141,18 @@ def process_particle(id, part, txt_loc, stagnation_min, time_thresh, sloc, sfile
         particle_data[f"{col}_kin"] = lowgrad_kin[col].values[0] if not lowgrad_kin[col].empty else np.nan
         particle_data[f"{col}_trans"] = lowgrad_trans[col].values[0] if not lowgrad_trans[col].empty else np.nan
 
-    fig = plt.figure(figsize=(8, 6))
-    plt.plot(lowgrad["time"], lowgrad["Pm"], color="green", linewidth=2, zorder=5)
-    plt.plot(data["time"], data["Plith"], color="grey")
-    plt.scatter(lowgrad["tm"], lowgrad["Pm"], color="red", zorder=10)
-    plt.xlabel("Time (Myr)")
-    plt.ylabel("Pressure (GPa)")
-    plt.title(f"Particle {id} - Lithology: {part['lithology']}")
-    plt.ylim(0, 2.5)
-    plt.savefig(f"{sloc}/stagnant_times_{id}.png")
-    plt.close()
+    if id % 10 == 0:
+        fig = plt.figure(figsize=(8, 6))
+        plt.plot(lowgrad["time"], lowgrad["Pm"], color="green", linewidth=2, zorder=5)
+        plt.plot(data["time"], data["Plith"], color="grey")
+        plt.scatter(lowgrad["tm"], lowgrad["Pm"], color="red", zorder=10)
+        plt.xlabel("Time (Myr)")
+        plt.ylabel("Pressure (GPa)")
+        plt.title(f"Particle {id} - Lithology: {part['lithology']}")
+        plt.ylim(0, 3.)
+        plt.savefig(f"{sloc}/stagnant_times_{id}.png")
+        plt.close()
+
 
     lowgrad.to_csv(f"{sfiles}/stagnant_times_{id}.txt", sep=" ", index=False, float_format='%.2f', na_rep="NaN")
 
@@ -214,6 +216,9 @@ def main():
     particles.dropna(subset=columns_to_check, how='all', inplace=True)
     particles = particles.astype({col: 'float' for col in columns if col not in fixed_columns})
     particles.to_csv(f"{txt_loc}/stagnant_times.txt", sep=" ", index=False, float_format='%.2f', na_rep="NaN")
+
+    print("Initial number of particles: ", len(part))
+    print("Stagnant particles after processing: ", len(particles))
 
 
 if __name__ == "__main__":
