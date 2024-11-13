@@ -44,15 +44,12 @@ def load_data(id, txt_loc):
 def compute_time_intervals(data, stagnation_min, time_thresh):
     start_time = None
     for i, row in data.iterrows():
-        # If duration == time_thresh, we're still in the same interval
         if row['duration'] == time_thresh:
             if start_time is None:
-                start_time = row['time']  # Mark the start time of the interval
-            end_time = row['time']  # Update the end time (current row's time)
+                start_time = row['time']
+            end_time = row['time']
 
-            # If we reach the last row of consecutive 0.5 intervals or the last row in the bin, assign the time_bin
             if i == len(data) - 1 or data.at[i+1, 'duration'] != time_thresh:
-                # Assign the time bin to all rows in the current interval
                 for j in range(i, -1, -1):
                     if data.at[j, 'duration'] == time_thresh:
                         if start_time != end_time:  
@@ -97,10 +94,67 @@ def process_times_for_particle(data, stagnation_min, time_thresh):
     return lowgrad
 
 
+def assign_particle_values(particles, lowgrad_dyn, lowgrad_kin, lowgrad_trans, i, c):
+    for col in c:
+        if not lowgrad_dyn[col].empty:
+            particles[f"{col}_dyn"].iloc[i] = lowgrad_dyn[col].values[0]
+        else:
+            particles[f"{col}_dyn"].iloc[i] = np.nan
+
+        if not lowgrad_kin[col].empty:
+            particles[f"{col}_kin"].iloc[i] = lowgrad_kin[col].values[0]
+        else:
+            particles[f"{col}_kin"].iloc[i] = np.nan
+
+        if not lowgrad_trans[col].empty:
+            particles[f"{col}_trans"].iloc[i] = lowgrad_trans[col].values[0]
+        else:
+            particles[f"{col}_trans"].iloc[i] = np.nan
+
+    return particles
 
 
+def process_particle(id, part, txt_loc, stagnation_min, time_thresh, sloc, sfiles):
+    data = load_data(id, txt_loc)
+    data['gradient'] = np.gradient(data["Plith"], data["time"])
 
+    lowgrad = process_times_for_particle(data, stagnation_min, time_thresh)
+    lowgrad["lithology"] = part["lithology"]
 
+    bin_number = lowgrad["time_bin"].nunique()
+    if bin_number == 0:
+        return None
+
+    c = ["Pm", "tm", "Tm", "time_interval", "ti", "tf"]
+
+    lowgrad_dyn = lowgrad[lowgrad["tm"] < 33.]
+    lowgrad_kin = lowgrad[lowgrad["tm"] > 37.]
+    lowgrad_trans = lowgrad[(lowgrad["tm"] > 33.) & (lowgrad["tm"] < 37.)]
+
+    particle_data = {
+        "id": id,
+        "lithology": part["lithology"]
+    }
+
+    for col in c:
+        particle_data[f"{col}_dyn"] = lowgrad_dyn[col].values[0] if not lowgrad_dyn[col].empty else np.nan
+        particle_data[f"{col}_kin"] = lowgrad_kin[col].values[0] if not lowgrad_kin[col].empty else np.nan
+        particle_data[f"{col}_trans"] = lowgrad_trans[col].values[0] if not lowgrad_trans[col].empty else np.nan
+
+    fig = plt.figure(figsize=(8, 6))
+    plt.plot(lowgrad["time"], lowgrad["Pm"], color="green", linewidth=2, zorder=5)
+    plt.plot(data["time"], data["Plith"], color="grey")
+    plt.scatter(lowgrad["tm"], lowgrad["Pm"], color="red", zorder=10)
+    plt.xlabel("Time (Myr)")
+    plt.ylabel("Pressure (GPa)")
+    plt.title(f"Particle {id} - Lithology: {part['lithology']}")
+    plt.ylim(0, 2.5)
+    plt.savefig(f"{sloc}/stagnant_times_{id}.png")
+    plt.close()
+
+    lowgrad.to_csv(f"{sfiles}/stagnant_times_{id}.txt", sep=" ", index=False, float_format='%.2f', na_rep="NaN")
+
+    return particle_data
 
 
 ############### MAIN ####################
@@ -112,12 +166,10 @@ def main():
 
     json_loc = '/home/vturino/PhD/projects/exhumation/pyInput/'
 
-    # Read the json file
     with open(f"{json_loc}{args.json_file}") as json_file:
         configs = json.load(json_file)
     m = configs["models"][0]
 
-    # Create the folders to save the plots
     plot_loc = f"/home/vturino/PhD/projects/exhumation/plots/single_models/{m}"
     txt_loc = f'{plot_loc}/txt_files'
     if not os.path.exists(txt_loc):
@@ -133,95 +185,36 @@ def main():
 
     timing = ["dyn", "trans", "kin"]
 
-
-
     fixed_columns = ["id", "lithology"]
     columns = fixed_columns + [f"{c}_{t}" for c in ["Pm", "tm", "Tm", "time_interval", "ti", "tf"] for t in timing]
     
     part = pd.read_csv(f"{txt_loc}/stagnant_particles.txt", sep="\s+")
     particles = pd.DataFrame(columns=columns, index=part.index)
-    
 
     stagnation_min = 10.
     grad_thresh = 0.01
     time_thresh = 0.5
 
-    count = 0
+    c = ["Pm", "tm", "Tm", "time_interval", "ti", "tf"]
 
-    for i in range(len(part)):
-        id = part["id"].iloc[i]
-        data = load_data(id, txt_loc)
-        data['gradient'] = np.gradient(data["Plith"], data["time"])
+    with ProcessPoolExecutor() as executor:
+        futures = [
+            executor.submit(process_particle, part["id"].iloc[i], part.iloc[i], txt_loc, stagnation_min, time_thresh, sloc, sfiles)
+            for i in range(len(part))
+        ]
 
-        lowgrad = process_times_for_particle(data, stagnation_min, time_thresh)
-        lowgrad["lithology"] = part["lithology"].iloc[i]
+        for future in tqdm(as_completed(futures), total=len(futures)):
+            result = future.result()
+            if result:
+                for key, value in result.items():
+                    particles.at[result["id"], key] = value
 
-        bin_number = lowgrad["time_bin"].nunique()
-        if bin_number == 0:
-            continue
+    columns_to_check = [f"{col}_dyn" for col in c] + [f"{col}_kin" for col in c] + [f"{col}_trans" for col in c]
 
-        count += 1
-
-
-        c = ["Pm", "tm", "Tm", "time_interval", "ti", "tf"]
-
-        # Pre-filter the lowgrad DataFrame once for each condition
-        lowgrad_dyn = lowgrad[lowgrad["tm"] < 33.]
-        lowgrad_kin = lowgrad[lowgrad["tm"] > 37.]
-        lowgrad_trans = lowgrad[(lowgrad["tm"] > 33.) & (lowgrad["tm"] < 37.)]
-
-        # Iterate over each column in `c` and check the subsets
-        for col in c:
-            # Check and assign for dyn
-            if not lowgrad_dyn[col].empty:
-                particles[f"{col}_dyn"].iloc[i] = lowgrad_dyn[col].values[0]
-            else:
-                particles[f"{col}_dyn"].iloc[i] = np.nan
-
-            # Check and assign for kin
-            if not lowgrad_kin[col].empty:
-                particles[f"{col}_kin"].iloc[i] = lowgrad_kin[col].values[0]
-            else:
-                particles[f"{col}_kin"].iloc[i] = np.nan
-
-            # Check and assign for trans
-            if not lowgrad_trans[col].empty:
-                particles[f"{col}_trans"].iloc[i] = lowgrad_trans[col].values[0]
-            else:
-                particles[f"{col}_trans"].iloc[i] = np.nan
-
-        # if all values of particles are nan, then remove the particle
-        if particles.iloc[i].isnull().all():
-            part.drop(i, inplace=True)
-            continue
-
-
-        particles["id"].iloc[i] = id
-        particles["lithology"].iloc[i] = part["lithology"].iloc[i]
-
-        
-        if i % 10 == 0:
-            fig = plt.figure(figsize=(8, 6))
-            plt.plot(lowgrad["time"], lowgrad["Pm"], color="green", linewidth = 2, zorder = 5)
-            plt.plot(data["time"], data["Plith"], color="grey")
-            plt.scatter(lowgrad["tm"], lowgrad["Pm"], color="red", zorder = 10)
-            plt.xlabel("Time (Myr)")
-            plt.ylabel("Pressure (GPa)")
-            plt.title(f"Particle {id} - Lithology: {part['lithology'].iloc[i]}")
-            plt.ylim(0,2.5)
-            plt.savefig(f"{sloc}/stagnant_times_{id}.png")
-            plt.close()
-
-        lowgrad.to_csv(f"{sfiles}/stagnant_times_{id}.txt", sep=" ", index=False, float_format='%.2f')
-
-    print(particles)
-    print("Number of particles: ", len(part))
-    print("Number of particles that stagnate at least once: ", count)   
-
-
-
+    particles.dropna(subset=columns_to_check, how='all', inplace=True)
+    particles = particles.astype({col: 'float' for col in columns if col not in fixed_columns})
+    particles.to_csv(f"{txt_loc}/stagnant_times.txt", sep=" ", index=False, float_format='%.2f', na_rep="NaN")
 
 
 if __name__ == "__main__":
     main()
-
