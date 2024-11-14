@@ -186,7 +186,7 @@ def main():
     plt.subplots_adjust(hspace=0)
     
 
-    plt.savefig(f"{plot_loc}/scatter_exhumVScr.png", dpi=500)
+    plt.savefig(f"{plot_loc}/scatter_exhumVScr.eps", dpi=500)
     plt.close()
 
 

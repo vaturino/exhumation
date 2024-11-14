@@ -61,15 +61,21 @@ def main():
         plot_loc_mod = f"/home/vturino/PhD/projects/exhumation/plots/single_models/{m}"
         if not os.path.exists(plot_loc_mod):
             os.mkdir(plot_loc_mod)
-        plot_loc = f"{plot_loc_mod}/Panels/"
+        plot_loc = f"{plot_loc_mod}/"
         if not os.path.exists(plot_loc):
             os.mkdir(plot_loc)
         else:
             file_count = len(os.listdir(plot_loc))
 
-        for t in tqdm(range(0, len(time_array), 2)):
-            f1, a1 = plt.subplots(1, 3, figsize=(20, 5))
-            plotname = f"{plot_loc}{int(t/2)}.png" 
+        f1, a1 = plt.subplots(3,3, figsize=(15, 11))
+        plotname = f"{plot_loc}time_evolution.ps" 
+
+        # Before the plotting loop, enable vector simplification globally
+        plt.rcParams['path.simplify'] = True
+        plt.rcParams['path.simplify_threshold'] = 0.5  # Tune as needed
+
+        for indt, t in enumerate([1, 50, 90]):
+            
             data = pd.read_parquet(f"{csvs_loc}{m}/fields/full.{int(t)}.gzip")
             data["lithology"] = 0
             data["logvisc"] = np.log10(data["viscosity"])
@@ -121,55 +127,63 @@ def main():
             data["terrain_idx"] = data["terrain"].map({label: idx for idx, label in enumerate(present_terrains)})
 
             # Plot lithology using terrain indices and corresponding color map
-            p1 = a1[0].tripcolor(triang, data["terrain_idx"], cmap=matplotlib.colors.ListedColormap(colors_for_terrain), shading='gouraud', vmin=0, vmax=len(colors_for_terrain)-1)
-            a1[0].tricontour(triang, data["T"] - 273.5, colors='k', levels=[100, 300, 500, 700, 900], linewidths=0.3)
+            p1 = a1[0, indt].tripcolor(triang, data["terrain_idx"], cmap=matplotlib.colors.ListedColormap(colors_for_terrain), shading='gouraud', vmin=0, vmax=len(colors_for_terrain)-1, rasterized=True)
+            a1[0, indt].tricontour(triang, data["T"] - 273.5, colors='k', levels=[100, 300, 500, 700, 900], linewidths=0.3)
 
             # Terrain colorbar
-            cbar = plt.colorbar(p1, orientation='horizontal', ax=a1[0])
-            cbar.set_ticks(np.arange(len(colors_for_terrain)))
-            cbar.set_ticklabels([terrain for terrain in present_terrains])  # Set tick labels to present terrain names
-            cbar.set_label('Terrain', rotation=0, labelpad=5)
 
-            a1[0].set_ylim([(ymax_plot - ymin_plot) / 1.e3, -5])
-            a1[0].set_xlim([xmin_plot / 1.e3, xmax_plot / 1.e3])
-            a1[0].set_aspect('equal')
+
+            a1[0, indt].set_ylim([(ymax_plot - ymin_plot) / 1.e3, -5])
+            a1[0, indt].set_xlim([xmin_plot / 1.e3, xmax_plot / 1.e3])
+            a1[0, indt].set_aspect('equal')
+            a1[0, indt].spines[['top']].set_visible(False)
+            time_label = f"Time: {time_array[t, 1]/1e6:.1f} Myr"
+            a1[0, indt].text(0.05, 0.1, time_label, transform=a1[0, indt].transAxes, fontsize=12, verticalalignment='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+
+
 
             # Strain rate plot
-            p2 = a1[1].tripcolor(triang, data["logSR"], cmap='RdBu_r', shading='gouraud', vmin=-19, vmax=-12)
-            a1[1].spines[['top']].set_visible(False)
-            plt.colorbar(p2, orientation='horizontal', label='Log(Strain rate) [s-1]', ax=a1[1])
-            a1[1].set_ylim([(ymax_plot - ymin_plot) / 1.e3, -5])
-            a1[1].set_xlim([xmin_plot / 1.e3, xmax_plot / 1.e3])
-            a1[1].set_aspect('equal')
-            # Annotate time in subplot a1[1]
-            time_label = f"Time: {time_array[t, 1]/1e6:.1f} Myr"
-            a1[1].text(0.05, 0.1, time_label, transform=a1[1].transAxes, fontsize=12, verticalalignment='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+            p2 = a1[1, indt].tripcolor(triang, data["logSR"], cmap='RdBu_r', shading='gouraud', vmin=-19, vmax=-12, rasterized=True)
+            a1[1, indt].spines[['top']].set_visible(False)
+            a1[1, indt].set_ylim([(ymax_plot - ymin_plot) / 1.e3, -5])
+            a1[1, indt].set_xlim([xmin_plot / 1.e3, xmax_plot / 1.e3])
+            a1[1, indt].set_aspect('equal')
+            # Annotate time in subplot a1[1, indt]
+            
 
             # Viscosity plot + velocity vectors
-            p3 = a1[2].tripcolor(triang, data["logvisc"], shading='gouraud', vmin=18, vmax=24)
-            vel_plot_thresh = 0.0001  # don't plot velocity vectors smaller than this (cm/yr)
-            step = 500  # plot every 100th vector to reduce the number of vectors plotted
-            # # Filter out small velocity vectors and downsample data for plotting
-            # mask = (100. * np.sqrt(data["velocity:0"]**2 + data["velocity:1"]**2)) >= vel_plot_thresh
-            # mask = mask.reindex(data_filtered_comp.index, fill_value=False)
-            # data_filtered = data_filtered_comp[mask].iloc[::step]
+            p3 = a1[2, indt].tripcolor(triang, data["logvisc"], shading='gouraud', vmin=18, vmax=24, rasterized=True)
+            a1[2, indt].spines[['top']].set_visible(False)
+            a1[2, indt].set_ylim([(ymax_plot - ymin_plot) / 1.e3, -5])
+            a1[2, indt].set_xlim([xmin_plot / 1.e3, xmax_plot / 1.e3])
+            a1[2, indt].set_aspect('equal')
 
-            # vel_vects = a1[2].quiver(data_filtered["Points:0"].to_numpy() / 1.e3, 
-            #                          (ymax_plot - data_filtered["Points:1"].to_numpy()) / 1.e3, 
-            #                          data_filtered["velocity:0"].to_numpy() * 100, 
-            #                          data_filtered["velocity:1"].to_numpy() * 100, 
-            #                          scale=50, color='black', width=0.0015)
-            # a1[2].quiverkey(vel_vects, 0.15, 0.1, 1, '1 cm/yr', labelpos='W', fontproperties={'size': '7'}, color='white', labelcolor='white')
-            a1[2].spines[['top']].set_visible(False)
-            plt.colorbar(p3, orientation='horizontal', label='Log(Viscosity) [Pa s]', ax=a1[2])
-            a1[2].set_ylim([(ymax_plot - ymin_plot) / 1.e3, -5])
-            a1[2].set_xlim([xmin_plot / 1.e3, xmax_plot / 1.e3])
-            a1[2].set_aspect('equal')
+        # Make all plots the same size
+        f1.tight_layout()
+        # Add axes labels
+        a1[2,0].set_xlabel('x [km]')
+        a1[2,1].set_xlabel('x [km]')
+        a1[2,2].set_xlabel('x [km]')
+        a1[0,0].set_ylabel('y [km]')
+        a1[1,0].set_ylabel('y [km]')
+        a1[2,0].set_ylabel('y [km]')
 
-            # Save and close the plot
-            plt.savefig(plotname, bbox_inches='tight', format='png', dpi=500)
-            plt.clf()
-            plt.close('all')
+        cbar = plt.colorbar(p1, orientation='horizontal', ax=a1[2, 0])
+        cbar.set_ticks(np.arange(len(colors_for_terrain)))
+        cbar.set_ticklabels([terrain for terrain in present_terrains])  # Set tick labels to present terrain names
+        cbar.set_label('Terrain', rotation=0, labelpad=5)  
+        plt.colorbar(p2, orientation='horizontal', label='Log(Strain rate) [s-1]', ax=a1[2, 1])
+        plt.colorbar(p3, orientation='horizontal', label='Log(Viscosity) [Pa s]', ax=a1[2, 2])
+        plt.subplots_adjust(hspace = 0.)  
+
+        # # Enable vector simplification
+        # plt.rcParams['path.simplify'] = True
+        # plt.rcParams['path.simplify_threshold'] = 0.5  # Adjust threshold as needed
+
+
+        plt.savefig(plotname, bbox_inches='tight', format='ps', dpi=500, pad_inches=0.1)
+        plt.clf()
+        plt.close('all')
 
 if __name__ == "__main__":
     main()
