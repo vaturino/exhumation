@@ -109,7 +109,7 @@ def main():
     subd = pd.read_csv(f"{txt_loc}/subducted_particles.txt", sep="\s+")
     subd = subd.dropna()
 
-    stag = pd.DataFrame(columns=["id", "maxP", "maxT", "lithology", "tin", "tmax", "tfin", "burial", "stag", "maxdepth", "stagdepth", "vbur", "vstag", "Pin", "Pstag"], index=range(len(init)))
+    stag = pd.DataFrame(columns=["id", "Pm_kin", "Tm_kin", "lithology", "tin", "tm_kin", "tfin", "burial", "stag", "maxdepth", "stagdepth", "vbur", "vstag", "Pin", "Pstag"], index=range(len(init)))
 
     print("Number of stagnant particles = ", len(init)) 
 
@@ -120,11 +120,21 @@ def main():
         id = init["id"].iloc[p]
         part = pd.read_csv(f"{pt_files}/pt_part_{id}.txt", sep="\s+")
 
+        if init["Pm_kin"].notna().iloc[p]:
+            stag["Pm_kin"].iloc[p] = init["Pm_kin"].iloc[p]
+            stag["Tm_kin"].iloc[p] = init["Tm_kin"].iloc[p]
+            stag["tm_kin"].iloc[p] = init["tm_kin"].iloc[p]
+        if init["Pm_dyn"].notna().iloc[p]:
+            stag["maxP"].iloc[p] = init["Pm_dyn"].iloc[p]
+            stag["maxT"].iloc[p] = init["Tm_dyn"].iloc[p]
+            stag["tmax"].iloc[p] = init["tm_dyn"].iloc[p]
+        if init["Pm_trans"].notna().iloc[p]:
+            stag["maxP"].iloc[p] = init["Pm_trans"].iloc[p]
+            stag["maxT"].iloc[p] = init["Tm_trans"].iloc[p]
+            stag["tmax"].iloc[p] = init["tm_trans"].iloc[p]
+
         stag["id"].iloc[p] = id
-        stag["maxP"].iloc[p] = init["maxPP"].iloc[p]
-        stag["maxT"].iloc[p] = init["maxPT"].iloc[p]
         stag["lithology"].iloc[p] = init["lithology"].iloc[p]
-        stag["tmax"].iloc[p] = init["tmax"].iloc[p]
         stag["maxdepth"].iloc[p] = (ymax - part["depth"].min())
         stag["stagdepth"] = 0.25*stag["maxdepth"]
 
@@ -268,6 +278,6 @@ def main():
          
 
 
-
 if __name__ == '__main__':
     main()
+

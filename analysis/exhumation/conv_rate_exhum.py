@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import argparse
 import os
+import matplotlib.patches as mpatches
+
 
 def main():
     # Parse the arguments
@@ -57,23 +59,8 @@ def main():
         "serp": "lightsalmon"
     }
 
-    # Categorize 'vbur' and 'vexh' into 3 groups and capture bin edges
-    # exhumed_list["vbur_category"], e_bin_edges_bur = pd.qcut(exhumed_list["vbur"], q=3, labels=["low", "mid", "high"], retbins=True)
-    # e_bin_edges_bur = np.round(e_bin_edges_bur, 2)
 
-    # exhumed_list["vexh_category"], e_bin_edges_exh = pd.qcut(exhumed_list['vexh'], q=3, labels=["low", "mid", "high"], retbins=True)
-    # e_bin_edges_exh = np.round(e_bin_edges_exh, 2)
-
-    # stagnant_list["vbur_category"], s_bin_edges_bur = pd.qcut(stagnant_list["vbur"], q=3, labels=["low", "mid", "high"], retbins=True)
-    # s_bin_edges_bur = np.round(s_bin_edges_bur, 2)
-
-    # stagnant_list["vstag_category"], s_bin_edges_stag = pd.qcut(stagnant_list['vstag'], q=3, labels=["low", "mid", "high"], retbins=True)
-    # s_bin_edges_stag = np.round(s_bin_edges_stag, 2)
-
-
-    # # Define marker sizes for each category
-    # sizes = {"low": 20, "mid": 50, "high": 80}  # Adjust sizes for clarity
-    # markers = {"low": "s", "mid": "X", "high": "d"}
+    labels_font = 13
 
     # Create the plot
     # fig, ax = plt.subplots(2, 1, figsize=(15, 10))
@@ -83,28 +70,123 @@ def main():
 
     # Plot 0: convergence rate
     ax[0].plot(cr["time"]/1e6, cr["conv_rate"], color="grey", label="Convergence rate", linewidth=3)
-    ax[0].set_ylabel("Convergence rate (cm/yr)", color="grey", fontweight="bold")
-    ax[0].set_xlabel("Time (Ma)")
-    ax[0].set_title("Convergence rate and exhumed particles")
+    ax[0].set_ylabel("Convergence rate (cm/yr)", color="black", fontsize=labels_font)
+    ax[0].set_xlabel("Time (Ma)", fontsize=labels_font)
+    ax[0].set_title("Convergence rate and exhumed particles", fontsize=15)
     ax[0].set_ylim(0, cr["conv_rate"].max()+0.2)
-    ax[0].set_xlim(-1, 51)
+    ax[0].set_xlim(0, 51)
     ax[0].label_outer()  # Only show outer labels and tick labels
     # vertical line at 35 Ma
     ax[0].axvline(x=35, color="grey", linestyle="--", label="35 Ma")
 
     # Plot 1: Pressure-time for exhumed particles
-    sns.scatterplot(data=exhumed_list, x="tin", y="Pin", hue="lithology", ax=ax[1], palette=colors_tin, legend=True)    
-    sns.scatterplot(data=exhumed_list, x="tmax", y="maxP", hue="lithology", ax=ax[1], palette=colors_tmax, legend=False)
-    sns.scatterplot(data=exhumed_list, x="tfin", y="Pexh", hue="lithology", ax=ax[1], palette=colors_tfin, legend=False)
-    ax[1].set_xlabel("Time (Ma)")
-    ax[1].set_ylabel("Pressure (GPa)")
-    ax[1].set_xlim(-1, 51)
+    ax[1].add_patch(plt.Rectangle((0, 0), exhumed_list["tin"].max(), 2000, color='grey', alpha=0.5))
+    # Create legend handles manually for tfin and tmax using unique lithologies and colors
+    unique_lithologies = exhumed_list["lithology"].unique()
+    handles_tmax = [mpatches.Patch(color=colors_tmax[lith], label=lith) for lith in unique_lithologies]
+    handles_tfin = [mpatches.Patch(color=colors_tfin[lith], label=lith) for lith in unique_lithologies]
+
+    sns.histplot(
+        data=exhumed_list, x="tmax", hue="lithology", ax=ax[1],
+        palette=colors_tmax, legend=False, alpha=1, multiple="stack",
+        edgecolor="black", linewidth=0.5
+    )
+    sns.histplot(
+        data=exhumed_list, x="tfin", hue="lithology", ax=ax[1],
+        palette=colors_tfin, legend=False, alpha=1, multiple="stack",
+        edgecolor="black", linewidth=0.5
+    )
+    # Add custom legends for tmax and tfin
+    legend_tmax = ax[1].legend(handles=handles_tmax, title="Peak Pressure", loc=(0.75, 0.85), frameon=True)
+    ax[1].add_artist(legend_tmax)  # Manually add the tmax legend
+
+    ax[1].legend(handles=handles_tfin, title="Time at Exhumability", loc=(0.85, 0.85), frameon=True)
+
+    # Set scale, labels, and limits
+    ax[1].set_yscale("log")
+    ax[1].text(1, 20, " Particles \n Subduction", fontsize=18)
+    ax[1].set_xlabel("Time (Ma)", fontsize=labels_font)
+    ax[1].set_ylabel("Particles count (log)", fontsize=labels_font)
+    ax[1].set_xlim(0, 51)
+    ax[1].set_ylim(1, 2.e3)
     ax[1].axvline(x=35, color="grey", linestyle="--", label="35 Ma")
+
+    # Add no vertical space between the plots
+    plt.subplots_adjust(hspace=0)
+
+
+    plt.savefig(f"{plot_loc}/exhumVScr_hist.png", dpi=500)
+    plt.close()
+
+
+    ################ TOTAL PLOT ################
+    labels_font = 15
+
+    # Create the plot
+    # fig, ax = plt.subplots(2, 1, figsize=(15, 10))
+    #mosaic: the plot on top is thinner than the one on the bottom
+    fig, ax = plt.subplots(3, 1, figsize=(17, 15), gridspec_kw={'height_ratios': [0.5, 1.5, 1.5]})
+    # fig.suptitle("Pressure-time conditions")
+
+    # Plot 0: convergence rate
+    ax[0].plot(cr["time"]/1e6, cr["conv_rate"], color="grey", linewidth=3, label = "Convergence rate (cm/yr)")
+    ax[0].legend(loc='upper right', fontsize = labels_font)
+    ax[0].tick_params(axis='both', which='major', labelsize=labels_font-2)
+    # ax[0].set_ylabel("Convergence rate (cm/yr)", color="grey", fontweight="bold")
+    ax[0].set_xlabel("Time (Ma)")
+    ax[0].set_title("Convergence rate and exhumed particles")
+    ax[0].set_ylim(0, cr["conv_rate"].max()+0.2)
+    ax[0].set_xlim(0, 51)
+    ax[0].label_outer()  # Only show outer labels and tick labels
+    # vertical line at 35 Ma
+    ax[0].axvline(x=35, color="grey", linestyle="--", label="35 Ma")
+
+    # Plot 1: Pressure-time for exhumed particles
+    legend_tmax = ax[1].legend(handles=handles_tmax, title="Peak Pressure", loc=(0.69, 0.02), frameon=True, fontsize = labels_font, title_fontsize=labels_font)
+    ax[1].add_artist(legend_tmax)  # Manually add the tmax legend
+    ax[1].legend(handles=handles_tfin, title="Time at Exhumability", loc=(0.814, 0.02), frameon=True, fontsize=labels_font, title_fontsize=labels_font)
+
+    ax[1].add_patch(plt.Rectangle((0, 0), exhumed_list["tin"].max(), 2000, color='grey', alpha=0.5))
+    ax[1].text(1, 0.5, " Particles \n Subduction", fontsize=18)
+    sns.scatterplot(data=exhumed_list, x="tmax", y="maxP", hue="lithology", ax=ax[1], palette=colors_tmax, legend=False, s=80, linewidth=0.5, edgecolor="white")
+    sns.scatterplot(data=exhumed_list, x="tfin", y="Pexh", hue="lithology", ax=ax[1], palette=colors_tfin, legend=False, s=80, linewidth=0.5, edgecolor="white")
+    # ax[1].set_xlabel("Time (Ma)")
+    ax[1].set_ylabel("Pressure (GPa)", fontsize=labels_font)
+    #make ticklabels font bigger
+    ax[1].tick_params(axis='both', which='major', labelsize=labels_font-2)
+    ax[1].set_xlim(0, 51)
+    ax[1].set_ylim(0, exhumed_list["maxP"].max()+0.1)
+    ax[1].label_outer()  # Only show outer labels and tick labels
+    ax[1].axvline(x=35, color="grey", linestyle="--", label="35 Ma")
+
+    # Plot 3: Histogram of tmax and tfin
+    ax[2].add_patch(plt.Rectangle((0, 0), exhumed_list["tin"].max(), 2000, color='grey', alpha=0.5))
+    ax[2].text(1, 30, " Particles \n Subduction", fontsize=18)
+    sns.histplot(
+        data=exhumed_list, x="tmax", hue="lithology", ax=ax[2],
+        palette=colors_tmax, legend=False, alpha=1, multiple="stack",
+        edgecolor="black", linewidth=0.5
+    )
+    sns.histplot(
+        data=exhumed_list, x="tfin", hue="lithology", ax=ax[2],
+        palette=colors_tfin, legend=False, alpha=1, multiple="stack",
+        edgecolor="black", linewidth=0.5
+    )
+    ax[2].set_yscale("log")
+    ax[2].set_xlabel("Time (Ma)", fontsize=labels_font)
+    ax[2].set_ylabel("Log(Particles count)", fontsize=labels_font)
+    ax[2].tick_params(axis='both', which='major', labelsize=labels_font-2)
+    ax[2].set_xlim(0, 51)
+    ax[2].set_ylim(1, 2.e3)
+    ax[2].axvline(x=35, color="grey", linestyle="--", label="35 Ma")
+
+
+
     # add no vertical space between the plots
     plt.subplots_adjust(hspace=0)
-    plt.savefig(f"{plot_loc}/pressure_time.png", dpi=500)
+    
 
-    plt.savefig(f"{plot_loc}/exhumVScr.png", dpi=500)
+    plt.savefig(f"{plot_loc}/scatter_exhumVScr.png", dpi=500)
     plt.close()
 
 

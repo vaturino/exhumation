@@ -175,7 +175,7 @@ def process_particle(p, txt_loc, line_colors, compositions, composition_mapping,
 
 
 
-def plot_max_conditions(df, title_str, plot_file, lith_count):
+def plot_max_conditions(df, title_str, plot_file, lith_count, P:str, T:str, t: str):
         print(f"Plotting exhumed")
         f, a = plt.subplots(1, 3, figsize=(15, 5))
 
@@ -187,7 +187,7 @@ def plot_max_conditions(df, title_str, plot_file, lith_count):
         color_mapping = {lithology: color for lithology, color in zip(unique_lithologies, colors)}
 
         # Scatterplot with consistent colors
-        sns.scatterplot(ax=a[0], data=df, x="maxPT", y="maxPP", hue="lithology", palette=color_mapping, linewidth=0.2, size="tmax")
+        sns.scatterplot(ax=a[0], data=df, x=T, y=P, hue="lithology", palette=color_mapping, linewidth=0.2)
         a[0].set_xlabel("T ($^\circ$C)")
         a[0].set_ylabel("P (GPa)")
         a[0].set_title("Max P")
@@ -200,7 +200,7 @@ def plot_max_conditions(df, title_str, plot_file, lith_count):
         a[1].set_title("Lithology")
 
         # Histogram with hue based on lithology
-        sns.histplot(ax=a[2], data=df, x="tmax", bins=20, hue="lithology", element="step", palette=color_mapping)
+        sns.histplot(ax=a[2], data=df, x=t, bins=20, hue="lithology", element="step", palette=color_mapping)
         a[2].set_xlabel("Peak pressure Time (Ma)")
 
         f.suptitle(title_str)
@@ -257,7 +257,7 @@ def main():
 
     fixed_columns = ["id", "lithology"]
     timing = ["dyn", "trans", "kin"]
-    columns = fixed_columns + [f"{c}_{t}" for c in ["Pm", "tm", "Tm", "time_interval", "ti", "tf"] for t in timing]
+    columns = fixed_columns + [f"{c}_{t}" for c in ["Pm", "tm", "Tm", "time_interval", "ti","tf"] for t in timing]
     stag = pd.DataFrame(columns=columns, index=range(npa))
 
 
@@ -349,19 +349,28 @@ def main():
         percentage = (count / npa) * 100
         exh_title_str += f"{lithology}: count = {count}, percentage = {percentage:.5f}%\n"
 
-    # stag_title_str = ""
-    # for j in range(len(stag.lithology.value_counts())):
-    #     lithology = stag.lithology.value_counts().index[j]
-    #     count = stag.lithology.value_counts().values[j]
-    #     percentage = (count / npa) * 100
-    #     stag_title_str += f"{lithology}: count = {count}, percentage = {percentage:.5f}%\n"
+    stag_title_str = ""
+    for j in range(len(stag.lithology.value_counts())):
+        lithology = stag.lithology.value_counts().index[j]
+        count = stag.lithology.value_counts().values[j]
+        percentage = (count / npa) * 100
+        stag_title_str += f"{lithology}: count = {count}, percentage = {percentage:.5f}%\n"
 
 
+    # Calculate the highest numerical value between Pm_kin, Pm_trans, Pm_dyn
+    stag["Pm"] = stag[["Pm_kin", "Pm_trans", "Pm_dyn"]].max(axis=1)
+    max_Pm_column = stag[["Pm_kin", "Pm_trans", "Pm_dyn"]].idxmax(axis=1)
+    # Map each column to its corresponding tm_i column
+    tm_mapping = {
+        "Pm_kin": "tm_kin",
+        "Pm_trans": "tm_trans",
+        "Pm_dyn": "tm_dyn"
+    }
     
 
-
-    plot_max_conditions(exh, f"Total number of exhumed particles = {len(exh)} - {(len(exh) / npa) * 100:.1f}%", f"{plot_loc}/max_PT_conditions.png", exh_title_str)
-    print("exhumed particles plotted")
+    plot_max_conditions(exh, f"Total number of exhumed particles = {len(exh)} - {(len(exh) / npa) * 100:.1f}%", f"{plot_loc}/max_PT_conditions.png", exh_title_str, "maxPP", "maxPT", "tmax")
+    plot_max_conditions(stag, f"Total number of stagnant particles = {len(stag)} - {(len(stag) / npa) * 100:.1f}%", f"{plot_loc}/max_PT_conditions_stagnant.png", stag_title_str, "Pm_kin", "Tm_kin", "tm_kin")   
+    print("particles plotted")
 
     exh.to_csv(f"{txt_loc}/exhumed_particles.txt", sep="\t", index=False)
     stag = stag.astype({col: 'float' for col in columns if col not in fixed_columns})

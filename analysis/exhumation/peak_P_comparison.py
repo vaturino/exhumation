@@ -105,6 +105,8 @@ def main():
     cr = pd.read_csv(f"{txt_loc}/2D_v.txt", sep="\s+")
     cr["conv_rate"].iloc[0]= np.nan
 
+    # Load the data
+    allp = pd.read_csv(f"{txt_loc}/particles_indexes.txt", sep="\s+")
     stag = pd.read_csv(f"{txt_loc}/stagnant_particles.txt", sep="\s+")
     exh = pd.read_csv(f"{txt_loc}/exhumed_particles.txt", sep="\s+")
     subd = pd.read_csv(f"{txt_loc}/subducted_particles.txt", sep="\s+")
@@ -138,24 +140,24 @@ def main():
     a1[0,0].set_title("Exhumed particles: peak Pressure")
     a1[0,0].set_xlim(0, 900)
     a1[0,0].set_ylim(0, 3.5)
+    a1[0,0].text(10, 3, "Percentage of\nexhumable\nparticles: " + str(round(len(exh)/len(allp)*100, 2)) + "%", fontsize=10)
     sns.kdeplot(data=rocks, x="T", y="P", ax=a1[0,0], fill = True, cbar = False, alpha = .7, zorder=2, color='grey')
     
 
     #plot stagnating peak P conditions over rocks
-    sns.scatterplot(data=stag,
-                    x="maxPT",
-                    y="maxPP",
-                    hue="lithology",
-                    ax=a1[0,1],
-                    zorder = 10,
-                    alpha=1,
-                    palette=palette_stag)
+    sns.scatterplot(data=stag, x="Tm_kin", y="Pm_kin", hue="lithology", ax=a1[0,1], zorder = 10, palette=palette_stag, legend=True)
+    sns.scatterplot(data=stag, x="Tm_dyn", y="Pm_dyn", hue="lithology", ax=a1[0,1], zorder = 10, palette=palette_stag, legend=False)
+    sns.scatterplot(data=stag, x="Tm_trans", y = "Pm_trans", hue="lithology", ax=a1[0,1], zorder = 10, palette=palette_stag, legend=False)
     a1[0,1].set_ylabel("Pressure (GPa)")
     a1[0,1].set_xlabel("T ($^\circ$C)")
     a1[0,1].set_title("Peak pressure")
     a1[0,1].set_xlim(0, 900)
     a1[0,1].set_ylim(0, 3.5)
+    a1[0,1].text(10, 3, "Percentage of\nstagnating\nparticles: " + str(round(len(stag)/len(allp)*100, 2)) + "%", fontsize=10)
     sns.kdeplot(data=rocks, x="T", y="P", ax=a1[0,1], fill = True, cbar = False, alpha = .7, zorder=2, color='grey')
+    
+    
+
 
     for s in range(0, len(subd), 50):
         id = subd["id"].iloc[s].astype(int)
@@ -187,8 +189,17 @@ def main():
     stag_lithology_counts.plot.pie(autopct='%1.1f%%', ax=a1[1,1], colors=stag_lithology_colors)
     a1[1,1].set_title("Stagnant particles: lithology distribution")
 
-    #leave completely empty the last subplot
-    a1[1,2].axis('off')
+    #Last subplot is the amount of stagnant particles that are stagnant for kin, dyn, trans
+    dyn = len(stag[stag["tm_dyn"].notna()])
+    kin = len(stag[stag["tm_kin"].notna()])
+    trans = len(stag[stag["tm_trans"].notna()])
+
+    #pie chart
+    a1[1,2].pie([dyn,kin, trans], labels = ['Dynamic\nslowdown', 'Kinematic\nslowdown', 'Transition\npoint'], colors = ['lightcoral', 'lightblue', 'blueviolet'], autopct='%1.1f%%', startangle=90)
+    a1[1,2].text(-1.5, -1.2, "Number of particles stagnating during dynamic slowdown: " + str(dyn), fontsize=10)
+    a1[1,2].text(-1.5, -1.3, "Number of particles stagnating during kinematic slowdown: " + str(kin), fontsize=10)
+    a1[1,2].text(-1.5, -1.4, "Number of particles stagnating through the transition: " + str(trans), fontsize = 10)
+
 
 
     
