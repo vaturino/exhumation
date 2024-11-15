@@ -111,7 +111,7 @@ def assign_particle_values(particles, lowgrad_dyn, lowgrad_kin, lowgrad_trans, i
 
 
 
-def process_particle(p, txt_loc, line_colors, compositions, composition_mapping, thresh, time_thresh, stagnation_min, c, ymax=900.):
+def process_particle(p, txt_loc, line_colors, compositions, composition_mapping, thresh, time_thresh, stagnation_min, c, ymax=901.):
     # Load data
     pt_single = load_data(p, txt_loc)
 
