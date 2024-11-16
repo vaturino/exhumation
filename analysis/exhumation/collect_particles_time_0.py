@@ -59,7 +59,7 @@ def main():
     for ind_m, m in tqdm(enumerate(configs['models'])): 
         
 
-        plot_loc = f"../plots/single_models/{configs['models'][ind_m]}"
+        plot_loc = f"/home/vturino/PhD/projects/exhumation/plots/single_models/{configs['models'][ind_m]}"
         txt_loc = f'{plot_loc}/txt_files'
         if not os.path.exists(txt_loc):
             os.mkdir(txt_loc)
@@ -71,6 +71,7 @@ def main():
         tr  = 0.5
         compositions = configs['compositions']
         track = configs['track']
+        
 
         # load data for the first and last time step
         initial = load_data(csvs_loc+m, '/particles/full.1.gzip', compositions, tr)
@@ -80,7 +81,7 @@ def main():
         dataset["lithology"] = [0]*len(dataset)
 
         # create lithology classes
-        # for c in compositions:
+        # for c in compositions:x
         #     dataset[c][dataset[c] >= 0.5] = 1
         #     dataset[c][dataset[c] < 0.5] = 0
 
@@ -91,7 +92,7 @@ def main():
         dataset["lithology"] = dataset["lithology"].round().astype(int)
 
         # sample 5% of the dataset
-        msk = np.random.rand(len(dataset)) <= 0.2
+        msk = np.random.rand(len(dataset)) <= 0.05
         sample = dataset[msk]
 
         # get the count of each class

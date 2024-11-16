@@ -125,7 +125,7 @@ def process_particle(p, txt_loc, line_colors, compositions, composition_mapping,
     max_depth = ymax - pt_single["depth"].min()
     exhumed = ((pt_single.depth.iat[-1] - pt_single.depth.min()) >= thresh * max_depth) and (max_depth > 10.)
 
-    stagnant = not exhumed
+    stagnant = not exhumed #and (pt_single.Plith.max() <= 6.)
     subducted = False  # Default as not subducted
 
     particle_data = None
