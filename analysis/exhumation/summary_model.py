@@ -161,7 +161,7 @@ def main():
     a1[1].set_title("Exhumed particles: peak Pressure")
     a1[1].set_xlim(0, 900)
     a1[1].set_ylim(0, 3.5)
-    sns.kdeplot(data=rocks, x="T", y="P", ax=a1[1], fill = True, cbar = False, alpha = .7, zorder=2, color='grey')
+    sns.kdeplot(data=rocks, x="T", y="P", ax=a1[1], fill = True, cbar = False, alpha = 1, zorder=2, color='whitesmoke')
     
 
     #plot stagnating peak P conditions over rocks
@@ -173,7 +173,7 @@ def main():
     a1[2].set_title("Peak pressure")
     a1[2].set_xlim(0, 900)
     a1[2].set_ylim(0, 3.5)
-    sns.kdeplot(data=rocks, x="T", y="P", ax=a1[2], fill = True, cbar = False, alpha = .7, zorder=2, color='grey')
+    sns.kdeplot(data=rocks, x="T", y="P", ax=a1[2], fill = True, cbar = False, alpha = 1, zorder=2, color='whitesmoke')
     
     
 
@@ -186,7 +186,7 @@ def main():
     a1[0].set_ylabel("Pressure (GPa)")
     a1[0].set_xlabel("Temperature (C)")
     a1[0].set_title("Subducted particles")
-    sns.kdeplot(data=rocks, x="T", y="P", ax=a1[0], fill = True, cbar = False, alpha = .7, zorder=1, color='grey')
+    sns.kdeplot(data=rocks, x="T", y="P", ax=a1[0], fill = True, cbar = False, alpha = 1, zorder=1, color='whitesmoke')
     a1[0].set_ylim(0, 3.5)
     a1[0].set_xlim(0, 900)
 

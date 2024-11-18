@@ -21,6 +21,8 @@ sys.path.insert(0, path)
 from libraries.functions import *
 from libraries.particles import *
 import plotly.graph_objects as go
+from matplotlib.patches import Rectangle
+
 
 
 def main():
@@ -67,8 +69,38 @@ def main():
         else:
             file_count = len(os.listdir(plot_loc))
 
-        f1, a1 = plt.subplots(3,3, figsize=(15, 11))
+        f1, a1 = plt.subplots(3,3, figsize=(15, 9))
         plotname = f"{plot_loc}time_evolution.ps" 
+
+        # # Add a rectangle around the first column
+        # margin_left = 0.15  # Left margin
+        # margin_right = - 0.047  # Right margin
+        # margin_top = 0.15  # Top margin
+        # margin_bottom = 0.095  # Bottom margin
+
+        # text_color = ["black", "darkgreen", "navy"]
+        # boxcolor = ["silver", "palegreen", "skyblue"]
+
+        # # Get the positions of the subplots in the first column
+        # bbox_top = a1[0, 0].get_position()  # Topmost subplot in the first column
+        # bbox_bottom = a1[2, 0].get_position()  # Bottommost subplot in the first column
+
+        # # Calculate the rectangle bounds
+        # xl = bbox_top.x0 - margin_left  # Left edge with margin
+        # xr = bbox_top.x1 + margin_right  # Right edge with margin
+        # yb = bbox_bottom.y0 - margin_bottom  # Bottom edge with margin
+        # yt = bbox_top.y1 + margin_top  # Top edge with margin
+        # width = xr - xl  # Width of the rectangle
+        # height = yt - yb  # Height of the rectangle
+
+        # # Create and add the rectangle to the figure
+        # rect = Rectangle(
+        #     (xl, yb), width, height, transform=f1.transFigure,
+        #     color=boxcolor[0], fill=False, alpha = 1, lw=2
+        # )
+        # f1.patches.append(rect)
+
+
 
         # Before the plotting loop, enable vector simplification globally
         plt.rcParams['path.simplify'] = True
@@ -137,8 +169,8 @@ def main():
             a1[0, indt].set_xlim([xmin_plot / 1.e3, xmax_plot / 1.e3])
             a1[0, indt].set_aspect('equal')
             a1[0, indt].spines[['top']].set_visible(False)
-            time_label = f"Time: {time_array[t, 1]/1e6:.1f} Myr"
-            a1[0, indt].text(0.05, 0.1, time_label, transform=a1[0, indt].transAxes, fontsize=12, verticalalignment='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+            # time_label = f"Time: {time_array[t, 1]/1e6:.1f} Myr"
+            # a1[0, indt].text(0.05, 0.1, time_label, transform=a1[0, indt].transAxes, fontsize=12, verticalalignment='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
 
 
 
@@ -168,13 +200,19 @@ def main():
         a1[1,0].set_ylabel('y [km]')
         a1[2,0].set_ylabel('y [km]')
 
-        cbar = plt.colorbar(p1, orientation='horizontal', ax=a1[2, 0])
+
+
+        # Colorbars
+        cbar1 = f1.add_axes([0.92, 0.70, 0.02, 0.25])  # Adjust the position and size as needed
+        cbar = plt.colorbar(p1, cax = cbar1, orientation='vertical')
         cbar.set_ticks(np.arange(len(colors_for_terrain)))
         cbar.set_ticklabels([terrain for terrain in present_terrains])  # Set tick labels to present terrain names
-        cbar.set_label('Terrain', rotation=0, labelpad=5)  
-        plt.colorbar(p2, orientation='horizontal', label='Log(Strain rate) [s-1]', ax=a1[2, 1])
-        plt.colorbar(p3, orientation='horizontal', label='Log(Viscosity) [Pa s]', ax=a1[2, 2])
-        plt.subplots_adjust(hspace = 0.)  
+        cbar.set_label('Terrain', rotation=90, labelpad=0)  
+        cbar2 = f1.add_axes([0.92, 0.385, 0.02, 0.25])
+        plt.colorbar(p2, orientation='vertical', label='Log(Strain rate) [s-1]', cax=cbar2)
+        cbar_ax = f1.add_axes([0.92, 0.07, 0.02, 0.25])  # Adjust the position and size as needed
+        plt.colorbar(p3, cax=cbar_ax, orientation='vertical', label='Log(Viscosity) [Pa s]')
+        plt.subplots_adjust(hspace = 0., right=0.9)  
 
         # # Enable vector simplification
         # plt.rcParams['path.simplify'] = True

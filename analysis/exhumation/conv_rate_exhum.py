@@ -80,7 +80,7 @@ def main():
     ax[0].axvline(x=35, color="grey", linestyle="--", label="35 Ma")
 
     # Plot 1: Pressure-time for exhumed particles
-    ax[1].add_patch(plt.Rectangle((0, 0), exhumed_list["tin"].max(), 2000, color='grey', alpha=0.5))
+    ax[1].add_patch(plt.Rectangle((0, 0), exhumed_list["tin"].max(), 2000, color='silver', alpha=0.7))
     # Create legend handles manually for tfin and tmax using unique lithologies and colors
     unique_lithologies = exhumed_list["lithology"].unique()
     handles_tmax = [mpatches.Patch(color=colors_tmax[lith], label=lith) for lith in unique_lithologies]
@@ -115,7 +115,7 @@ def main():
     plt.subplots_adjust(hspace=0)
 
 
-    plt.savefig(f"{plot_loc}/exhumVScr_hist.png", dpi=500)
+    plt.savefig(f"{plot_loc}/exhumVScr_hist.eps", dpi=500)
     plt.close()
 
 
@@ -146,7 +146,7 @@ def main():
     ax[1].add_artist(legend_tmax)  # Manually add the tmax legend
     ax[1].legend(handles=handles_tfin, title="Time at Exhumability", loc=(0.814, 0.02), frameon=True, fontsize=labels_font, title_fontsize=labels_font)
 
-    ax[1].add_patch(plt.Rectangle((0, 0), exhumed_list["tin"].max(), 2000, color='grey', alpha=0.5))
+    ax[1].add_patch(plt.Rectangle((0, 0), exhumed_list["tin"].max(), 2000, color='silver', alpha=0.7))
     ax[1].text(1, 0.5, " Particles \n Subduction", fontsize=18)
     sns.scatterplot(data=exhumed_list, x="tmax", y="maxP", hue="lithology", ax=ax[1], palette=colors_tmax, legend=False, s=80, linewidth=0.5, edgecolor="white")
     sns.scatterplot(data=exhumed_list, x="tfin", y="Pexh", hue="lithology", ax=ax[1], palette=colors_tfin, legend=False, s=80, linewidth=0.5, edgecolor="white")
@@ -160,7 +160,7 @@ def main():
     ax[1].axvline(x=35, color="grey", linestyle="--", label="35 Ma")
 
     # Plot 3: Histogram of tmax and tfin
-    ax[2].add_patch(plt.Rectangle((0, 0), exhumed_list["tin"].max(), 2000, color='grey', alpha=0.5))
+    ax[2].add_patch(plt.Rectangle((0, 0), exhumed_list["tin"].max(), 2000, color='silver', alpha=0.7))
     ax[2].text(1, 30, " Particles \n Subduction", fontsize=18)
     sns.histplot(
         data=exhumed_list, x="tmax", hue="lithology", ax=ax[2],
