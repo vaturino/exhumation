@@ -43,8 +43,8 @@ def main():
 
     plot_loc = "/home/vturino/PhD/projects/exhumation/plots/single_models"
 
-    tests = ["velocity", "viscosity", "friction", "serpentinization"]
-    names = ["velocity_names", "viscosity_names", "friction_names", "serpentinization_names"]
+    tests = ["velocity"] #, "viscosity", "friction", "serpentinization"]
+    names = ["velocity_names"]# , "viscosity_names", "friction_names", "serpentinization_names"]
             
     
     for idx, test in enumerate(tests):
@@ -70,7 +70,7 @@ def main():
                 text_loc = f"{plot_loc}/{m}/txt_files"
                 initial = pd.read_csv(f"{text_loc}/particles_indexes.txt", sep="\t")
                 exhumed = pd.read_csv(f"{text_loc}/exhumed_particles.txt", sep="\t")
-                stagnant = pd.read_csv(f"{text_loc}/stagnant_particles.txt", sep="\t")
+                stagnant = pd.read_csv(f"{text_loc}/stagnant_particles.txt", sep="\s+")
 
                 nparts.append(len(initial))
 

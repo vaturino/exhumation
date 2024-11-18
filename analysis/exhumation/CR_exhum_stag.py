@@ -180,7 +180,7 @@ def main():
 
 
     # Plot 1: Count of particles for each 0.5 Myr for exhumed particles, tfin, do as in first plot
-    ax[1].add_patch(plt.Rectangle((0, 0), exhumed_list["tin"].max(), 2000, color='silver', alpha=alpha))
+    ax[1].add_patch(plt.Rectangle((0, 0), exhumed_list["tin"].max(), 5000, color='silver', alpha=alpha))
     
     # Create legend handles manually for tfin and tmax using unique lithologies and colors
     unique_lithologies_exhumed = exhumed_list["lithology"].unique()
@@ -219,12 +219,12 @@ def main():
     ax[1].set_xlabel("Time (Ma)", fontsize=labels_font)
     ax[1].set_ylabel("Particles count (log)", fontsize=labels_font)
     ax[1].set_xlim(0, 50)
-    ax[1].set_ylim(0.9, 2.e3)
+    ax[1].set_ylim(0.9, 5.e3)
     ax[1].axvline(x=35, color="grey", linestyle="--", label="35 Ma")
 
 
     # Plot 2: Count of particles for each 0.5 Myr for stagnant particles, tm_kin, tm_dyn, tm_trans: do like for exhumed
-    ax[2].add_patch(plt.Rectangle((0, 0), exhumed_list["tin"].max(), 2000, color='silver', alpha=alpha))
+    ax[2].add_patch(plt.Rectangle((0, 0), exhumed_list["tin"].max(), 5000, color='silver', alpha=alpha))
 
     unique_lithologies_stagnant = stagnant_list["lithology"].unique()
     handles_stagnant = [mpatches.Patch(color=colors_tfin[lith], label=lith) for lith in unique_lithologies_stagnant]
@@ -334,7 +334,7 @@ def main():
     ax[2].text(1, 20, " Particles \n Subduction", fontsize=18)
     ax[2].legend(handles=handles_stagnant, title="Lithologies")
     ax[2].set_xlim(0, 50)
-    ax[2].set_ylim(0.9, 2.e3)
+    ax[2].set_ylim(0.9, 5.e3)
     ax[2].set_yscale("log")
     ax[2].axvline(x=35, color="grey", linestyle="--", label="35 Ma")
 
