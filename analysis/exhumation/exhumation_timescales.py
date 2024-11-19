@@ -237,4 +237,31 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main()       
+    
+    
+    
+    
+    
+     # # Calculate exdepth: minimum depth after tmax
+        # tmax = init["tmax"].iloc[p]  # Time at max pressure
+        # post_tmax_data = part[part["time"] > tmax]  # Data where time > tmax
+
+        # if not post_tmax_data.empty:
+        #     exh["Pexh"].iloc[p] = post_tmax_data["Plith"].min()
+        # else:
+        #     exh["Pexh"].iloc[p] = np.nan
+
+        # # Compute tin and Pin (time and pressure when depth changes by 2 units)
+        # idx = 0
+        # for i in range(len(part)):
+        #     if (part.depth.iloc[0] - part.depth.iloc[i]) >= 2.0:
+        #         exh["tin"].iloc[p] = part["time"].iat[i] / 2.0
+        #         exh["Pin"].iloc[p] = part["Plith"].iat[i]
+        #         idx = i
+        #         break
+
+        # # Compute tfin and exdepth (time and pressure at exdepth)
+        # idxmin = post_tmax_data.Plith.idxmin()  # Index of the minimum depth
+        # exh["tfin"].iloc[p] = part["time"].iloc[idxmin]
+        # exh["exdepth"].iloc[p] = ymax - part["depth"].iloc[idxmin]

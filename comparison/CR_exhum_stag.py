@@ -84,7 +84,7 @@ def main():
 
 
                 # Plot 1: Count of particles for each 0.5 Myr for exhumed particles, tfin, do as in first plot
-                ax[ind_m+1, 0].add_patch(plt.Rectangle((0, 0), exhumed_list["tin"].max(), 5000, color='silver', alpha=alpha))
+                # ax[ind_m+1, 0].add_patch(plt.Rectangle((0, 0), exhumed_list["tin"].max(), 5000, color='silver', alpha=alpha))
                 
                 # Create legend handles manually for tfin and tmax using unique lithologies and colors
                 unique_lithologies_exhumed = exhumed_list["lithology"].unique()
@@ -93,7 +93,7 @@ def main():
 
 
                 # Histograms for tmax and tfin (Manual layering with plt.bar)
-                bin_edges = np.arange(0, 50.5, 0.5)  # Define bin edges
+                bin_edges = np.arange(0, 50.5, 1)  # Define bin edges
                 width = np.diff(bin_edges)
 
                 # Plot tfin bars (lower count in front, higher in back)
@@ -119,7 +119,7 @@ def main():
                 # Set scale, labels, and limits
                 ax[ind_m+1, 0].set_yscale("log")
                 ax[ind_m+1, 0].label_outer()  # Only show outer labels and tick labels
-                ax[ind_m+1, 0].text(1, 20, " Particles \n Subduction", fontsize=15)
+                # ax[ind_m+1, 0].text(1, 20, " Particles \n Subduction", fontsize=15)
                 ax[ind_m+1, 0].set_xlabel("Time (Ma)", fontsize=labels_font)
                 ax[ind_m+1, 0].set_ylabel("Particles count (log)", fontsize=labels_font)
                 ax[ind_m+1, 0].set_xlim(0, 50)
@@ -128,13 +128,13 @@ def main():
 
 
                 # Plot 2: Count of particles for each 0.5 Myr for stagnant particles, tm_kin, tm_dyn, tm_trans: do like for exhumed
-                ax[ind_m+1, 1].add_patch(plt.Rectangle((0, 0), exhumed_list["tin"].max(), 5000, color='silver', alpha=alpha))
+                # ax[ind_m+1, 1].add_patch(plt.Rectangle((0, 0), exhumed_list["tin"].max(), 5000, color='silver', alpha=alpha))
 
                 unique_lithologies_stagnant = stagnant_list["lithology"].unique()
                 handles_stagnant = [mpatches.Patch(color=colors_tfin[lith], label=lith) for lith in unique_lithologies_stagnant]
 
                 # Define bin edges for tm_kin
-                bin_edges = np.arange(0, 50, 0.5)  # Bin edges from 0 to 50 with step 0.5
+                bin_edges = np.arange(0, 50, 1)  # Bin edges from 0 to 50 with step 0.5
                 width = np.diff(bin_edges)
 
                 # Initialize a dictionary to store the histogram counts for each lithology
@@ -235,7 +235,7 @@ def main():
 
 
                 # Add a title, labels, and legend
-                ax[ind_m+1, 1].text(1, 20, " Particles \n Subduction", fontsize=15)
+                # ax[ind_m+1, 1].text(1, 20, " Particles \n Subduction", fontsize=15)
                 # ax[ind_m+1, 1].legend(handles=handles_stagnant, title="Lithologies")
                 ax[ind_m+1, 1].set_xlim(0, 50)
                 ax[ind_m+1, 1].set_ylim(0.9, 5.e3)

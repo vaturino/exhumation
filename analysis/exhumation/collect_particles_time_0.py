@@ -92,7 +92,7 @@ def main():
         dataset["lithology"] = dataset["lithology"].round().astype(int)
 
         # sample 5% of the dataset
-        msk = np.random.rand(len(dataset)) <= 0.05
+        msk = np.random.rand(len(dataset)) <= 0.2
         sample = dataset[msk]
 
         # get the count of each class

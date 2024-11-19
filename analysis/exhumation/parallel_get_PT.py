@@ -89,11 +89,11 @@ def main():
         plot_loc = f"/home/vturino/PhD/projects/exhumation/plots/single_models/{configs['models'][ind_m]}"
         txt_loc, pt_files = setup_directories(plot_loc)
 
-        with open(f"{txt_loc}/particles_indexes.txt", "r") as f:
+        with open(f"{txt_loc}/particles_indexes.csv", "r") as f:
             npart = len(f.readlines()) - 1
 
         initialize_particle_files(pt_files, npart, compositions)
-        idx = pd.read_csv(f"{txt_loc}/particles_indexes.txt", sep="\s+")
+        idx = pd.read_csv(f"{txt_loc}/particles_indexes.csv")
 
         all_data = [[] for _ in range(npart)]
 

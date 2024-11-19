@@ -189,7 +189,7 @@ def main():
 
 
     # Histograms for tmax and tfin (Manual layering with plt.bar)
-    bin_edges = np.arange(0, 50.5, 0.5)  # Define bin edges
+    bin_edges = np.arange(0, 50.5, 1)  # Define bin edges
     width = np.diff(bin_edges)
 
     # Plot tfin bars (lower count in front, higher in back)
@@ -230,7 +230,7 @@ def main():
     handles_stagnant = [mpatches.Patch(color=colors_tfin[lith], label=lith) for lith in unique_lithologies_stagnant]
 
     # Define bin edges for tm_kin
-    bin_edges = np.arange(0, 50, 0.5)  # Bin edges from 0 to 50 with step 0.5
+    bin_edges = np.arange(0, 50, 1)  # Bin edges from 0 to 50 with step 0.5
     width = np.diff(bin_edges)
 
     # Initialize a dictionary to store the histogram counts for each lithology
