@@ -48,6 +48,8 @@ def main():
 
             
             data = pd.read_parquet(f"{csvs_loc}{m}/fields/full.{int(t)}.gzip") 
+            # data = data.sample(frac=0.1)  # Reduces the number of data points by half
+
             data["Tcel"] = data["T"] - 273.15  # Convert to Celsius
             #eliminate data["opc"] != 0 and data["op"] != 0
             data = data[(data["opc"] < tr) & (data["op"] <tr)]
@@ -72,23 +74,27 @@ def main():
             triang.set_mask(np.logical_and(maxi > max_radius, y[triangles][:,1] < 90.))
 
             # if data Tcel > 700. put it to nan
-            data["Tcel"] = np.where(data["Tcel"] > 700, np.nan, data["Tcel"])
+            data["Tcel"] = np.where(data["Tcel"] > 900, np.nan, data["Tcel"])
 
             # Mask values above 700°C (keep values < 700°C)
             Tcel_array = np.array(data["Tcel"])
            
 
-            ax[indt].tripcolor(triang, Tcel_array, shading='flat', cmap=cmap)
+            ax[indt].tripcolor(triang, Tcel_array, shading='flat', cmap=cmap, rasterized=True)
             ax[indt].set_ylim(ymax_plot/1.e3, ymin_plot/1.e3)
             ax[indt].set_aspect('equal')
             ax[indt].spines[['top', 'bottom', 'left', 'right']].set_visible(False)
             ax[indt].set_xticks([])
             ax[indt].set_yticks([])
+            ax[indt].set_xlim(xmin_plot/1.e3, (xmax_plot-2000)/1.e3)
+
  
 
 
-            
-        plt.savefig(plotname, bbox_inches='tight', format='eps', dpi=500)
+        fig.subplots_adjust(hspace=0)  
+        fig.subplots_adjust(wspace=0)
+        
+        plt.savefig(plotname, bbox_inches='tight', format='eps', dpi=500, transparent = True)
         plt.clf()
         plt.close('all')
 
