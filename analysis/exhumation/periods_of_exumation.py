@@ -259,7 +259,7 @@ def main():
     grad_thresh = 0.008
     time_thresh = 0.5
 
-    with ProcessPoolExecutor() as executor:
+    with ProcessPoolExecutor(max_workers=2) as executor:
         futures = [
             executor.submit(process_particle, part["id"].iloc[i], part.iloc[i], txt_loc, stagnation_min, time_thresh, sloc, sfiles, grad_thresh)
             for i in range(len(part))

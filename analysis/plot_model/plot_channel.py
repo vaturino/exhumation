@@ -70,9 +70,10 @@ def main():
         else:
             file_count = len(os.listdir(plot_loc))
 
-        for t in tqdm(range(0, len(time_array), 2)):
+        # for t in tqdm(range(0, len(time_array), 2)):
+        for t in [28, 40, 60, 90]:
             f1, a1 = plt.subplots(2, 2, figsize=(15, 10))
-            plotname = f"{plot_loc}{int(t/2)}.png" 
+            plotname = f"{plot_loc}{int(t/2)}.pdf" 
             data = pd.read_parquet(f"{csvs_loc}{m}/fields/full.{int(t)}.gzip")
             data["lithology"] = 0
             data["logvisc"] = np.log10(data["viscosity"])
@@ -189,7 +190,7 @@ def main():
             a1[1,1].set_aspect('equal')
 
             # Save and close the plot
-            plt.savefig(plotname, bbox_inches='tight', format='png', dpi=500)
+            plt.savefig(plotname, bbox_inches='tight', format='pdf', dpi=500)
             plt.clf()
             plt.close('all')
 

@@ -86,9 +86,10 @@ def main():
 
 
 
-        for t in tqdm(range(0, len(time_array), 2)):
+        # for t in tqdm(range(0, len(time_array), 2)):
+        for t in [80, 90]:
             f1, a1 = plt.subplots(2, 2, figsize=(15, 10))
-            plotname = f"{plot_loc}{int(t/2)}.png" 
+            plotname = f"{plot_loc}{int(t/2)}.pdf" 
             data = pd.read_parquet(f"{csvs_loc}{m}/fields/full.{int(t)}.gzip")
             data["lithology"] = 0
             data["logvisc"] = np.log10(data["viscosity"])
@@ -141,7 +142,7 @@ def main():
             data["terrain_idx"] = data["terrain"].map({label: idx for idx, label in enumerate(present_terrains)})
 
             # Plot lithology using terrain indices and corresponding color map
-            p1 = a1[0,0].tripcolor(triang, data["terrain_idx"], cmap=matplotlib.colors.ListedColormap(colors_for_terrain), shading='gouraud', vmin=0, vmax=len(colors_for_terrain)-1)
+            p1 = a1[0,0].tripcolor(triang, data["terrain_idx"], cmap=matplotlib.colors.ListedColormap(colors_for_terrain), shading='gouraud', vmin=0, vmax=len(colors_for_terrain)-1, rasterized = True)
             a1[0,0].tricontour(triang, data["T"] - 273.5, colors='k', levels=[100, 300, 500, 700, 900], linewidths=0.3)
 
             # Terrain colorbar
@@ -164,11 +165,11 @@ def main():
             a1[1,0].scatter(e3['x'].iloc[t]/1.e3, (ymax_plot - e3['y'].iloc[t])/1.e3, c='k', s=size, marker='s', zorder = 10)
             a1[1,0].scatter(e4['x'].iloc[t]/1.e3, (ymax_plot - e4['y'].iloc[t])/1.e3, c='k', s=size, marker='*', zorder = 10)
             a1[1,0].scatter(e5['x'].iloc[t]/1.e3, (ymax_plot - e5['y'].iloc[t])/1.e3, c='k', s=size, marker='x',  zorder = 10)
-            a1[1,0].scatter(l1['x'].iloc[t]/1.e3, (ymax_plot - l1['y'].iloc[t])/1.e3, c='green', s=size, marker='o', zorder = 10)
-            a1[1,0].scatter(l2['x'].iloc[t]/1.e3, (ymax_plot - l2['y'].iloc[t])/1.e3, c='green', s=size, marker='d', zorder = 10)
-            a1[1,0].scatter(l3['x'].iloc[t]/1.e3, (ymax_plot - l3['y'].iloc[t])/1.e3, c='green', s=size, marker='s', zorder = 10)
-            a1[1,0].scatter(l4['x'].iloc[t]/1.e3, (ymax_plot - l4['y'].iloc[t])/1.e3, c='green', s=size, marker='*', zorder = 10)
-            a1[1,0].scatter(l5['x'].iloc[t]/1.e3, (ymax_plot - l5['y'].iloc[t])/1.e3, c='green', s=size, marker='x', zorder = 10)
+            a1[1,0].scatter(l1['x'].iloc[t]/1.e3, (ymax_plot - l1['y'].iloc[t])/1.e3, c='grey', s=size, marker='o', zorder = 10)
+            a1[1,0].scatter(l2['x'].iloc[t]/1.e3, (ymax_plot - l2['y'].iloc[t])/1.e3, c='grey', s=size, marker='d', zorder = 10)
+            a1[1,0].scatter(l3['x'].iloc[t]/1.e3, (ymax_plot - l3['y'].iloc[t])/1.e3, c='grey', s=size, marker='s', zorder = 10)
+            a1[1,0].scatter(l4['x'].iloc[t]/1.e3, (ymax_plot - l4['y'].iloc[t])/1.e3, c='grey', s=size, marker='*', zorder = 10)
+            a1[1,0].scatter(l5['x'].iloc[t]/1.e3, (ymax_plot - l5['y'].iloc[t])/1.e3, c='grey', s=size, marker='x', zorder = 10)
 
             a1[0,1].spines[['top']].set_visible(False)
             plt.colorbar(p2, orientation='horizontal', label='Log(Strain rate) [s-1]', ax=a1[0,1])
@@ -190,7 +191,7 @@ def main():
             a1[0,0].scatter(l5['x'].iloc[t]/1.e3, (ymax_plot - l5['y'].iloc[t])/1.e3, c='green', s=size, marker='x', zorder = 10)
 
             # Plot horizontal stress
-            p3 = a1[1,0].tripcolor(triang, data["shear_stress:0"], cmap='RdBu_r', shading='gouraud', vmin=-1e8, vmax=1e8)
+            p3 = a1[1,0].tripcolor(triang, data["shear_stress:0"], cmap='RdBu_r', shading='gouraud', vmin=-1e8, vmax=1e8, rasterized=True)
             a1[1,0].spines[['top']].set_visible(False)
             plt.colorbar(p3, orientation='horizontal', label='Horizontal stress [Pa]', ax=a1[1,0])
             a1[1,0].set_ylim([(ymax_plot - ymin_plot) / 1.e3, -5])
@@ -200,7 +201,7 @@ def main():
 
 
             # Viscosity plot + velocity vectors
-            p3 = a1[1,1].tripcolor(triang, data["logvisc"], shading='gouraud', vmin=18, vmax=24)
+            p3 = a1[1,1].tripcolor(triang, data["logvisc"], shading='gouraud', vmin=18, vmax=24, rasterized=True)   
             vel_plot_thresh = 0.0001  # don't plot velocity vectors smaller than this (cm/yr)
             step = 250  # plot every 100th vector to reduce the number of vectors plotted
             # Filter out small velocity vectors and downsample data for plotting
@@ -221,7 +222,7 @@ def main():
             a1[1,1].set_aspect('equal')
 
             # Save and close the plot
-            plt.savefig(plotname, bbox_inches='tight', format='png', dpi=500)
+            plt.savefig(plotname, bbox_inches='tight', format='pdf', dpi=500)
             plt.clf()
             plt.close('all')
 

@@ -49,7 +49,7 @@ def main():
             model_names = models[names[tests.index(test)]]
             for ind_m, m in enumerate(models[test]):
                 text_loc = f"{plot_loc}/{m}/txt_files"
-                exhumed_list = pd.read_csv(f"{text_loc}/timing_exhumed_particles.txt", sep="\s+")
+                exhumed_list = pd.read_csv(f"{text_loc}/exhumed_times.txt", sep="\s+")
                 stagnant_list = pd.read_csv(f"{text_loc}/stagnant_particles.txt", sep="\s+")
                 cr = pd.read_csv(f"{text_loc}/2D_v.txt", sep="\s+")
                 cr["conv_rate"].iloc[0] = np.nan
@@ -100,7 +100,7 @@ def main():
                 bin_edges = np.arange(0, 50.5, 1)  # Define bin edges
                 width = np.diff(bin_edges)
 
-                sns.histplot(data=exhumed_list, x="tfin", bins=bin_edges, hue="lithology", palette=colors_tfin, ax=ax[ind_m+1, 0], linewidth=0.5, legend = False, element = "step", alpha = alpha)
+                sns.histplot(data=exhumed_list, x="ti", bins=bin_edges, hue="lithology", palette=colors_tfin, ax=ax[ind_m+1, 0], linewidth=0.5, legend = False, element = "step", alpha = alpha)
 
                 # # Plot tfin bars (lower count in front, higher in back)
                 # for i in range(len(bin_edges) - 1):

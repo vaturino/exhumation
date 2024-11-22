@@ -5,11 +5,15 @@ import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 import pandas as pd
 import argparse
-import os
+import os, sys
 import json
 from pathlib import Path
 from tqdm import tqdm
 from matplotlib.colors import LinearSegmentedColormap
+path = str(Path(Path(__file__).parent.absolute()).parent.absolute())
+sys.path.insert(0, path)
+from libraries.functions import *
+from libraries.particles import *
 
 def main():
     parser = argparse.ArgumentParser(description='Script to plot temperature and viscosity fields.')
@@ -25,6 +29,8 @@ def main():
 
     # Define a single color (e.g., RGB format)
     single_color = ["gray", "forestgreen", "blue"]
+    background_color = ["silver", "palegreen", "skyblue"]
+    background_alpha = 0.2
 
    
 
@@ -39,7 +45,7 @@ def main():
             os.mkdir(plot_loc)
 
         fig, ax = plt.subplots(1, 3, figsize=(15, 5))
-        plotname = f"{plot_loc}slab.eps" 
+        plotname = f"{plot_loc}slab.pdf" 
 
         for indt, t in enumerate([1, 50, 90]):  # Loop over selected time steps
             tr = 1e-2
@@ -52,13 +58,15 @@ def main():
 
             data["Tcel"] = data["T"] - 273.15  # Convert to Celsius
             #eliminate data["opc"] != 0 and data["op"] != 0
-            data = data[(data["opc"] < tr) & (data["op"] <tr)]
+            # data = data[(data["opc"] < tr) & (data["op"] <tr)]
 
 
-            xmin_plot = 0
-            xmax_plot = 5400.e3
-            ymin_plot = 0
-            ymax_plot = 905.e3
+            pts = get_points_with_y_in(data, 15.e3, 2.e3, ymax=900.e3)
+            trench = get_trench_position(pts, threshold=0.13e7)
+            xmin_plot = trench - 400.e3
+            xmax_plot = trench + 700.e3
+            ymin_plot = 0.e3
+            ymax_plot = 902.e3
 
             # Extract coordinates
             x = data["Points:0"].to_numpy() / 1.e3
@@ -74,16 +82,18 @@ def main():
             triang.set_mask(np.logical_and(maxi > max_radius, y[triangles][:,1] < 90.))
 
             # if data Tcel > 700. put it to nan
-            data["Tcel"] = np.where(data["Tcel"] > 900, np.nan, data["Tcel"])
+            data["Tcel"] = np.where(data["Tcel"] > 1100, np.nan, data["Tcel"])
 
             # Mask values above 700°C (keep values < 700°C)
             Tcel_array = np.array(data["Tcel"])
            
 
             ax[indt].tripcolor(triang, Tcel_array, shading='flat', cmap=cmap, rasterized=True)
+            ax[indt].axvspan(xmin_plot/1.e3, (xmax_plot-2000)/1.e3, color=background_color[indt], alpha=background_alpha)
             ax[indt].set_ylim(ymax_plot/1.e3, ymin_plot/1.e3)
             ax[indt].set_aspect('equal')
-            ax[indt].spines[['top', 'bottom', 'left', 'right']].set_visible(False)
+            ax[indt].axhline(y = (ymax_plot - 242.e3)/1e3, color = 'k', linestyle = '--', linewidth = 2)
+            ax[indt].spines[['top']].set_visible(False)
             ax[indt].set_xticks([])
             ax[indt].set_yticks([])
             ax[indt].set_xlim(xmin_plot/1.e3, (xmax_plot-2000)/1.e3)
@@ -91,10 +101,10 @@ def main():
  
 
 
-        fig.subplots_adjust(hspace=0)  
-        fig.subplots_adjust(wspace=0)
+        fig.subplots_adjust(hspace=0.2)  
+        fig.subplots_adjust(wspace=0.2)
         
-        plt.savefig(plotname, bbox_inches='tight', format='eps', dpi=500, transparent = True)
+        plt.savefig(plotname, bbox_inches='tight', format='pdf', dpi=500, transparent = True)
         plt.clf()
         plt.close('all')
 

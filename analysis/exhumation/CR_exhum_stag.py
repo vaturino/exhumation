@@ -106,7 +106,7 @@ def main():
     ax[1].set_xlabel("Time (Ma)")
     ax[1].set_ylabel("Particles count (log)")
     ax[1].set_xlim(0, 50)
-    ax[1].set_ylim(0.1, 5.e3)
+    ax[1].set_ylim(0.9, 5.e3)
     ax[1].axvline(x=35, color="grey", linestyle="--", label="35 Ma", linewidth = 0.5)
     # Add pathch forom the first bin (smaller x value) to end of the plot
     
