@@ -92,11 +92,13 @@ def main():
                 
             data["lithology"] = data["lithology"].astype(int)
             
-        
-            xmin_plot = trench["x"].iloc[t] -100.e3
-            xmax_plot = trench["x"].iloc[t] + 200.e3
-            ymin_plot = trench["y"].iloc[t] - 160.e3
-            ymax_plot = trench["y"].iloc[t] + 2.e3
+            pts = get_points_with_y_in(data, 15.e3, 2.e3, ymax = 900.e3)
+            trench= get_trench_position(pts,threshold = 0.13e7)
+            xmin_plot = trench -100.e3
+            xmax_plot = trench + 200.e3
+            ymin_plot = 740.e3
+            ymax_plot = 900.e3
+
             
 
             x = data["Points:0"].to_numpy()/1.e3
@@ -121,8 +123,10 @@ def main():
             # print(exhumed_data["x"].iloc[t]/1.e3, (ymax_plot - exhumed_data["y"].iloc[t])/1.e3)
             
             plt.tripcolor(triang, data["lithology"], cmap=colors, shading='gouraud', vmax=len(compositions), vmin=0)
+            plt.tripcolor(triang, data["plastic_yielding"], cmap = "Greys", shading='gouraud', vmax=1, vmin=0, alpha = 0.2)
+
             # plt.plot(trench["x"].iloc[t]/1.e3, (ymax_plot - trench["y"].iloc[t])/1.e3, color='k', marker='v', zorder =2, markersize=5)
-            plt.scatter(exhumed_data["x"].iloc[t]/1.e3, (ymax_plot - exhumed_data["y"].iloc[t])/1.e3, color='red', marker='x', zorder = 1)
+            # plt.scatter(exhumed_data["x"].iloc[t]/1.e3, (ymax_plot - exhumed_data["y"].iloc[t])/1.e3, color='red', marker='x', zorder = 1)
             plt.colorbar(orientation='horizontal', label='Composition')
             plt.ylim([(ymax_plot-ymin_plot)/1.e3,-5])
             plt.xlim([xmin_plot/1.e3,xmax_plot/1.e3])

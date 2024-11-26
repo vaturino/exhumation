@@ -79,9 +79,9 @@ def calculate_middle_values(data):
 
     return data
     
-def process_times_for_particle(data, stagnation_min, time_thresh):
+def process_times_for_particle(data, stagnation_min, time_thresh, grad_thresh):
     data['gradient'] = np.gradient(data["Plith"], data["time"])
-    lowgrad = data[abs(data["gradient"]) < 0.01].reset_index(drop=True)
+    lowgrad = data[abs(data["gradient"]) < grad_thresh].reset_index(drop=True)
     lowgrad["duration"] = lowgrad["time"].diff()
     lowgrad['time_bin'] = None
 
@@ -111,7 +111,7 @@ def assign_particle_values(particles, lowgrad_dyn, lowgrad_kin, lowgrad_trans, i
 
 
 
-def process_particle(p, txt_loc, line_colors, compositions, composition_mapping, thresh, time_thresh, stagnation_min, c, ymax=901.):
+def process_particle(p, txt_loc, line_colors, compositions, composition_mapping, thresh, time_thresh, stagnation_min, c, grad_thresh, ymax=901.):
     # Load data
     pt_single = load_data(p, txt_loc)
 
@@ -125,14 +125,14 @@ def process_particle(p, txt_loc, line_colors, compositions, composition_mapping,
     max_depth = ymax - pt_single["depth"].min()
     exhumed = ((pt_single.depth.iat[-1] - pt_single.depth.min()) >= thresh * max_depth) and (max_depth > 10.)
 
-    stagnant = not exhumed #and (pt_single.Plith.max() <= 6.)
-    subducted = False  # Default as not subducted
+    stagnant = not exhumed and (pt_single.Plith.max() <= 6.)
+    subducted = not exhumed and not stagnant  # Default as not subducted
 
     particle_data = None
 
     if stagnant:
         pt_single["gradient"] = np.gradient(pt_single["Plith"], pt_single["time"])
-        lowgrad = process_times_for_particle(pt_single, stagnation_min, time_thresh)
+        lowgrad = process_times_for_particle(pt_single, stagnation_min, time_thresh, grad_thresh)
 
         bin_number = lowgrad["time_bin"].nunique()
         if bin_number == 0:
@@ -175,7 +175,7 @@ def process_particle(p, txt_loc, line_colors, compositions, composition_mapping,
 
 
 
-def plot_max_conditions(df, title_str, plot_file, lith_count, P:str, T:str, t: str):
+def plot_max_conditions(df, title_str, plot_file, lith_count, P, T, t):
         print(f"Plotting exhumed")
         f, a = plt.subplots(1, 3, figsize=(15, 5))
 
@@ -186,26 +186,27 @@ def plot_max_conditions(df, title_str, plot_file, lith_count, P:str, T:str, t: s
         # Create a mapping of lithologies to colors
         color_mapping = {lithology: color for lithology, color in zip(unique_lithologies, colors)}
 
-        # Scatterplot with consistent colors
-        sns.scatterplot(ax=a[0], data=df, x=T, y=P, hue="lithology", palette=color_mapping, linewidth=0.2)
-        a[0].set_xlabel("T ($^\circ$C)")
-        a[0].set_ylabel("P (GPa)")
-        a[0].set_title("Max P")
+        for p in range(len(P)):
+            # Scatterplot with consistent colors
+            sns.scatterplot(ax=a[0], data=df, x=T[p], y=P[p], hue="lithology", palette=color_mapping, linewidth=0.2)
+            a[0].set_xlabel("T ($^\circ$C)")
+            a[0].set_ylabel("P (GPa)")
+            a[0].set_title("Max P")
 
 
-        # Pie chart with consistent colors
-        lithology_counts = df.lithology.value_counts()
-        a[1].pie(lithology_counts, labels=lithology_counts.index, autopct='%1.1f%%', 
-                    colors=[color_mapping[lithology] for lithology in lithology_counts.index])
-        a[1].set_title("Lithology")
+            # Pie chart with consistent colors
+            lithology_counts = df.lithology.value_counts()
+            a[1].pie(lithology_counts, labels=lithology_counts.index, autopct='%1.1f%%', 
+                        colors=[color_mapping[lithology] for lithology in lithology_counts.index])
+            a[1].set_title("Lithology")
 
-        # Histogram with hue based on lithology
-        sns.histplot(ax=a[2], data=df, x=t, bins=20, hue="lithology", element="step", palette=color_mapping)
-        a[2].set_xlabel("Peak pressure Time (Ma)")
+            # Histogram with hue based on lithology
+            sns.histplot(ax=a[2], data=df, x=t[p], bins=20, hue="lithology", element="step", palette=color_mapping)
+            a[2].set_xlabel("Peak pressure Time (Ma)")
 
-        f.suptitle(title_str)
-        f.text(0.5, 0.1, lith_count, ha='center', va='center')
-        f.tight_layout()
+            f.suptitle(title_str)
+            f.text(0.5, 0.1, lith_count, ha='center', va='center')
+            f.tight_layout()
         plt.savefig(plot_file, dpi=1000)
         plt.close()
 
@@ -241,7 +242,7 @@ def main():
     print("Total number of particles = ", npa)
 
     stagnation_min = 10.
-    grad_thresh = 0.01
+    grad_thresh = 0.03
     time_thresh = 0.5
     exhumed_thresh = 0.25
     c = ["Pm", "tm", "Tm", "time_interval", "ti", "tf"]
@@ -276,36 +277,56 @@ def main():
     f3, a3 = plt.subplots(1, 2, figsize=(15, 5))
 
     with ProcessPoolExecutor() as executor:
-        futures = [executor.submit(process_particle, p, txt_loc, line_colors, compositions, composition_mapping, exhumed_thresh, time_thresh, stagnation_min, c) for p in range(npa)]
+        futures = [
+            executor.submit(
+                process_particle, 
+                p, txt_loc, line_colors, compositions, composition_mapping, exhumed_thresh, time_thresh, stagnation_min, c, grad_thresh
+            ) 
+            for p in range(npa)
+        ]
         for future in tqdm(as_completed(futures), total=npa):
-            result = future.result()
-            if result is None:
-                continue  # Skip to the next future if the result is None
-            p = result["p"]
-            pt_single = result["pt_single"]
-            line_color = result["line_color"]
+            try:
+                result = future.result()
+                if result is None:
+                    continue  # Skip to the next future if the result is None
+                p = result["p"]
+                pt_single = result["pt_single"]
+                line_color = result["line_color"]
 
+                if result["subducted"]:
+                    subducted += 1
+                    a2.plot(pt_single["T"], pt_single["Plith"], color=line_color)
+                    subd.iloc[p] = [p]
+                elif result["exhumed"]:
+                    exhumed += 1
+                    exh.loc[p] = [
+                        p, 
+                        pt_single["Plith"].max(), 
+                        pt_single["T"].iloc[pt_single["Plith"].idxmax()],  
+                        pt_single["Plith"].iloc[pt_single["T"].idxmax()],
+                        pt_single["T"].iloc[pt_single["T"].idxmax()],
+                        pt_single["lithology"].iloc[-1],
+                        pt_single["time"].iloc[pt_single["Plith"].idxmax()]
+                    ]
+                    a1[0].plot(pt_single["T"], pt_single["Plith"], color=line_color)
+                    a1[1].plot((pt_single["time"]), pt_single["Plith"], color=line_color)
+                    a1[1].set_xlim(0, 50)
+                elif result["stagnant"]:
+                    stagnant += 1
+                    if result["data"] is not None:
+                        result_data_cleaned = result["data"].copy()
+                        result_data_cleaned["lithology"] = result_data_cleaned["lithology"].iloc[-1]  # Take the last entry if it's a series
+                        particle_data_series = pd.Series(result_data_cleaned, index=stag.columns)
+                        stag.loc[p] = particle_data_series  # Assign the data to the stagnant DataFrame             
+                    a3[0].plot(pt_single["T"], pt_single["Plith"], color=line_color)
+                    a3[1].plot((pt_single["time"]), pt_single["Plith"], color=line_color)
+                    a3[1].set_xlim(0, 50)
 
-            if result["subducted"]:
-                subducted += 1
-                a2.plot(pt_single["T"] , pt_single["Plith"], color=line_color)
-                subd.iloc[p] = [p]
-            elif result["exhumed"]:
-                exhumed += 1
-                exh.loc[p] = [p, pt_single["Plith"].max(), pt_single["T"].iloc[pt_single["Plith"].idxmax()]  , pt_single["Plith"].iloc[pt_single["T"].idxmax()], pt_single["T"].iloc[pt_single["T"].idxmax()] , pt_single["lithology"].iloc[-1], pt_single["time"].iloc[pt_single["Plith"].idxmax()]]
-                a1[0].plot(pt_single["T"] , pt_single["Plith"], color=line_color)
-                a1[1].plot((pt_single["time"] ), pt_single["Plith"], color=line_color)
-                a1[1].set_xlim(0,50)
-            elif result["stagnant"]:
-                stagnant += 1
-                if result["data"] is not None:
-                    result_data_cleaned = result["data"].copy()
-                    result_data_cleaned["lithology"] = result_data_cleaned["lithology"].iloc[-1]  # Take the last entry if it's a series
-                    particle_data_series = pd.Series(result_data_cleaned, index=stag.columns)
-                    stag.loc[p] = particle_data_series # Assign the data to the stagnant DataFrame             
-                a3[0].plot(pt_single["T"] , pt_single["Plith"], color=line_color)
-                a3[1].plot((pt_single["time"] ), pt_single["Plith"], color=line_color)
-                a3[1].set_xlim(0, 50)
+            except Exception as e:
+                print(f"Error processing particle {p}: {e}")
+
+    # No explicit executor.shutdown() needed; the context manager handles it.
+
 
 
     for ax, title in zip([a1[0], a1[1], a2, a3[0], a3[1]], ["Exhumed particles", "Exhumed particles trajectory", "Subducted particles", "Stagnant particles", "Stagnant particles trajectory"]):
@@ -368,8 +389,8 @@ def main():
     }
     
 
-    plot_max_conditions(exh, f"Total number of exhumed particles = {len(exh)} - {(len(exh) / npa) * 100:.1f}%", f"{plot_loc}/max_PT_conditions.png", exh_title_str, "maxPP", "maxPT", "tmax")
-    plot_max_conditions(stag, f"Total number of stagnant particles = {len(stag)} - {(len(stag) / npa) * 100:.1f}%", f"{plot_loc}/max_PT_conditions_stagnant.png", stag_title_str, "Pm_kin", "Tm_kin", "tm_kin")   
+    plot_max_conditions(exh, f"Total number of exhumed particles = {len(exh)} - {(len(exh) / npa) * 100:.1f}%", f"{plot_loc}/max_PT_conditions.png", exh_title_str, ["maxPP"], ["maxPT"], ["tmax"])
+    plot_max_conditions(stag, f"Total number of stagnant particles = {len(stag)} - {(len(stag) / npa) * 100:.1f}%", f"{plot_loc}/max_PT_conditions_stagnant.png", stag_title_str, ["Pm_kin", "Pm_dyn", "Pm_trans"], ["Tm_kin", "Tm_dyn", "Tm_trans"], ["tm_kin", "tm_dyn", "tm_trans"])   
     print("particles plotted")
 
     exh.to_csv(f"{txt_loc}/exhumed_particles.txt", sep="\t", index=False)

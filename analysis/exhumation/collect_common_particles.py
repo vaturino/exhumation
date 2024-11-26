@@ -63,7 +63,7 @@ def filter_particles_by_sample(model_path, sample_ids, compositions, tr):
 
 
 def main():
-    json_file = "/home/vturino/PhD/projects/exhumation/pyInput/velocity_comparison.json"
+    json_file = "/home/vturino/PhD/projects/exhumation/pyInput/viscosity_comparison.json"
     with open(json_file) as json_file:
         file = json.load(json_file)
 

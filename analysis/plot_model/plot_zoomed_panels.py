@@ -61,15 +61,16 @@ def main():
         plot_loc_mod = f"/home/vturino/PhD/projects/exhumation/plots/single_models/{m}"
         if not os.path.exists(plot_loc_mod):
             os.mkdir(plot_loc_mod)
-        plot_loc = f"{plot_loc_mod}/Panels/"
+        plot_loc = f"{plot_loc_mod}/Panels_pdf/"
         if not os.path.exists(plot_loc):
             os.mkdir(plot_loc)
         else:
             file_count = len(os.listdir(plot_loc))
 
-        for t in tqdm(range(0, len(time_array), 2)):
+        # for t in tqdm(range(0, len(time_array), 2)):
+        for t in [50, 70, 90]:
             f1, a1 = plt.subplots(1, 3, figsize=(20, 5))
-            plotname = f"{plot_loc}{int(t/2)}.png" 
+            plotname = f"{plot_loc}{int(t/2)}.pdf" 
             data = pd.read_parquet(f"{csvs_loc}{m}/fields/full.{int(t)}.gzip")
             data["lithology"] = 0
             data["logvisc"] = np.log10(data["viscosity"])
@@ -167,7 +168,7 @@ def main():
             a1[2].set_aspect('equal')
 
             # Save and close the plot
-            plt.savefig(plotname, bbox_inches='tight', format='png', dpi=500)
+            plt.savefig(plotname, bbox_inches='tight', format='pdf', dpi=500)
             plt.clf()
             plt.close('all')
 

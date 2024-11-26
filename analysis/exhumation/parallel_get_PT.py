@@ -19,7 +19,8 @@ matplotlib_axes_logger.setLevel('ERROR')
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 from pathlib import Path
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
+import signal
 
 path = str(Path(Path(__file__).parent.absolute()).parent.absolute())
 sys.path.insert(0, path)
@@ -47,24 +48,37 @@ def initialize_particle_files(pt_files, npart, compositions):
             pt.write("id time x y P Plith T depth vx vy " + " ".join(compositions) + "\n")
 
 def process_time_step(t, csvs_loc, m, compositions, tr, idx, cmyr, rhog, ymax=901.e3):
-    fcol = ["id", "position:0", "position:1", "p", "T", "position:1", "velocity:0", "velocity:1"]
-    df = pd.read_parquet(f"{csvs_loc}{m}/particles/full.{t}.gzip", columns=fcol + compositions)
-    fil = (df[compositions] > tr).any(axis=1)
-    df = df[fil]
-    conds = df[df['id'].isin(idx['id'])].sort_values(by='id')
+    try:
+        fcol = ["id", "position:0", "position:1", "p", "T", "position:1", "velocity:0", "velocity:1"]
+        df = pd.read_parquet(f"{csvs_loc}{m}/particles/full.{t}.gzip", columns=fcol + compositions)
+        fil = (df[compositions] > tr).any(axis=1)
+        df = df[fil]
+        conds = df[df['id'].isin(idx['id'])].sort_values(by='id')
 
-    data = []
-    for i in range(len(idx)):
-        row = [
-            conds["id"].iloc[i], t, conds["position:0"].iloc[i], conds["position:1"].iloc[i],
-            conds["p"].iloc[i] / 1e9, (ymax - conds["position:1"].iloc[i])*rhog/1.e9, (conds["T"].iloc[i] + 0.6*(ymax - conds["position:1"].iloc[i])/1.e3) - 273.,
-            conds["position:1"].iloc[i] / 1.e3,
-            conds["velocity:0"].iloc[i] * cmyr,
-            conds["velocity:1"].iloc[i] * cmyr
-        ]
-        row.extend(conds[col].iloc[i] for col in compositions)
-        data.append(row)
-    return data
+        data = []
+        for i in range(len(idx)):
+            row = [
+                conds["id"].iloc[i], t, conds["position:0"].iloc[i], conds["position:1"].iloc[i],
+                conds["p"].iloc[i] / 1e9, (ymax - conds["position:1"].iloc[i])*rhog/1.e9, 
+                (conds["T"].iloc[i] + 0.6*(ymax - conds["position:1"].iloc[i])/1.e3) - 273.,
+                conds["position:1"].iloc[i] / 1.e3,
+                conds["velocity:0"].iloc[i] * cmyr,
+                conds["velocity:1"].iloc[i] * cmyr
+            ]
+            row.extend(conds[col].iloc[i] for col in compositions)
+            data.append(row)
+        return data
+    except Exception as e:
+        print(f"Error processing time step {t}: {e}")
+        return []
+
+def terminate_executor(executor):
+    """Terminate all processes in the executor pool."""
+    try:
+        executor.shutdown(wait=False, cancel_futures=True)
+        os.killpg(0, signal.SIGTERM)  # Terminate all child processes
+    except Exception as e:
+        print(f"Error terminating executor: {e}")
 
 def main():
     args = parse_arguments()
@@ -89,20 +103,31 @@ def main():
         plot_loc = f"/home/vturino/PhD/projects/exhumation/plots/single_models/{configs['models'][ind_m]}"
         txt_loc, pt_files = setup_directories(plot_loc)
 
-        with open(f"{txt_loc}/particles_indexes.csv", "r") as f:
+        with open(f"{txt_loc}/particles_indexes.txt", "r") as f:
             npart = len(f.readlines()) - 1
 
         initialize_particle_files(pt_files, npart, compositions)
-        idx = pd.read_csv(f"{txt_loc}/particles_indexes.csv")
+        idx = pd.read_csv(f"{txt_loc}/particles_indexes.txt", sep='\s+')
 
         all_data = [[] for _ in range(npart)]
+        executor = ProcessPoolExecutor()
 
-        with ProcessPoolExecutor() as executor:
+        try:
             futures = [executor.submit(process_time_step, t, csvs_loc, m, compositions, tr, idx, cmyr, rhog, ymax) for t in range(1, len(time_array))]
-            for future in tqdm(futures):
+            for future in tqdm(as_completed(futures)):
                 data = future.result()
                 for i, row in enumerate(data):
                     all_data[i].append(row)
+        except KeyboardInterrupt:
+            print("Terminating due to keyboard interrupt...")
+            terminate_executor(executor)
+            sys.exit(1)
+        except Exception as e:
+            print(f"Error during processing: {e}")
+            terminate_executor(executor)
+            sys.exit(1)
+        finally:
+            executor.shutdown(wait=True)
 
         for i in range(npart):
             all_data[i].sort(key=lambda x: x[1])  # Sort by time

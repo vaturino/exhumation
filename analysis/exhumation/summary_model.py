@@ -215,14 +215,14 @@ def main():
     # Plot the 100% stacked vertical bar for lithology distribution in Exhumed particles
     bottom = 0
     for lith, pct in exh_pct_lith.items():
-        a1[3].bar([0.2], pct * 4, bottom=bottom, color=palette_exh[lith], label=lith, width=0.1)
+        a1[3].bar([0.2], pct * 4, bottom=bottom, color=palette_exh[lith], width=0.1)
         a1[3].text(0.2, bottom + (pct * 2), f'{pct:.1f}%', ha='center', va='center', color='k', fontsize=bar_fontsize)
         bottom += pct * 4
 
     # Plot the 100% stacked vertical bar for lithology distribution in Stagnant particles
     bottom = 0
     for lith, pct in stag_pct_lith.items():
-        a1[3].bar([0.4], pct * 4, bottom=bottom, color=palette_stag[lith], width=0.1)
+        a1[3].bar([0.4], pct * 4, bottom=bottom, color=palette_stag[lith], width=0.1, label = lith)
         a1[3].text(0.4, bottom + (pct * 2), f'{pct:.1f}%', ha='center', va='center', color='k', fontsize=bar_fontsize)
         bottom += pct * 4
 

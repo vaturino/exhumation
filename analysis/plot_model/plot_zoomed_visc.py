@@ -65,10 +65,9 @@ def main():
 
         
         for t in tqdm(range(0, len(time_array), 2)):
-        # for t in tqdm(range(2,3)):
+        # for t in [70, 90]:
 
-            fig=plt.figure()
-            gs=GridSpec(2,1)
+            fig, ax = plt.subplots()
             plotname = f"{plot_loc}{int(t/2)}.png" 
             data = pd.read_parquet(f"{csvs_loc}{m}/fields/full.{int(t)}.gzip") 
             data["lithology"] = 0
@@ -95,10 +94,12 @@ def main():
             xmin_plot = trench -100.e3
             xmax_plot = trench + 200.e3
             ymin_plot = 740.e3
-            ymax_plot = 900.e3
+            ymax_plot = 902.e3
 
             x = data["Points:0"].to_numpy()/1.e3
             y = (ymax_plot - data["Points:1"].to_numpy())/1.e3
+
+            Plith = y*1e3*9.81*3100
 
             triang = tri.Triangulation(x, y)
             colors = matplotlib.colormaps['viridis']((18,24,601))
@@ -114,28 +115,34 @@ def main():
             maxi = np.max(np.sqrt(xtri**2 + ytri**2), axis=1)
             triang.set_mask(np.logical_and(maxi > max_radius, y[triangles][:,1] < 90.))
 
-          
-            plt.tripcolor(triang, data["logvisc"], shading='gouraud', vmin=18, vmax=24)
-            vel_plot_thresh = 0.0001  # don't plot velocity vectors smaller than this (cm/yr)
+            ax.tripcolor(triang, data["logvisc"], shading='gouraud', vmin=18, vmax=24)
             step = 500  # plot every 100th vector to reduce the number of vectors plotted
-            # Filter out small velocity vectors and downsample data for plotting
-            mask = (100. * np.sqrt(data["velocity:0"]**2 + data["velocity:1"]**2)) >= vel_plot_thresh
-            mask = mask.reindex(data_filtered_comp.index, fill_value=False)
-            data_filtered = data_filtered_comp[mask].iloc[::step]
+            data_filtered = data_filtered_comp.iloc[::step]
 
+            # Normalize velocity vectors to unit vectors
+            vel_magnitude = np.sqrt(data_filtered["velocity:0"]**2 + data_filtered["velocity:1"]**2)
+            data_filtered["velocity:0_norm"] = data_filtered["velocity:0"] / vel_magnitude
+            data_filtered["velocity:1_norm"] = data_filtered["velocity:1"] / vel_magnitude
+
+            # Plot quiver with uniform arrow lengths
             vel_vects = plt.quiver(data_filtered["Points:0"].to_numpy() / 1.e3, 
-                                     (ymax_plot - data_filtered["Points:1"].to_numpy()) / 1.e3, 
-                                     data_filtered["velocity:0"].to_numpy() * 100, 
-                                     data_filtered["velocity:1"].to_numpy() * 100, 
-                                     scale=50, color='black', width=0.0015)
-            plt.quiverkey(vel_vects, 0.15, 0.1, 1, '1 cm/yr', labelpos='W', fontproperties={'size': '7'}, color='white', labelcolor='white')
+                                (ymax_plot - data_filtered["Points:1"].to_numpy()) / 1.e3, 
+                                data_filtered["velocity:0_norm"].to_numpy(), 
+                                data_filtered["velocity:1_norm"].to_numpy(), 
+                                scale=70, color='black', width=0.0015)  # Adjust scale for arrow size
+            ax.quiverkey(vel_vects, 0.15, 0.1, 1, '1 cm/yr', labelpos='W', fontproperties={'size': '7'}, color='white', labelcolor='white')
             # plt.scatter(row["x"].to_numpy()/1.e3, (ymax_plot - row["depth"].to_numpy())/1.e3, color='red', marker='x', zorder = 1)
             plt.colorbar(orientation='horizontal', label='Log(Viscosity) [Pa s]')
-            plt.ylim([(ymax_plot-ymin_plot)/1.e3,-5])
-            plt.xlim([xmin_plot/1.e3,xmax_plot/1.e3])
-            plt.gca().set_aspect('equal')
-            # plt.xticks(np.arange(xmin_plot/1.e3, xmax_plot/1.e3, 20))
-            # plt.yticks(np.arange((ymax_plot-ymin_plot)/1.e3, -5, -20))
+            ax.set_ylim([(ymax_plot-ymin_plot)/1.e3,-5])
+            ax.set_xlim([xmin_plot/1.e3,xmax_plot/1.e3])
+            # ax1 = ax.twinx()
+            # ax1.set_ylim(5, -0.5)
+            # No top spine
+            ax.spines['top'].set_visible(False)
+            ax.set_aspect('equal')
+            
+
+
 
             plt.savefig(plotname, bbox_inches='tight', format='png', dpi=1000)
             plt.clf()

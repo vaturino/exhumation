@@ -60,7 +60,7 @@ def main():
             file_count = len(os.listdir(plot_loc))
 
         
-        for t in tqdm(range(2*file_count, len(time_array), 2)):
+        for t in tqdm(range(0, len(time_array), 2)):
         # for t in tqdm(range(2,3)):
 
             fig=plt.figure()
@@ -96,8 +96,9 @@ def main():
 
           
             plt.tripcolor(triang, data["logSR"], cmap='RdBu_r', shading='gouraud', vmin=-19, vmax=-12)
+            plt.tricontour(triang, data["plastic_yielding"], colors='black', linewidths=0.5, levels=[1], zorder = 10)
             # plt.scatter(row["x"].to_numpy()/1.e3, (ymax_plot - row["depth"].to_numpy())/1.e3, color='red', marker='x', zorder = 1)
-            plt.colorbar(orientation='horizontal', label='Log(Strain rate) [s-1]')
+            # plt.colorbar(orientation='horizontal', label='Log(Strain rate) [s-1]')
             plt.ylim([(ymax_plot-ymin_plot)/1.e3,-5])
             plt.xlim([xmin_plot/1.e3,xmax_plot/1.e3])
             plt.gca().set_aspect('equal')
