@@ -68,7 +68,7 @@ def main():
             file_count = len(os.listdir(plot_loc))
 
         # for t in tqdm(range(0, len(time_array), 2)):
-        for t in [50, 70, 90]:
+        for t in [90]:
             f1, a1 = plt.subplots(1, 3, figsize=(20, 5))
             plotname = f"{plot_loc}{int(t/2)}.pdf" 
             data = pd.read_parquet(f"{csvs_loc}{m}/fields/full.{int(t)}.gzip")
@@ -123,7 +123,23 @@ def main():
 
             # Plot lithology using terrain indices and corresponding color map
             p1 = a1[0].tripcolor(triang, data["terrain_idx"], cmap=matplotlib.colors.ListedColormap(colors_for_terrain), shading='gouraud', vmin=0, vmax=len(colors_for_terrain)-1)
-            a1[0].tricontour(triang, data["T"] - 273.5, colors='k', levels=[100, 300, 500, 700, 900], linewidths=0.3)
+            # a1[0].tricontour(triang, data["T"] - 273.5, colors='k', levels=[100, 300, 500, 700, 900], linewidths=0.3)
+            a1[0].tricontourf(triang, data["logSR"], colors='navy', levels=[np.log10(5) -14, -12], alpha = 0.5)
+            step = 500  # plot every 100th vector to reduce the number of vectors plotted
+            data_filtered = data_filtered_comp.iloc[::step]
+
+            # Normalize velocity vectors to unit vectors
+            vel_magnitude = np.sqrt(data_filtered["velocity:0"]**2 + data_filtered["velocity:1"]**2)
+            data_filtered["velocity:0_norm"] = data_filtered["velocity:0"] / vel_magnitude
+            data_filtered["velocity:1_norm"] = data_filtered["velocity:1"] / vel_magnitude
+
+            # Plot quiver with uniform arrow lengths
+            vel_vects = a1[0].quiver(data_filtered["Points:0"].to_numpy() / 1.e3, 
+                                (ymax_plot - data_filtered["Points:1"].to_numpy()) / 1.e3, 
+                                data_filtered["velocity:0_norm"].to_numpy(), 
+                                data_filtered["velocity:1_norm"].to_numpy(), 
+                                scale=70, color='black', width=0.0015, zorder = 10)  # Adjust scale for arrow size
+            a1[0].quiverkey(vel_vects, 0.15, 0.1, 1, '1 cm/yr', labelpos='W', fontproperties={'size': '7'}, color='k', labelcolor='k') 
 
             # Terrain colorbar
             cbar = plt.colorbar(p1, orientation='horizontal', ax=a1[0])

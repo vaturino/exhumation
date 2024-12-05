@@ -71,7 +71,7 @@ def main():
             file_count = len(os.listdir(plot_loc))
 
         # for t in tqdm(range(0, len(time_array), 2)):
-        for t in [28, 40, 60, 90]:
+        for t in [90]:
             f1, a1 = plt.subplots(2, 2, figsize=(15, 10))
             plotname = f"{plot_loc}{int(t/2)}.pdf" 
             data = pd.read_parquet(f"{csvs_loc}{m}/fields/full.{int(t)}.gzip")
@@ -146,7 +146,7 @@ def main():
             a1[0,0].spines[['top']].set_visible(False)
 
             # Strain rate plot
-            p2 = a1[0,1].tripcolor(triang, data["logSR"], cmap='RdBu_r', shading='gouraud', vmin=-19, vmax=-12)
+            p2 = a1[0,1].tripcolor(triang, data["logSR"], cmap='Greys', shading='gouraud', vmin=-19, vmax=-12)
             size = 80
 
             a1[0,1].spines[['top']].set_visible(False)
