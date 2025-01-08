@@ -63,7 +63,7 @@ def filter_particles_by_sample(model_path, sample_ids, compositions, tr):
 
 
 def main():
-    json_file = "/home/vturino/PhD/projects/exhumation/pyInput/viscosity_comparison.json"
+    json_file = "/home/vturino/PhD/projects/exhumation/pyInput/serpentinite_comparison.json"
     with open(json_file) as json_file:
         file = json.load(json_file)
 
@@ -107,6 +107,9 @@ def main():
         model_path = os.path.join(csvs_loc, model)
         matching_particles = filter_particles_by_sample(model_path, sample_ids, compositions, tr)
         model_ids.append(set(matching_particles["id"]))
+        
+
+        
 
  
     # Find common IDs across all models

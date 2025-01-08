@@ -55,12 +55,13 @@ def process_time_step(t, csvs_loc, m, compositions, tr, idx, cmyr, rhog, ymax=90
         df = df[fil]
         conds = df[df['id'].isin(idx['id'])].sort_values(by='id')
 
+
         data = []
         for i in range(len(idx)):
             row = [
                 conds["id"].iloc[i], t, conds["position:0"].iloc[i], conds["position:1"].iloc[i],
                 conds["p"].iloc[i] / 1e9, (ymax - conds["position:1"].iloc[i])*rhog/1.e9, 
-                (conds["T"].iloc[i] + 0.6*(ymax - conds["position:1"].iloc[i])/1.e3) - 273.,
+                (conds["T"].iloc[i] + 0.3*(ymax - conds["position:1"].iloc[i])/1.e3) - 273.,
                 conds["position:1"].iloc[i] / 1.e3,
                 conds["velocity:0"].iloc[i] * cmyr,
                 conds["velocity:1"].iloc[i] * cmyr
@@ -103,11 +104,11 @@ def main():
         plot_loc = f"/home/vturino/PhD/projects/exhumation/plots/single_models/{configs['models'][ind_m]}"
         txt_loc, pt_files = setup_directories(plot_loc)
 
-        with open(f"{txt_loc}/particles_indexes.txt", "r") as f:
+        with open(f"{txt_loc}/particles_indexes.csv", "r") as f:
             npart = len(f.readlines()) - 1
 
         initialize_particle_files(pt_files, npart, compositions)
-        idx = pd.read_csv(f"{txt_loc}/particles_indexes.txt", sep='\s+')
+        idx = pd.read_csv(f"{txt_loc}/particles_indexes.csv")
 
         all_data = [[] for _ in range(npart)]
         executor = ProcessPoolExecutor()
@@ -134,6 +135,5 @@ def main():
             with open(f"{pt_files}/pt_part_{i}.txt", "a+") as pt:
                 for row in all_data[i]:
                     pt.write(" ".join(f"{val:.3f}" if isinstance(val, float) else f"{val:.0f}" for val in row) + "\n")
-
 if __name__ == "__main__":
     main()

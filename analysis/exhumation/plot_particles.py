@@ -131,6 +131,9 @@ def process_particle(p, txt_loc, line_colors, compositions, composition_mapping,
     particle_data = None
 
     if stagnant:
+        #smooth little wrinkles in the Plith - time curve
+        pt_single["Plith"] = pt_single["Plith"].rolling(window=10, min_periods=1).mean()
+        pt_single["time"] = pt_single["time"].rolling(window=10, min_periods=1).mean()
         pt_single["gradient"] = np.gradient(pt_single["Plith"], pt_single["time"])
         lowgrad = process_times_for_particle(pt_single, stagnation_min, time_thresh, grad_thresh)
 
@@ -242,13 +245,13 @@ def main():
     print("Total number of particles = ", npa)
 
     stagnation_min = 10.
-    grad_thresh = 0.03
+    grad_thresh = 0.01
     time_thresh = 0.5
     exhumed_thresh = 0.25
     c = ["Pm", "tm", "Tm", "time_interval", "ti", "tf"]
 
 
-    init = pd.read_csv(f"{txt_loc}/particles_indexes.txt", sep="\s+")
+    init = pd.read_csv(f"{txt_loc}/particles_indexes.csv")
     pal1 = plt.get_cmap('viridis')
     norm = plt.Normalize(init["init_x"].min() / 1e3, init["init_x"].max() / 1e3)
     line_colors = pal1(norm(init["init_x"] / 1e3))

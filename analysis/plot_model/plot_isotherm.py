@@ -21,8 +21,10 @@ def main():
     args = parser.parse_args()
 
     json_loc = '/home/vturino/PhD/projects/exhumation/pyInput/'
-    models_loc = '/home/vturino/Vale_nas/exhumation/raw_outputs/'
-    csvs_loc = '/home/vturino/Vale_nas/exhumation/gz_outputs/'
+    models_loc = '/home/vturino/PhD/projects/exhumation/raw_outputs/'
+    csvs_loc = '/home/vturino/PhD/projects/exhumation/gz_outputs/'
+    # models_loc = '/home/vturino/Vale_nas/exhumation/raw_outputs/'
+    # csvs_loc = '/home/vturino/Vale_nas/exhumation/gz_outputs/'
 
     with open(f"{json_loc}{args.json_file}") as json_file:
         configs = json.load(json_file)

@@ -36,6 +36,8 @@ else:
     # Count the files in the fields_loc directory
     file_count = len(os.listdir(fields_loc))
 
+print('file_count:', file_count)    
+
 
 times = reader.time_values
 

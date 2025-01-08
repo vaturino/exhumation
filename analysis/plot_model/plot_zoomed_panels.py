@@ -61,16 +61,16 @@ def main():
         plot_loc_mod = f"/home/vturino/PhD/projects/exhumation/plots/single_models/{m}"
         if not os.path.exists(plot_loc_mod):
             os.mkdir(plot_loc_mod)
-        plot_loc = f"{plot_loc_mod}/Panels_pdf/"
+        plot_loc = f"{plot_loc_mod}/Panels_png/"
         if not os.path.exists(plot_loc):
             os.mkdir(plot_loc)
         else:
             file_count = len(os.listdir(plot_loc))
 
-        # for t in tqdm(range(0, len(time_array), 2)):
-        for t in [90]:
+        for t in tqdm(range(0, len(time_array), 2)):
+        # for t in [90]:
             f1, a1 = plt.subplots(1, 3, figsize=(20, 5))
-            plotname = f"{plot_loc}{int(t/2)}.pdf" 
+            plotname = f"{plot_loc}{int(t/2)}.png" 
             data = pd.read_parquet(f"{csvs_loc}{m}/fields/full.{int(t)}.gzip")
             data["lithology"] = 0
             data["logvisc"] = np.log10(data["viscosity"])
@@ -124,7 +124,7 @@ def main():
             # Plot lithology using terrain indices and corresponding color map
             p1 = a1[0].tripcolor(triang, data["terrain_idx"], cmap=matplotlib.colors.ListedColormap(colors_for_terrain), shading='gouraud', vmin=0, vmax=len(colors_for_terrain)-1)
             # a1[0].tricontour(triang, data["T"] - 273.5, colors='k', levels=[100, 300, 500, 700, 900], linewidths=0.3)
-            a1[0].tricontourf(triang, data["logSR"], colors='navy', levels=[np.log10(5) -14, -12], alpha = 0.5)
+            # a1[0].tricontourf(triang, data["logSR"], colors='navy', levels=[np.log10(5) -14, -12], alpha = 0.5)
             step = 500  # plot every 100th vector to reduce the number of vectors plotted
             data_filtered = data_filtered_comp.iloc[::step]
 
@@ -184,7 +184,7 @@ def main():
             a1[2].set_aspect('equal')
 
             # Save and close the plot
-            plt.savefig(plotname, bbox_inches='tight', format='pdf', dpi=500)
+            plt.savefig(plotname, bbox_inches='tight', format='png', dpi=500)
             plt.clf()
             plt.close('all')
 

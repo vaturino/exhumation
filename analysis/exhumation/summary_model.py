@@ -106,7 +106,7 @@ def main():
     cr["conv_rate"].iloc[0]= np.nan
 
     # Load the data
-    allp = pd.read_csv(f"{txt_loc}/particles_indexes.txt", sep="\s+")
+    allp = pd.read_csv(f"{txt_loc}/particles_indexes.csv")
     stag = pd.read_csv(f"{txt_loc}/stagnant_particles.txt", sep="\s+")
     exh = pd.read_csv(f"{txt_loc}/exhumed_particles.txt", sep="\s+")
     subd = pd.read_csv(f"{txt_loc}/subducted_particles.txt", sep="\s+")
@@ -194,7 +194,7 @@ def main():
 
    # Plot the 100% stacked vertical bar with a narrow width for Particle Classification
     a1[3].bar([0], subd_pct, color='powderblue', label='Subducted', width=0.1, linewidth=0.5)
-    a1[3].bar([0], exh_pct, bottom=subd_pct, color='cornflowerblue', label='Exhumed', width=0.1)
+    a1[3].bar([0], exh_pct, bottom=subd_pct, color='magenta', label='Exhumed', width=0.1)
     a1[3].bar([0], stag_pct, bottom=subd_pct + exh_pct, color='olivedrab', label='Stagnant', width=0.1)
 
     # Set limits and formatting for the particle classification bar
