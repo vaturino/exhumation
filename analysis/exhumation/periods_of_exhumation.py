@@ -41,18 +41,18 @@ def load_data(id, txt_loc):
     return data
 
 
-def compute_time_intervals(data, stagnation_min, time_thresh):
-    # Determine the maximum pressure and its corresponding time
-    Pmax = data["Plith"].max()
-    tmax = data[data["Plith"] == Pmax]["time"].values[0]
-    Pthresh = round(0.75 * Pmax, 3)
+def compute_time_intervals(data, stagnation_min, time_thresh, Pthresh):
     
     # Find the exhumation threshold time (texh)
-    texh = data[(data["Plith"] <= Pthresh) & (data["time"] > tmax)]["time"].min()
+    filexh = ((data["Plith"] <= Pthresh) & (data["time"] >= stagnation_min))
+    texh = data[filexh]["time"].min()
+    tmax = data["time"].max()
+    # print(texh)
     if pd.isna(texh):  # Handle cases where texh cannot be determined
         texh = tmax - 0.5
 
     start_time = None  # Initialize start time for intervals
+
 
     # Iterate over the data rows
     for i, row in data.iterrows():
@@ -80,6 +80,7 @@ def compute_time_intervals(data, stagnation_min, time_thresh):
                 start_time = None  # Reset start time for the next interval
         else:
             start_time = None  # Reset start time if duration condition is not met
+
 
     return data
 
@@ -109,15 +110,42 @@ def calculate_middle_values(data):
     return data
 
     
-def process_times_for_particle(data, stagnation_min, time_thresh, grad_thresh):
+def process_times_for_particle(data, stagnation_min, time_thresh, grad_thresh, min_time=15.):
     data['gradient'] = np.gradient(data["Plith"], data["time"])
-    lowgrad = data[abs(data["gradient"]) < grad_thresh].reset_index(drop=True)
-    lowgrad["duration"] = lowgrad["time"].diff()
-    lowgrad['time_bin'] = None
 
-    lowgrad = compute_time_intervals(lowgrad, stagnation_min, time_thresh)
-    lowgrad = calculate_middle_values(lowgrad)
-    return lowgrad
+    # Determine 75% of the maximum pressure
+    Pmax = data["Plith"].max()
+    Pthresh = round(0.75 * Pmax,3)
+
+
+    # Filter data to ensure the time interval starts where Plith < Pthresh
+    fil = ((data["Plith"] <= Pthresh) & (data["time"] > min_time))
+    valid_data = data[fil].reset_index(drop=True)
+
+    # plt.plot(data["time"], data["Plith"])
+    # plt.plot(valid_data["time"], valid_data["Plith"])
+    # plt.axhline(y=Pthresh, color="red", linestyle="--")
+    # plt.show()
+    # exit
+
+
+    # Further filter valid_data where gradient < 0 or abs(gradient) < grad_thresh
+    valid_data = valid_data[
+        (valid_data["gradient"] < 0) | (abs(valid_data["gradient"]) < grad_thresh)
+    ].reset_index(drop=True)
+
+
+    # Compute the duration and initialize time_bin
+    valid_data["duration"] = valid_data["time"].diff()
+    valid_data['time_bin'] = None
+
+
+    # Call compute_time_intervals with the filtered data
+    valid_data = compute_time_intervals(valid_data, stagnation_min, time_thresh, Pthresh)
+    valid_data = calculate_middle_values(valid_data)
+
+    return valid_data
+
 
 
 def calculate_middle_values(data):
@@ -136,6 +164,8 @@ def calculate_middle_values(data):
 
 def process_particle(id, part, txt_loc, stagnation_min, time_thresh, sloc, sfiles, grad_thresh):
     data = load_data(id, txt_loc)
+    data["Plith"] = data["Plith"].rolling(window=5, min_periods=1).mean()
+    data["time"] = data["time"].rolling(window=5, min_periods=1).mean()
     data['gradient'] = np.gradient(data["Plith"], data["time"])
 
     lowgrad = process_times_for_particle(data, stagnation_min, time_thresh, grad_thresh)
@@ -157,16 +187,15 @@ def process_particle(id, part, txt_loc, stagnation_min, time_thresh, sloc, sfile
         else:
             particle_data[col] = np.nan  # No valid value in the column
 
-
-
+    
     if id % 10 == 0:
         fig = plt.figure(figsize=(8, 6))
-        # plt.plot(lowgrad["time"], lowgrad["Pm"], color="green", linewidth=2, zorder=5)
         # Plot the time interval calculated before, from ti to tf
         for i, row in lowgrad.iterrows():
             plt.plot([row["ti"], row["tf"]], [row["Pm"], row["Pm"]], color="green", linewidth=2, zorder=5)
         plt.plot(data["time"], data["Plith"], color="grey")
-        plt.scatter(lowgrad["tm"], lowgrad["Pm"], color="red", zorder=10)
+        plt.axhline(y=0.75 * data["Plith"].max(), color="lightblue", linestyle="--", linewidth=1)
+        plt.scatter(lowgrad["ti"], lowgrad["Pm"], color="red", zorder=10)
         plt.xlabel("Time (Myr)")
         plt.ylabel("Pressure (GPa)")
         plt.title(f"Particle {id} - Lithology: {part['lithology']}")
@@ -209,13 +238,14 @@ def main():
     columns = ["id", "lithology", "Pm", "tm", "Tm", "time_interval", "ti", "tf"]
     particles = pd.DataFrame(columns=columns, index=part.index)
 
-    stagnation_min = 10.
+    stagnation_min = 5.
 
-    grad_thresh = 0.008
+    grad_thresh = 0.1
     time_thresh = 0.5
 
     with ProcessPoolExecutor(max_workers=2) as executor:
         futures = [
+            
             executor.submit(process_particle, part["id"].iloc[i], part.iloc[i], txt_loc, stagnation_min, time_thresh, sloc, sfiles, grad_thresh)
             for i in range(len(part))
         ]

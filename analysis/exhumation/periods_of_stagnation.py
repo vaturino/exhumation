@@ -78,8 +78,9 @@ def main():
     for i in tqdm(range(0, len(part), 10)):
         id = part["id"].iloc[i]
         particle = pd.read_csv(f"{txt_loc}/PT/pt_part_{id}.txt", sep="\s+")
-        particle["Plith"] = particle["Plith"].rolling(window=10, min_periods=1).mean()
-        particle["time"] = particle["time"].rolling(window=10, min_periods=1).mean()/2.
+        particle["time"] = particle["time"]/2.
+        # particle["Plith"] = particle["Plith"].rolling(window=10, min_periods=1).mean()
+        # particle["time"] = particle["time"].rolling(window=10, min_periods=1).mean()
 
         plt.plot(particle["time"], particle["Plith"], color = "grey", linewidth = 1)
         suff = ["kin", "dyn", "trans"]
@@ -108,6 +109,9 @@ def main():
             plt.title(f"Particle {id} - Lithology: {part.iloc[i]['lithology']}")
             plt.savefig(f"{ecloc}/stagnant_times_{id}.png")
             plt.close()
+
+    # Save the data
+    part.to_csv(f"{sfiles}/stagnant_times.txt", sep=" ", columns=columns, index=False)
 
 
 if __name__ == "__main__":

@@ -36,6 +36,7 @@ def main():
     cr["conv_rate"].iloc[0] = np.nan
 
 
+
     # Create a mapping for lithology colors
      # Define color palettes
     colors_tin = {
@@ -118,9 +119,9 @@ def main():
     bin_edges = np.arange(0, 50, 1)  # Define bin edges
     stagnant_list_sorted = stagnant_list.sort_values(by='lithology', ascending=True)
 
-    sns.histplot(stagnant_list_sorted, x="tm_kin", hue="lithology", ax=ax[2], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend = False)
-    sns.histplot(stagnant_list_sorted, x="tm_dyn", hue="lithology", ax=ax[2], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend = False)
-    sns.histplot(stagnant_list_sorted, x="tm_trans", hue="lithology", ax=ax[2], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges,    )
+    sns.histplot(stagnant_list_sorted, x="ti_kin", hue="lithology", ax=ax[2], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend = False)
+    sns.histplot(stagnant_list_sorted, x="ti_dyn", hue="lithology", ax=ax[2], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend = False)
+    sns.histplot(stagnant_list_sorted, x="ti_trans", hue="lithology", ax=ax[2], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges,    )
 
 
 

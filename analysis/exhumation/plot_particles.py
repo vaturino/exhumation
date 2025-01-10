@@ -87,6 +87,8 @@ def process_times_for_particle(data, stagnation_min, time_thresh, grad_thresh):
 
     lowgrad = compute_time_intervals(lowgrad, stagnation_min, time_thresh)
     lowgrad = calculate_middle_values(lowgrad)
+    #I want to put to nan all the rows for which Plith is >=6.0
+    lowgrad = lowgrad[lowgrad["Plith"] < 6.0]
     return lowgrad
 
 
@@ -125,7 +127,7 @@ def process_particle(p, txt_loc, line_colors, compositions, composition_mapping,
     max_depth = ymax - pt_single["depth"].min()
     exhumed = ((pt_single.depth.iat[-1] - pt_single.depth.min()) >= thresh * max_depth) and (max_depth > 10.)
 
-    stagnant = not exhumed and (pt_single.Plith.max() <= 6.)
+    stagnant = not exhumed #and (pt_single.Plith.max() <= 6.)
     subducted = not exhumed and not stagnant  # Default as not subducted
 
     particle_data = None
