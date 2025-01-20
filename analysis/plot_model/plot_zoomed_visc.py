@@ -64,8 +64,8 @@ def main():
 
 
         
-        for t in tqdm(range(0, len(time_array), 2)):
-        # for t in [70, 90]:
+        # for t in tqdm(range(0, len(time_array), 2)):
+        for t in [90]:
 
             fig, ax = plt.subplots()
             plotname = f"{plot_loc}{int(t/2)}.png" 
