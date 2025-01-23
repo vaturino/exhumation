@@ -67,17 +67,19 @@ def main():
 
  
     # # Create the plot
-    fig,ax = plt.subplots(3, 2, figsize=(15, 6), height_ratios=[0.25, 1, 1])
+    fig,ax = plt.subplots(6, 1, figsize=(10, 10), height_ratios=[0.25, 0.05, 1, 0.05, 1, 1])
 
     # Plot 0: convergence rate
-    ax[0,0].plot(cr["time"]/1e6, cr["conv_rate"], color="grey", label="Convergence rate (cm/yr)", linewidth=1)
-    ax[0,0].axvline(x=35, color="grey", linestyle="--", linewidth = linewidth)
-    ax[0,0].label_outer()  # Only show outer labels and tick labels
-    ax[0,0].legend(loc='upper right')
-    ax[0,0].set_ylim(0, cr["conv_rate"].max()+1)
-    ax[0,0].set_xlim(0, 50)
-    ax[0,0].set_title("Exhumable particles", fontsize=12)
-    ax[0,0].set_yticks([0, 5])
+    ax[0].plot(cr["time"]/1e6, cr["conv_rate"], color="grey", label="Convergence rate (cm/yr)", linewidth=1)
+    ax[0].axvline(x=35, color="grey", linestyle="--", linewidth = linewidth)
+    ax[0].label_outer()  # Only show outer labels and tick labels
+    ax[0].legend(loc='upper right')
+    ax[0].set_ylim(0, cr["conv_rate"].max()+1)
+    ax[0].set_xlim(0, 50)
+    ax[0].set_title("Exhumable particles", fontsize=12)
+    ax[0].set_yticks([0, 5])
+
+    ax[1].set_visible(False)
 
     # # Histograms for tmax and tfin (Manual layering with plt.bar)
     bin_edges = np.arange(0, 50,1)  # Define bin edges
@@ -85,62 +87,46 @@ def main():
 
     # Sort exhumed_list by lithology to ensure 'oc' is plotted over 'sed'
     exhumed_list_sorted = exhumed_list.sort_values(by='lithology', ascending=True)
-    sns.histplot(exhumed_list_sorted, x="ti", hue="lithology", bins=bin_edges, ax=ax[1,0], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", legend=False)
-    # sns.histplot(exhumed_list_sorted, x="tm", hue="lithology", bins=bin_edges, ax=ax[1,0], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", legend = False)
+    sns.histplot(exhumed_list_sorted, x="ti", hue="lithology", bins=bin_edges, ax=ax[2], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", legend=False)
+    # sns.histplot(exhumed_list_sorted, x="tm", hue="lithology", bins=bin_edges, ax=ax[2], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", legend = False)
     
 
     # Set scale, labels, and limits
-    ax[1,0].set_yscale("log")
-    ax[1,0].label_outer()  # Only show outer labels and tick labels
-    # ax[1,0].text(1, 20, " Particles \n Subduction", fontsize=18)
-    ax[1,0].set_xlabel("")
-    ax[1,0].set_ylabel("Particles count (log)")
-    ax[1,0].set_xlim(0, 50)
-    ax[1,0].set_ylim(0.7, 5.e3)
-    ax[1,0].axvline(x=35, color="grey", linestyle="--", label="35 Ma", linewidth = linewidth)
-    ax[1,0].text(0.32, 0.9, "Time at exhumable threshold", fontsize=12, transform=ax[1,0].transAxes)
+    ax[2].set_yscale("log")
+    ax[2].label_outer()  # Only show outer labels and tick labels
+    # ax[2].text(1, 20, " Particles \n Subduction", fontsize=18)
+    ax[2].set_xlabel("")
+    ax[2].set_ylabel("Particles count (log)")
+    ax[2].set_xlim(0, 50)
+    ax[2].set_ylim(0.7, 5.e3)
+    ax[2].axvline(x=35, color="grey", linestyle="--", label="35 Ma", linewidth = linewidth)
+    ax[2].text(0.32, -2, "Time at exhumable threshold", fontsize=12, transform=ax[1].transAxes)
 
 
-   
-
-    # COLUMN 2
-
-    # Plot 0: convergence rate
-    ax[0,1].plot(cr["time"]/1e6, cr["conv_rate"], color="grey", label="Convergence rate (cm/yr)", linewidth=1)
-    ax[0,1].axvline(x=35, color="grey", linestyle="--", linewidth = linewidth)
-    ax[0,1].label_outer()  # Only show outer labels and tick labels
-    ax[0,1].legend(loc='upper right')
-    ax[0,1].set_ylim(0, cr["conv_rate"].max()+1)
-    ax[0,1].set_xlim(0, 50)
-    ax[0,1].set_title("Stagnant particles", fontsize=12)
-    # ax[0,1].set_yticks([0, 5])
-    ax[0,1].set_yticks([])
-    ax[0,1].set_xticks([])
-    ax[0,1].label_outer()  # Only show outer labels and tick labels
-
+    ax[3].set_visible(False)
 
 
     # Histograms for tmax and tfin (Manual layering with plt.bar)
     stagnant_list_sorted = stagnant_list.sort_values(by='lithology', ascending=True)
 
-    sns.histplot(stagnant_list_sorted, x="ti_kin", hue="lithology", ax=ax[1,1], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend = False)
-    sns.histplot(stagnant_list_sorted, x="ti_dyn", hue="lithology", ax=ax[1,1], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend = False)
-    sns.histplot(stagnant_list_sorted, x="ti_trans", hue="lithology", ax=ax[1,1], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend=True)
+    sns.histplot(stagnant_list_sorted, x="ti_kin", hue="lithology", ax=ax[4], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend = False)
+    sns.histplot(stagnant_list_sorted, x="ti_dyn", hue="lithology", ax=ax[4], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend = False)
+    sns.histplot(stagnant_list_sorted, x="ti_trans", hue="lithology", ax=ax[4], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend=True)
 
-    ax[1,1].text(17, 2500, "Beginning of stagnation", fontsize=12)
+    ax[4].text(17, 2400, "Beginning of stagnation", fontsize=12)
 
     # Add a title, labels, and legend
-    ax[1,1].set_xlabel("")
-    ax[1,1].set_ylabel("")
-    ax[1,1].set_xlim(0, 50)
-    ax[1,1].set_ylim(0.7, 5.e3)
-    ax[1,1].set_xticks([])
-    ax[1,1].set_yticks([])
-    ax[1,1].label_outer()  # Only show outer labels and tick labels
+    ax[4].set_xlabel("")
+    ax[4].set_ylabel("")
+    ax[4].set_xlim(0, 50)
+    ax[4].set_ylim(0.7, 5.e3)
+    ax[4].set_xticks([])
+    ax[4].set_yticks([])
+    ax[4].label_outer()  # Only show outer labels and tick labels
     #put y ticks to the right
-    # ax[1,1].yaxis.tick_right()
-    ax[1,1].set_yscale("log")
-    ax[1,1].axvline(x=35, color="grey", linestyle="--", label="35 Ma", linewidth = linewidth)
+    # ax[4].yaxis.tick_right()
+    ax[4].set_yscale("log")
+    ax[4].axvline(x=35, color="grey", linestyle="--", label="35 Ma", linewidth = linewidth)
 
 
 
@@ -148,53 +134,6 @@ def main():
 
 
 
-    #print the particles in each bin of the histogram for exhumed particles
-    new_bins = np.arange(0, 50, 5)
-    offset = 0
-
-    # for each lithology in the exhumed list, create a dataframe with the average values for each bin
-    for l, lith in enumerate(exhumed_list["lithology"].unique()):
-        lith_df = exhumed_list[exhumed_list["lithology"] == lith]
-        avg_bins = pd.DataFrame(columns=["bin", "bin_edges", "particles_num", "avg_ti", "std_ti", "avg_duration", "std_duration"])
-        current_bin = 1
-        for i in range(0, len(new_bins)-1):
-            avg_bins.loc[i, "bin_edges"] = f"{new_bins[i]}-{new_bins[i+1]}"
-            avg_bins.loc[i, "particles_num"] = len(lith_df[(lith_df["ti"] >= new_bins[i]) & (lith_df["ti"] < new_bins[i+1])])
-            avg_bins.loc[i, "avg_ti"] = lith_df[(lith_df["ti"] >= new_bins[i]) & (lith_df["ti"] < new_bins[i+1])]["ti"].mean()
-            avg_bins.loc[i, "std_ti"] = lith_df[(lith_df["ti"] >= new_bins[i]) & (lith_df["ti"] < new_bins[i+1])]["ti"].std()
-            avg_bins.loc[i, "avg_duration"] = lith_df[(lith_df["ti"] >= new_bins[i]) & (lith_df["ti"] < new_bins[i+1])]["time_interval"].mean()
-            avg_bins.loc[i, "std_duration"] = lith_df[(lith_df["ti"] >= new_bins[i]) & (lith_df["ti"] < new_bins[i+1])]["time_interval"].std()
-            if avg_bins.loc[i, "particles_num"] > 0:
-                avg_bins.loc[i, "bin"] = current_bin + offset
-                current_bin += 1
-            else:
-                avg_bins.loc[i, "bin"] = np.nan
-
-        offset += len(avg_bins[avg_bins["particles_num"] > 0])
-        ax[2,0].plot([avg_bins["avg_ti"], avg_bins["avg_ti"]+avg_bins["avg_duration"]], [avg_bins["bin"], avg_bins["bin"]], color=colors_tfin[lith], linewidth=1.5, linestyle='--', zorder = 1)
-        ax[2,0].scatter(avg_bins["avg_ti"], avg_bins["bin"], color=colors_tfin[lith], label=lith, zorder = 10, marker=">", s = 100)
-        ax[2,0].errorbar(
-            avg_bins["avg_ti"] + avg_bins["avg_duration"],
-            avg_bins["bin"], 
-            xerr=avg_bins["std_duration"],
-            fmt='o', 
-            ecolor=colors_tin[lith], 
-            color=colors_tin[lith],  
-            markersize=5, 
-            linewidth=1.5, 
-            capsize=3
-        )
-
-    ax[2,0].invert_yaxis()
-    ax[2,0].set_yticks([])
-    ax[2,0].label_outer()  # Only show outer labels and tick labels
-    ax[2,0].axvline(x=35, color="grey", linestyle="--", label="35 Ma", linewidth = linewidth)
-    ax[2,0].set_xlim(0, 50)
-    ax[2,0].set_xlabel("Time interval (Ma)")
-
-
-
-    # do the same for stagnant particles: do not differentiate between ti_kin, ti_dyn, ti_trans etc
     new_bins = np.arange(0, 50, 5)
     offset = 0
 
@@ -226,45 +165,40 @@ def main():
         # print(avg_bins)
 
         offset += len(avg_bins[avg_bins["particles_num"] > 0])
-        ax[2,1].plot([avg_bins["avg_ti"], avg_bins["avg_ti"]+avg_bins["avg_duration"]], [avg_bins["bin"], avg_bins["bin"]], color=colors_tfin[lith], linewidth=1.5, linestyle='--', zorder=2)
-        ax[2,1].scatter(avg_bins["avg_ti"], avg_bins["bin"], color=colors_tfin[lith], label=lith, zorder=10, marker=">", s=100)
-        ax[2,1].errorbar(
+        ax[5].plot([avg_bins["avg_ti"], avg_bins["avg_ti"]+avg_bins["avg_duration"]], [avg_bins["bin"], avg_bins["bin"]], color=colors_tfin[lith], linewidth=1.5, linestyle='--', zorder=2)
+        ax[5].scatter(avg_bins["avg_ti"], avg_bins["bin"], color=colors_tfin[lith], label=lith, zorder=10, marker=">", s=100, linewidth = 0)
+        ax[5].errorbar(
             avg_bins["avg_ti"] + avg_bins["avg_duration"],
             avg_bins["bin"], 
             xerr=avg_bins["std_duration"],
             fmt='o', 
-            ecolor=colors_tin[lith], 
-            color=colors_tin[lith],  
-            markersize=5, 
-            linewidth=1.5, 
-            capsize=3,
+            ecolor=colors_tfin[lith], 
+            color=colors_tfin[lith],  
+            markersize=7, 
+            linewidth=0, 
+            capsize=5,
+            capthick=2,
             zorder=2
         )
 
 
-    ax[2,1].invert_yaxis()
-    ax[2,1].set_yticks([])
-    ax[2,1].label_outer()  # Only show outer labels and tick labels
-    ax[2,1].axvline(x=35, color="grey", linestyle="--", label="35 Ma", linewidth = linewidth)
-    ax[2,1].set_xlim(0, 50)
-    ax[2,1].set_xlabel("Time interval (Ma)")
+    ax[5].invert_yaxis()
+    ax[5].set_yticks([])
+    ax[5].label_outer()  # Only show outer labels and tick labels
+    ax[5].axvline(x=35, color="grey", linestyle="--", label="35 Ma", linewidth = linewidth)
+    ax[5].set_xlim(0, 50)
+    ax[5].set_xlabel("Time (Myr)")
 
    
+    plt.subplots_adjust(hspace=0.0)
 
-
-    
-
-
-    # Add no vertical space between the plots
-    plt.tight_layout()
-    plt.subplots_adjust(hspace=0, wspace=0.0)
 
 
 
 
     
 
-    plt.savefig(f"{plot_loc}/timeline.png", dpi=500)
+    plt.savefig(f"{plot_loc}/timeline.pdf", dpi=500)
     plt.close()
 
 
