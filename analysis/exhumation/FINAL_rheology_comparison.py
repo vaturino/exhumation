@@ -132,7 +132,6 @@ def main():
 
 
             # Histograms for tmax and tfin (Manual layering with plt.bar)
-            stagnant_list_sorted = stagnant_list.sort_values(by='lithology', ascending=True)
             stagnant_list["ti"] = np.nan
 
             # Handle ti_kin, ti_dyn, ti_trans

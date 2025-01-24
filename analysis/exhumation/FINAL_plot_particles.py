@@ -28,6 +28,8 @@ from libraries.exhumation import *
 
 import numpy as np
 
+
+# load the pressure-temperature data from the txt files extracted through the "parallel_get_PT.py" script
 def load_data(id, txt_loc):
     data = pd.read_csv(f"{txt_loc}/PT/pt_part_{id}.txt", sep="\s+")
     data["time"] = data["time"] / 2
@@ -35,7 +37,7 @@ def load_data(id, txt_loc):
     return data
 
 
-
+# Compute the time intervals for the particles
 def compute_time_intervals(data, stagnation_min, time_thresh):
     start_time = None
     data["time_interval"] = np.nan 
@@ -85,9 +87,9 @@ def process_times_for_particle(data, stagnation_min, time_thresh, grad_thresh):
     lowgrad["duration"] = lowgrad["time"].diff()
     lowgrad['time_bin'] = None
 
+
     lowgrad = compute_time_intervals(lowgrad, stagnation_min, time_thresh)
     lowgrad = calculate_middle_values(lowgrad)
-    #I want to put to nan all the rows for which Plith is >=6.0
     lowgrad = lowgrad[lowgrad["Plith"] < 6.0]
     return lowgrad
 
@@ -122,18 +124,18 @@ def process_particle(p, txt_loc, line_colors, compositions, composition_mapping,
     pt_single["terrain"] = sum((ind_c + 1) * pt_single[c].round() for ind_c, c in enumerate(compositions))
     pt_single["terrain"] = pt_single["terrain"].round()
     pt_single["lithology"] = pt_single["terrain"].map(composition_mapping)
-    pt_single["lithology"] = pt_single["lithology"].iloc[-1]
+    # pt_single["lithology"] = pt_single["lithology"].iloc[-1]
+    
 
     max_depth = ymax - pt_single["depth"].min()
     exhumed = ((pt_single.depth.iat[-1] - pt_single.depth.min()) >= thresh * max_depth) and (max_depth > 10.)
 
-    stagnant = not exhumed #and (pt_single.Plith.max() <= 6.)
+    stagnant = not exhumed # Default as stagnant
     subducted = not exhumed and not stagnant  # Default as not subducted
 
     particle_data = None
 
     if stagnant:
-        #smooth little wrinkles in the Plith - time curve
         pt_single["Plith"] = pt_single["Plith"].rolling(window=10, min_periods=1).mean()
         pt_single["time"] = pt_single["time"].rolling(window=10, min_periods=1).mean()
         pt_single["gradient"] = np.gradient(pt_single["Plith"], pt_single["time"])
@@ -146,7 +148,7 @@ def process_particle(p, txt_loc, line_colors, compositions, composition_mapping,
             # Process bins only if they exist
             lowgrad_dyn = lowgrad[lowgrad["tm"] < 33.]
             lowgrad_kin = lowgrad[lowgrad["tm"] > 37.]
-            lowgrad_trans = lowgrad[(lowgrad["tm"] > 33.) & (lowgrad["tm"] < 37.)]
+            lowgrad_trans = lowgrad[(lowgrad["tm"] >= 33.) & (lowgrad["tm"] <= 37.)]
 
             particle_data = {
                 "id": p,
@@ -179,20 +181,22 @@ def process_particle(p, txt_loc, line_colors, compositions, composition_mapping,
 
 
 
-
+# Plot the maximum conditions for each particle
 def plot_max_conditions(df, title_str, plot_file, lith_count, P, T, t):
         print(f"Plotting exhumed")
         f, a = plt.subplots(1, 3, figsize=(15, 5))
 
-        # Get unique lithologies and assign a color palette
-        unique_lithologies = df.lithology.unique()
-        colors = sns.color_palette("colorblind", len(unique_lithologies))
-
-        # Create a mapping of lithologies to colors
-        color_mapping = {lithology: color for lithology, color in zip(unique_lithologies, colors)}
-
+        
         for p in range(len(P)):
             # Scatterplot with consistent colors
+            # Get unique lithologies and assign a color palette
+            # print(df[lith[p]].unique())
+            unique_lithologies = df.lithology.unique()
+            colors = sns.color_palette("colorblind", len(unique_lithologies))
+    
+            # Create a mapping of lithologies to colors
+            color_mapping = {lithology: color for lithology, color in zip(unique_lithologies, colors)}
+
             sns.scatterplot(ax=a[0], data=df, x=T[p], y=P[p], hue="lithology", palette=color_mapping, linewidth=0.2)
             a[0].set_xlabel("T ($^\circ$C)")
             a[0].set_ylabel("P (GPa)")
@@ -250,7 +254,7 @@ def main():
     grad_thresh = 0.01
     time_thresh = 0.5
     exhumed_thresh = 0.25
-    c = ["Pm", "tm", "Tm", "time_interval", "ti", "tf"]
+    c = ["Pm", "tm", "Tm", "time_interval", "ti", "tf", "lithology"]
 
 
     init = pd.read_csv(f"{txt_loc}/particles_indexes.csv")
@@ -263,7 +267,7 @@ def main():
 
     fixed_columns = ["id", "lithology"]
     timing = ["dyn", "trans", "kin"]
-    columns = fixed_columns + [f"{c}_{t}" for c in ["Pm", "tm", "Tm", "time_interval", "ti","tf"] for t in timing]
+    columns = fixed_columns + [f"{c}_{t}" for c in ["Pm", "tm", "Tm", "time_interval", "ti","tf", "lithology"] for t in timing]
     stag = pd.DataFrame(columns=columns, index=range(npa))
 
 
@@ -276,6 +280,7 @@ def main():
     
 
     composition_mapping = {ind_c + 1: c for ind_c, c in enumerate(compositions)}
+
 
     f1, a1 = plt.subplots(1, 2, figsize=(15, 5))
     f2, a2 = plt.subplots(1, 1)
@@ -320,9 +325,9 @@ def main():
                     stagnant += 1
                     if result["data"] is not None:
                         result_data_cleaned = result["data"].copy()
-                        result_data_cleaned["lithology"] = result_data_cleaned["lithology"].iloc[-1]  # Take the last entry if it's a series
+                        result_data_cleaned["lithology"] = result_data_cleaned["lithology"].iloc[-1] 
                         particle_data_series = pd.Series(result_data_cleaned, index=stag.columns)
-                        stag.loc[p] = particle_data_series  # Assign the data to the stagnant DataFrame             
+                        stag.loc[p] = particle_data_series          
                     a3[0].plot(pt_single["T"], pt_single["Plith"], color=line_color)
                     a3[1].plot((pt_single["time"]), pt_single["Plith"], color=line_color)
                     a3[1].set_xlim(0, 50)
@@ -330,7 +335,6 @@ def main():
             except Exception as e:
                 print(f"Error processing particle {p}: {e}")
 
-    # No explicit executor.shutdown() needed; the context manager handles it.
 
 
 
@@ -385,13 +389,15 @@ def main():
 
     # Calculate the highest numerical value between Pm_kin, Pm_trans, Pm_dyn
     stag["Pm"] = stag[["Pm_kin", "Pm_trans", "Pm_dyn"]].max(axis=1)
-    max_Pm_column = stag[["Pm_kin", "Pm_trans", "Pm_dyn"]].idxmax(axis=1)
-    # Map each column to its corresponding tm_i column
-    tm_mapping = {
-        "Pm_kin": "tm_kin",
-        "Pm_trans": "tm_trans",
-        "Pm_dyn": "tm_dyn"
-    }
+    # max_Pm_column = stag[["Pm_kin", "Pm_trans", "Pm_dyn"]].idxmax(axis=1)
+    # # Map each column to its corresponding tm_i column
+    # tm_mapping = {
+    #     "Pm_kin": "tm_kin",
+    #     "Pm_trans": "tm_trans",
+    #     "Pm_dyn": "tm_dyn"
+    # }
+
+
     
 
     plot_max_conditions(exh, f"Total number of exhumed particles = {len(exh)} - {(len(exh) / npa) * 100:.1f}%", f"{plot_loc}/max_PT_conditions.png", exh_title_str, ["maxPP"], ["maxPT"], ["tmax"])
@@ -399,7 +405,7 @@ def main():
     print("particles plotted")
 
     exh.to_csv(f"{txt_loc}/exhumed_particles.txt", sep="\t", index=False)
-    stag = stag.astype({col: 'float' for col in columns if col not in fixed_columns})
+    stag = stag.astype({col: 'float' for col in columns if col not in fixed_columns+["lithology_kin", "lithology_dyn", "lithology_trans"]})
     stag.to_csv(f"{txt_loc}/stagnant_particles.txt", sep=" ", index=False, float_format='%.2f', na_rep="NaN")
     subd.to_csv(f"{txt_loc}/subducted_particles.txt", sep="\t", index=False)
 

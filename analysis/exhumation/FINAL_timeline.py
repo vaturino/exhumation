@@ -106,13 +106,42 @@ def main():
     ax[3].set_visible(False)
 
 
-    # Histograms for tmax and tfin (Manual layering with plt.bar)
-    stagnant_list_sorted = stagnant_list.sort_values(by='lithology', ascending=True)
+    # # Histograms for tmax and tfin (Manual layering with plt.bar)
+    # stagnant_list_sorted = stagnant_list.sort_values(by='lithology', ascending=True)
 
-    sns.histplot(stagnant_list_sorted, x="ti_kin", hue="lithology", ax=ax[4], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend = False)
-    sns.histplot(stagnant_list_sorted, x="ti_dyn", hue="lithology", ax=ax[4], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend = False)
-    sns.histplot(stagnant_list_sorted, x="ti_trans", hue="lithology", ax=ax[4], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend=True)
+    # sns.histplot(stagnant_list_sorted, x="ti_kin", hue="lithology", ax=ax[4], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend = False)
+    # sns.histplot(stagnant_list_sorted, x="ti_dyn", hue="lithology", ax=ax[4], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend = False)
+    # sns.histplot(stagnant_list_sorted, x="ti_trans", hue="lithology", ax=ax[4], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend=True)
 
+    # Initialize new columns
+    stagnant_list["ti"] = np.nan
+    stagnant_list["time_interval"] = np.nan
+    stagnant_list["lith_time"] = np.nan
+
+    # Handle ti_kin, ti_dyn, ti_trans
+    new_rows = []
+    for index, row in stagnant_list.iterrows():
+        ti_values = [row["ti_dyn"], row["ti_kin"], row["ti_trans"]]
+        time_interval_values = [row["time_interval_dyn"], row["time_interval_kin"], row["time_interval_trans"]]
+        lithology_values = [row["lithology_dyn"], row["lithology_kin"], row["lithology_trans"]]
+        
+        for ti, time_interval, lithology in zip(ti_values, time_interval_values, lithology_values):
+            if not np.isnan(ti):  # Only include non-NaN values
+                new_row = row.copy()
+                new_row["ti"] = ti
+                new_row["time_interval"] = time_interval
+                new_row["lith_time"] = lithology
+                new_rows.append(new_row)
+
+    # Concatenate new rows to create the final DataFrame
+    stagnant_list_expanded = pd.DataFrame(new_rows)
+
+    # print(stagnant_list[(stagnant_list["lithology"] == "oc") & (stagnant_list["ti"] <18)])
+
+
+    sns.histplot(stagnant_list_expanded, x="ti", ax=ax[4], hue = "lith_time", palette= colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend=False)
+    
+    
     ax[4].text(17, 2400, "Beginning of stagnation", fontsize=12)
 
     # Add a title, labels, and legend

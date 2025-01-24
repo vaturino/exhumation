@@ -143,12 +143,57 @@ def main():
 
 
 
-        # Histograms for tmax and tfin (Manual layering with plt.bar)
-        stagnant_list_sorted = stagnant_list.sort_values(by='lithology', ascending=True)
+        # # Histograms for tmax and tfin (Manual layering with plt.bar)
+        # stagnant_list["ti"] = np.nan
+        # stagnant_list["time_interval"] = np.nan
+        # stagnant_list["lith_time"] = np.nan
+        # # sns.histplot(stagnant_list, x="ti_dyn", ax=ax[ind_m+1,1], hue = "lithology", palette= colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend=False)
 
-        sns.histplot(stagnant_list_sorted, x="ti_kin", hue="lithology", ax=ax[ind_m+1,1], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend = False)
-        sns.histplot(stagnant_list_sorted, x="ti_dyn", hue="lithology", ax=ax[ind_m+1,1], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend = False)
-        sns.histplot(stagnant_list_sorted, x="ti_trans", hue="lithology", ax=ax[ind_m+1,1], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend=True)
+        # # Handle ti_kin, ti_dyn, ti_trans
+        # new_rows = []
+        # for index, row in stagnant_list.iterrows():
+        #     ti_values = [row["ti_kin"], row["ti_dyn"], row["ti_trans"]]
+        #     non_nan_ti_values = [ti for ti in ti_values if not np.isnan(ti)]
+        #     if len(non_nan_ti_values) == 1:
+        #         stagnant_list.at[index, "ti"] = non_nan_ti_values[0]
+        #     elif len(non_nan_ti_values) > 1:
+        #         for ti in non_nan_ti_values:
+        #             new_row = row.copy()
+        #             new_row["ti"] = ti
+        #             new_rows.append(new_row)
+        #         stagnant_list.at[index, "ti"] = np.nan  # Mark original row as NaN to be dropped later
+
+        # # Concatenate new rows to the DataFrame and drop original rows with NaN "ti"
+        # stagnant_list = pd.concat([stagnant_list, pd.DataFrame(new_rows)], ignore_index=True)
+        # stagnant_list = stagnant_list.dropna(subset=["ti"])
+
+        # Initialize new columns
+        stagnant_list["ti"] = np.nan
+        stagnant_list["time_interval"] = np.nan
+        stagnant_list["lith_time"] = np.nan
+
+        # Handle ti_kin, ti_dyn, ti_trans
+        new_rows = []
+        for index, row in stagnant_list.iterrows():
+            ti_values = [row["ti_dyn"], row["ti_kin"], row["ti_trans"]]
+            time_interval_values = [row["time_interval_dyn"], row["time_interval_kin"], row["time_interval_trans"]]
+            lithology_values = [row["lithology_dyn"], row["lithology_kin"], row["lithology_trans"]]
+            
+            for ti, time_interval, lithology in zip(ti_values, time_interval_values, lithology_values):
+                if not np.isnan(ti):  # Only include non-NaN values
+                    new_row = row.copy()
+                    new_row["ti"] = ti
+                    new_row["time_interval"] = time_interval
+                    new_row["lith_time"] = lithology
+                    new_rows.append(new_row)
+
+        # Concatenate new rows to create the final DataFrame
+        stagnant_list_expanded = pd.DataFrame(new_rows)
+
+        # print(stagnant_list[(stagnant_list["lithology"] == "oc") & (stagnant_list["ti"] <18)])
+
+
+        sns.histplot(stagnant_list_expanded, x="ti", ax=ax[ind_m+1,1], hue = "lith_time", palette= colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend=False)
 
         ax[ind_m+1,1].text(17, 2500, "Beginning of stagnation", fontsize=12)
 
@@ -190,9 +235,9 @@ def main():
         ax[ind_m+1,2].bar(0.8, pstagnant, bottom=psubducted+pexhumed, color=classification["stagnant"], 
                         label="Stagnant", edgecolor="black", linewidth=0.5, width=bar_width)
         #add text with the percentage of particles on the left of the bar
-        ax[ind_m+1,2].text(0.8, 0.5, f"{round(psubducted*100, 1)}%", fontsize=10, ha="center", va="center", weight="bold", color = "mediumblue")
-        ax[ind_m+1,2].text(0.8, psubducted + 0.5*pexhumed, f"{round(pexhumed*100, 1)}%", fontsize=10, ha="center", va="top", weight="bold", color = "indigo")
-        ax[ind_m+1,2].text(0.8, psubducted + pexhumed + 0.5*pstagnant, f"{round(pstagnant*100, 1)}%", fontsize=10, ha="center", va="bottom", weight="bold", color = "darkgreen")
+        ax[ind_m+1,2].text(0.8, 0.5, f"{round(psubducted*100, 0)}%", fontsize=10, ha="center", va="center", weight="bold", color = "mediumblue")
+        ax[ind_m+1,2].text(0.8, psubducted + 0.5*pexhumed, f"{round(pexhumed*100, 0)}%", fontsize=10, ha="center", va="top", weight="bold", color = "indigo")
+        ax[ind_m+1,2].text(0.8, psubducted + pexhumed + 0.5*pstagnant, f"{round(pstagnant*100, 0)}%", fontsize=10, ha="center", va="bottom", weight="bold", color = "darkgreen")
         
 
         ax[ind_m+1,2].axis("off")

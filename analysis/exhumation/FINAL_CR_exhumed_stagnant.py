@@ -144,11 +144,33 @@ def main():
 
     # Histograms for tmax and tfin (Manual layering with plt.bar)
     bin_edges = np.arange(0, 50, 1)  # Define bin edges
-    stagnant_list_sorted = stagnant_list.sort_values(by='lithology', ascending=True)
+    # Histograms for tmax and tfin (Manual layering with plt.bar)
+    stagnant_list["ti"] = np.nan
 
-    sns.histplot(stagnant_list_sorted, x="ti_kin", hue="lithology", ax=ax[1,1], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend = False)
-    sns.histplot(stagnant_list_sorted, x="ti_dyn", hue="lithology", ax=ax[1,1], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend = False)
-    sns.histplot(stagnant_list_sorted, x="ti_trans", hue="lithology", ax=ax[1,1], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend=True)
+    # Handle ti_kin, ti_dyn, ti_trans
+    new_rows = []
+    for index, row in stagnant_list.iterrows():
+        ti_values = [row["ti_kin"], row["ti_dyn"], row["ti_trans"]]
+        non_nan_ti_values = [ti for ti in ti_values if not np.isnan(ti)]
+        if len(non_nan_ti_values) == 1:
+            stagnant_list.at[index, "ti"] = non_nan_ti_values[0]
+        elif len(non_nan_ti_values) > 1:
+            for ti in non_nan_ti_values:
+                new_row = row.copy()
+                new_row["ti"] = ti
+                new_rows.append(new_row)
+            stagnant_list.at[index, "ti"] = np.nan  # Mark original row as NaN to be dropped later
+
+    # Concatenate new rows to the DataFrame and drop original rows with NaN "ti"
+    stagnant_list = pd.concat([stagnant_list, pd.DataFrame(new_rows)], ignore_index=True)
+    stagnant_list = stagnant_list.dropna(subset=["ti"])
+
+    sns.histplot(stagnant_list, x="ti", ax=ax[1,1], hue = "lithology", palette= colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges)
+    # stagnant_list_sorted = stagnant_list.sort_values(by='lithology', ascending=True)
+
+    # sns.histplot(stagnant_list_sorted, x="ti_kin", hue="lithology", ax=ax[1,1], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend = False)
+    # sns.histplot(stagnant_list_sorted, x="ti_dyn", hue="lithology", ax=ax[1,1], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend = False)
+    # sns.histplot(stagnant_list_sorted, x="ti_trans", hue="lithology", ax=ax[1,1], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend=True)
 
     ax[1,1].text(17, 2500, "Beginning of stagnation", fontsize=12)
 
