@@ -68,7 +68,7 @@ def main():
         for t in [90]:
 
             fig, ax = plt.subplots()
-            plotname = f"{plot_loc}{int(t/2)}.png" 
+            plotname = f"{plot_loc}{int(t/2)}.pdf" 
             data = pd.read_parquet(f"{csvs_loc}{m}/fields/full.{int(t)}.gzip") 
             data["lithology"] = 0
             data["logvisc"] = np.log10(data["viscosity"])
@@ -76,6 +76,8 @@ def main():
                 data[c][data["Points:1"] < cutoff[ind]] = 0
                 data[c][data[c] >= 0.5] = 1
                 data[c][data[c] < 0.5] = 0
+
+            data["comp"] = data["oc"]+data["sed"]+data["ecl"]
 
             for ind_c, c in enumerate(compositions):
                 weight = ind_c + 1
@@ -87,6 +89,8 @@ def main():
             data["terrain"].fillna("mantle", inplace=True)
             filter_mask = (data["terrain"] != "mantle") & (data["terrain"] != "opc")
             data_filtered_comp = data[filter_mask]
+
+            data["comp"] = data["oc"]+data["sed"]+data["ecl"]+data["serp"]
 
             
             pts = get_points_with_y_in(data, 15.e3, 2.e3, ymax = 900.e3)
@@ -116,6 +120,7 @@ def main():
             triang.set_mask(np.logical_and(maxi > max_radius, y[triangles][:,1] < 90.))
 
             ax.tripcolor(triang, data["logvisc"], shading='gouraud', vmin=18, vmax=24)
+            ax.tricontour(triang, data["comp"], levels=[1], colors='navy', linewidths=2)
             step = 500  # plot every 100th vector to reduce the number of vectors plotted
             data_filtered = data_filtered_comp.iloc[::step]
 
@@ -144,7 +149,7 @@ def main():
 
 
 
-            plt.savefig(plotname, bbox_inches='tight', format='png', dpi=1000)
+            plt.savefig(plotname, bbox_inches='tight', format='pdf', dpi=1000)
             plt.clf()
             plt.close('all')
 

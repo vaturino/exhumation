@@ -9,217 +9,401 @@ import argparse
 import os
 import matplotlib.patches as mpatches
 from scipy.stats import gaussian_kde
-import warnings
-warnings.filterwarnings("ignore")
 
 
 def main():
     # Parse the arguments
     parser = argparse.ArgumentParser(description='Script that gets some models and gives the kinematic indicators')
-    # parser.add_argument('json_file', help='json file with model name, time at the end of computation, folder where to save the plots, legend')
-    # args = parser.parse_args()
+    parser.add_argument('json_file', help='json file with model name, time at the end of computation, folder where to save the plots, legend')
+    args = parser.parse_args()
 
     json_loc = '/home/vturino/PhD/projects/exhumation/pyInput/'
-    json_files = ["weak_to_strong.json", "yield_stress.json", "serp_no_serp.json"]
+    json_file = f"{json_loc}{args.json_file}"
+
+    # Read the json file
+    with open(f"{json_file}") as json_file:
+        configs = json.load(json_file)
+
+    plotloc = f'/home/vturino/PhD/projects/exhumation/plots/{configs["plot_folder"][0]}'
+    plotname = "rheology_comparison.pdf"
+
+    crfolder = f"/home/vturino/PhD/projects/exhumation/plots/single_models/{configs['models'][0]}/txt_files"
+
+    cr = pd.read_csv(f"{crfolder}/2D_v.txt", sep="\s+")
+    cr["conv_rate"].iloc[0] = np.nan
 
 
-    cr_colors = [
-        "blue",
-        "grey",
-        "green"
-    ]
+    # colors
+    color = ["mediumslateblue", "darkslateblue", "orangered", "firebrick", "forestgreen", "darkgreen"]
 
-    classification = {
-        "subducted": "lightcyan",
-        "exhumed": "orchid",
-        "stagnant": "olivedrab"
+    colors_tfin = {
+        "sed": "cornflowerblue",
+        "oc": "#E3B64F",
+        "ecl": "#A0C93D",
+        "serp": "lightsalmon"
     }
 
 
-    alpha = 0.5
-    linewidth = 1
-
-    figloc = f"/home/vturino/PhD/projects/exhumation/plots/comparison/"
-    plotname = "rheology_comparison_timing.pdf"
+    # fig, ax = plt.subplots(9, 2, figsize=(10, 7), height_ratios=[0.25, 0.1,  1, 1, 1, 0.1, 1, 1, 1])
     
+    # # Plot 0: convergence rate
+    # ax[0,0].plot(cr["time"]/1e6, cr["conv_rate"], color="grey", label="Convergence rate (cm/yr)", linewidth=1)
+    # ax[0,0].axvline(x=35, color="grey", linestyle="--", linewidth = 1)
+    # ax[0,0].label_outer()  # Only show outer labels and tick labels
+    # ax[0,0].set_xlim(0, 50)
 
-    # # Create the plot
-    nplots = len(json_files)+1
-    fig,ax = plt.subplots(nplots, 3, figsize=(10, 6), height_ratios=[0.25]+[1]*(nplots-1), width_ratios=[1,1,0.1])
+    # ax[0,1].plot(cr["time"]/1e6, cr["conv_rate"], color="grey", label="Convergence rate (cm/yr)", linewidth=1)
+    # ax[0,1].axvline(x=35, color="grey", linestyle="--", linewidth = 1)
+    # ax[0,1].label_outer()  # Only show outer labels and tick labels
+    # ax[0,1].set_xlim(0, 50)
 
-
-
-    # Read the json file
-    for indf, f in enumerate(json_files):
-        with open(f"{json_loc}{f}") as json_file:
-            configs = json.load(json_file)
-
-
-        count = len(configs["models"])
-
-
-        for ind_m, m in enumerate(configs["models"]):
-            # Create the folders to save the plots
-            plot_loc = f"/home/vturino/PhD/projects/exhumation/plots/single_models/{m}"
-            txt_loc = f'{plot_loc}/txt_files'
-            if not os.path.exists(txt_loc):
-                os.mkdir(txt_loc)
-
-            # Load the data
-            exhumed_list = pd.read_csv(f"{txt_loc}/exhumed_times.txt", sep="\s+")
-            stagnant_list = pd.read_csv(f"{txt_loc}/stagnant_particles.txt", sep="\s+")
-            cr = pd.read_csv(f"{txt_loc}/2D_v.txt", sep="\s+")
-            cr["conv_rate"].iloc[0] = np.nan
+    # ax[1,0].set_visible(False)
+    # ax[1,1].set_visible(False)
+    # ax[5,0].set_visible(False)
+    # ax[5,1].set_visible(False)
 
 
-            # Plot 0: convergence rate
-            if indf == 0 and ind_m == 0:
-                ax[0,0].plot(cr["time"]/1e6, cr["conv_rate"], color=cr_colors[ind_m], linewidth=1)
-                ax[0,0].axvline(x=35, color='grey', linestyle="--", linewidth = linewidth)
-                ax[0,0].label_outer()  # Only show outer labels and tick labels
-                # ax[0,0].legend(loc='upper right')
-                ax[0,0].set_ylim(0, cr["conv_rate"].max()+1)
-                ax[0,0].set_xlim(13, 50)
-                ax[0,0].set_title("Exhumable particles", fontsize=12)
-                ax[0,0].set_yticks([0, 5])
-                ax[0,0].set_xticks([])
 
-            # # Histograms for tmax and tfin (Manual layering with plt.bar)
-            bin_edges = np.arange(0, 50,1)  # Define bin edges
 
-            # Sort exhumed_list by lithology to ensure 'oc' is plotted over 'sed'
-            exhumed_list_sorted = exhumed_list.sort_values(by='lithology', ascending=True)
-            if configs["legend"][ind_m] == "reference":
-                Fill = True
-                alpha = 0.5
-            else:
-                Fill = True
-                alpha = 0.1
-            sns.histplot(exhumed_list_sorted, x="ti",  bins=bin_edges, ax=ax[indf+1,0], color=cr_colors[ind_m], alpha=alpha, linewidth=1, element="step", legend=True, label=configs["legend"][ind_m], fill=Fill)
+
+    # fig.subplots_adjust(hspace=0.0, wspace=0.0)
+
+    # weak_idx = 0
+    # strong_idx = 0
+
+
+    # weak_stag = 6
+    # strong_stag = 6
+
+
+    # for m, mod in enumerate(configs['models']):
+    #     mod_loc = f"/home/vturino/PhD/projects/exhumation/plots/single_models/{mod}"
+    #     exhumed_list = pd.read_csv(f"{mod_loc}/txt_files/exhumed_times.txt", sep="\s+")
+    #     stagnant_list = pd.read_csv(f"{mod_loc}/txt_files/stagnant_particles.txt", sep="\s+")
+
+    #     bin_edges = np.arange(0, 50, 1)  # Define bin edges
+
+    #     if configs["strength"][m] == "weak":
+    #         sns.histplot(
+    #             exhumed_list,
+    #             x="ti",
+    #             ax=ax[weak_idx+2, 0],
+    #             bins=bin_edges,
+    #             hue = "lithology",
+    #             palette = colors_tfin,
+    #             alpha=0.5,
+    #             linewidth=1,
+    #             element="step",
+    #             legend=True
+    #         )
+
+    #         ax[weak_idx+2, 0].axvline(x=35, color="grey", linestyle="--", linewidth = 1)
+    #         ax[weak_idx+2, 0].set_yscale("log")
+    #         ax[weak_idx+2, 0].set_xlim(0, 50)
+    #         ax[weak_idx+2, 0].set_ylim(0.7, 5.e3)
+    #         ax[weak_idx+2, 0].set_ylabel("Count (log)")
+    #         ax[weak_idx+2, 0].set_xticks([])
+    #         ax[weak_idx+2, 0].set_xlabel("")
+    #         ax[weak_idx+2, 0].text(0.2, 0.8, configs["names"][m], horizontalalignment='center', verticalalignment='center', transform=ax[weak_idx+2, 0].transAxes)
+
+
+    #         weak_idx += 1
+
+    #     else:
+
+    #         sns.histplot(
+    #             exhumed_list,
+    #             x="ti",
+    #             ax=ax[strong_idx+2, 1],
+    #             bins=bin_edges,
+    #             hue = "lithology",
+    #             palette = colors_tfin,
+    #             alpha=0.5,
+    #             linewidth=1,
+    #             element="step",
+    #             legend=True,
+    #         )
+    #         ax[strong_idx+2, 1].axvline(x=35, color="grey", linestyle="--", linewidth = 1)
+    #         ax[strong_idx+2, 1].set_yscale("log")
+    #         ax[strong_idx+2, 1].set_xlim(0, 50)
+    #         ax[strong_idx+2, 1].set_ylim(0.7, 5.e3)
+    #         ax[strong_idx+2, 1].set_ylabel("")
+    #         ax[strong_idx+2, 1].set_xticks([])
+    #         ax[strong_idx+2, 1].set_xlabel("")
+    #         ax[strong_idx+2, 1].set_yticks([])
+    #         ax[strong_idx+2, 1].text(0.2, 0.8, configs["names"][m], horizontalalignment='center', verticalalignment='center', transform=ax[strong_idx+2, 1].transAxes)
+
+    #         strong_idx += 1
+
+    #     #stagnant particles
+    #     # Handle ti_kin, ti_dyn, ti_trans
+    #     new_rows = []
+    #     for index, row in stagnant_list.iterrows():
+    #         ti_values = [row["ti_dyn"], row["ti_kin"], row["ti_trans"]]
+    #         time_interval_values = [row["time_interval_dyn"], row["time_interval_kin"], row["time_interval_trans"]]
+    #         lithology_values = [row["lithology_dyn"], row["lithology_kin"], row["lithology_trans"]]
             
-            # ax[indf+1,0].legend()
-            # Set scale, labels, and limits
-            ax[indf+1,0].set_yscale("log")
-            ax[indf+1,0].label_outer()  # Only show outer labels and tick labels
-            # ax[indf+1,0].text(1, 20, " Particles \n Subduction", fontsize=18)
-            ax[indf+1,0].set_xlabel("")
-            ax[indf+1,0].set_ylabel("Particles count (log)")
-            ax[indf+1,0].set_xlim(13, 50)
-            ax[indf+1,0].set_xticks([])
-            ax[indf+1,0].set_ylim(0.7, 5.e3)
-            ax[indf+1,0].axvline(x=35, color="grey", linestyle="--", linewidth = linewidth)
-            ax[indf+1,0].text(0.32, 0.9, "Time at exhumable threshold", fontsize=12, transform=ax[indf+1,0].transAxes)
+    #         for ti, time_interval, lithology in zip(ti_values, time_interval_values, lithology_values):
+    #             if not np.isnan(ti):  # Only include non-NaN values
+    #                 new_row = row.copy()
+    #                 new_row["ti"] = ti
+    #                 new_row["time_interval"] = time_interval
+    #                 new_row["lith_time"] = lithology
+    #                 new_rows.append(new_row)
+
+    #     # Concatenate new rows to create the final DataFrame
+    #     stagnant_list_expanded = pd.DataFrame(new_rows)
+
+    #     if configs["strength"][m] == "weak":
+    #         sns.histplot(
+    #             stagnant_list_expanded,
+    #             x="ti",
+    #             ax=ax[weak_stag, 0],
+    #             bins=bin_edges,
+    #             hue="lith_time",
+    #             palette=colors_tfin,
+    #             alpha=0.5,
+    #             linewidth=1,
+    #             element="step",
+    #             legend=True,
+    #         )
+
+    #         ax[weak_stag, 0].axvline(x=35, color="grey", linestyle="--", linewidth = 1)
+    #         ax[weak_stag, 0].set_yscale("log")
+    #         ax[weak_stag, 0].set_xlim(0, 50)
+    #         ax[weak_stag, 0].set_ylim(0.7, 5.e3)
+    #         ax[weak_stag, 0].set_ylabel("Count (log)")
+    #         ax[weak_stag, 0].set_xticks([])
+    #         ax[weak_stag, 0].set_xlabel("")
+    #         ax[weak_stag, 0].text(0.2, 0.8, configs["names"][m], horizontalalignment='center', verticalalignment='center', transform=ax[weak_stag, 0].transAxes)
 
 
-        
+    #         weak_stag += 1
 
-            # COLUMN 2
-
-            # Plot 0: convergence rate
-            if indf == 0 and ind_m == 0:
-                ax[0,1].plot(cr["time"]/1e6, cr["conv_rate"], color= cr_colors[ind_m], linewidth=1)
-                ax[0,1].axvline(x=35, color="grey", linestyle="--", linewidth = linewidth)
-                ax[0,1].label_outer()  # Only show outer labels and tick labels
-                # ax[0,1].legend(loc='upper right')
-                ax[0,1].set_ylim(0, cr["conv_rate"].max()+1)
-                ax[0,1].set_xlim(13, 50)
-                ax[0,1].set_title("Stagnant particles", fontsize=12)
-                # ax[0,1].set_yticks([0, 5])
-                ax[0,1].set_yticks([])
-                ax[0,1].set_xticks([])
-                ax[0,1].label_outer()  # Only show outer labels and tick labels
-
-
-
-            # Histograms for tmax and tfin (Manual layering with plt.bar)
-            stagnant_list["ti"] = np.nan
-
-            # Handle ti_kin, ti_dyn, ti_trans
-            new_rows = []
-            for index, row in stagnant_list.iterrows():
-                ti_values = [row["ti_kin"], row["ti_dyn"], row["ti_trans"]]
-                non_nan_ti_values = [ti for ti in ti_values if not np.isnan(ti)]
-                if len(non_nan_ti_values) == 1:
-                    stagnant_list.at[index, "ti"] = non_nan_ti_values[0]
-                elif len(non_nan_ti_values) > 1:
-                    for ti in non_nan_ti_values:
-                        new_row = row.copy()
-                        new_row["ti"] = ti
-                        new_rows.append(new_row)
-                    stagnant_list.at[index, "ti"] = np.nan  # Mark original row as NaN to be dropped later
-
-            # Concatenate new rows to the DataFrame and drop original rows with NaN "ti"
-            stagnant_list = pd.concat([stagnant_list, pd.DataFrame(new_rows)], ignore_index=True)
-            stagnant_list = stagnant_list.dropna(subset=["ti"])
-
-            sns.histplot(stagnant_list, x="ti", ax=ax[indf+1,1], color=cr_colors[ind_m], alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend=True, label=configs["legend"][ind_m], fill=Fill)
-
-
-            ax[indf+1,1].text(17, 2500, "Beginning of stagnation", fontsize=12)
-
-            # Add a title, labels, and legend
-            ax[indf+1,1].set_xlabel("")
-            ax[indf+1,1].set_ylabel("")
-            ax[indf+1,1].set_xlim(13, 50)
-            ax[indf+1,1].set_ylim(0.7, 5.e3)
-            ax[indf+1,1].set_xticks([])
-            ax[indf+1,1].set_yticks([])
-            ax[indf+1,1].label_outer()  # Only show outer labels and tick labels
-            #put y ticks to the right
-            # ax[indf+1,1].yaxis.tick_right()
-            ax[indf+1,1].set_yscale("log")
-            ax[indf+1,1].axvline(x=35, color="grey", linestyle="--", label="35 Ma", linewidth = linewidth)
-
-
-            # add bars with percentage of exhumed/stagnant particles
-
-            #count amount of total particles:
-            particles = pd.read_csv(f"{txt_loc}/particles_indexes.csv", sep="\s+")
-            nparts = len(particles)
-            #count amount of exhumed particles
-            nexhumed = len(exhumed_list)
-            #count amount of stagnant particles
-            nstagnant = len(stagnant_list)
-
-            #calculate percentage of particles exhumed/stagnant with respect to total
-            pexhumed = nexhumed/nparts
-            pstagnant = nstagnant/nparts
-            psubducted = 1 - pexhumed - pstagnant
-
-
-            bar_width = 0.02
-            ax[indf+1,2].bar(0.8, psubducted, color=classification["subducted"], 
-                            label="Subducted", edgecolor="black", linewidth=0.5, width=bar_width)
-            ax[indf+1,2].bar(0.8, pexhumed, bottom=psubducted, color=classification["exhumed"], 
-                            label="Exhumed", edgecolor="black", linewidth=0.5, width=bar_width)
-            ax[indf+1,2].bar(0.8, pstagnant, bottom=psubducted+pexhumed, color=classification["stagnant"], 
-                            label="Stagnant", edgecolor="black", linewidth=0.5, width=bar_width)
-            #add text with the percentage of particles on the left of the bar
-            ax[indf+1,2].text(0.8, 0.5, f"{round(psubducted*100, 1)}%", fontsize=10, ha="center", va="center", weight="bold", color = "mediumblue")
-            ax[indf+1,2].text(0.8, psubducted + 0.5*pexhumed, f"{round(pexhumed*100, 1)}%", fontsize=10, ha="center", va="top", weight="bold", color = "indigo")
-            ax[indf+1,2].text(0.8, psubducted + pexhumed + 0.5*pstagnant, f"{round(pstagnant*100, 1)}%", fontsize=10, ha="center", va="bottom", weight="bold", color = "darkgreen")
+    #     else:
             
+    #         sns.histplot(
+    #             stagnant_list_expanded,
+    #             x="ti",
+    #             ax=ax[strong_stag, 1],
+    #             bins=bin_edges,
+    #             hue="lith_time",
+    #             palette=colors_tfin,
+    #             alpha=0.5,
+    #             linewidth=1,
+    #             element="step",
+    #             legend=True
+    #         )
+    #         ax[strong_stag, 1].axvline(x=35, color="grey", linestyle="--", linewidth = 1)
+    #         ax[strong_stag, 1].set_yscale("log")
+    #         ax[strong_stag, 1].set_xlim(0, 50)
+    #         ax[strong_stag, 1].set_ylim(0.7, 5.e3)
+    #         ax[strong_stag, 1].set_ylabel("")
+    #         ax[strong_stag, 1].set_xticks([])
+    #         ax[strong_stag, 1].set_xlabel("")
+    #         ax[strong_stag, 1].set_yticks([])
+    #         ax[strong_stag, 1].text(0.2, 0.8, configs["names"][m], horizontalalignment='center', verticalalignment='center', transform=ax[strong_stag, 1].transAxes)
 
-            ax[indf+1,2].axis("off")
 
-        ax[0,2].axis("off")
-        ax[count,0].set_xticks([20, 30, 40, 50])
-        ax[count,0].set_xlabel("Time (Myr)")
-
-        ax[count,1].set_xticks([20, 30, 40, 50])
-        ax[count,1].set_xlabel("Time (Myr)")
+    #         strong_stag += 1
 
 
-    # Add no vertical space between the plots
+
+
+    #     ax[4,1].set_visible(False)
+    #     ax[8,1].set_visible(False)
+    #     # ax[8,0].legend(loc="best")
+
+
+
+    
+    # plt.tight_layout()
+    # plt.subplots_adjust(hspace=0.0, wspace=0.0)
+    # plt.savefig(f"{plotloc}/{plotname}")
+    # plt.close()
+
+
+
+
+
+
+
+
+    fig, ax = plt.subplots(9, 2, figsize=(20, 15), height_ratios=[0.3, 0.3,  1, 1, 1, 0.3, 1, 1, 1])
+    
+    # Plot 0: convergence rate
+    ax[0,0].plot(cr["time"]/1e6, cr["conv_rate"], color="grey", label="Convergence rate (cm/yr)", linewidth=1)
+    ax[0,0].axvline(x=35, color="grey", linestyle="--", linewidth = 1)
+    ax[0,0].label_outer()  # Only show outer labels and tick labels
+    ax[0,0].set_xlim(0, 50)
+    ax[0,0].set_ylim(0, cr["conv_rate"].max()+1)
+
+    ax[0,1].plot(cr["time"]/1e6, cr["conv_rate"], color="grey", label="Convergence rate (cm/yr)", linewidth=1)
+    ax[0,1].axvline(x=35, color="grey", linestyle="--", linewidth = 1)
+    ax[0,1].label_outer()  # Only show outer labels and tick labels
+    ax[0,1].set_xlim(0, 50)
+    ax[0,1].set_ylim(0, cr["conv_rate"].max()+1)
+
+    ax[1,0].set_visible(False)
+    ax[1,1].set_visible(False)
+    ax[5,0].set_visible(False)
+    ax[5,1].set_visible(False)
+
+
+
+
+
+
+    weak_idx = 0
+    strong_idx = 0
+
+
+    weak_stag = 6
+    strong_stag = 6
+
+
+    for m, mod in enumerate(configs['models']):
+        mod_loc = f"/home/vturino/PhD/projects/exhumation/plots/single_models/{mod}"
+        exhumed_list = pd.read_csv(f"{mod_loc}/txt_files/exhumed_times.txt", sep="\s+")
+        stagnant_list = pd.read_csv(f"{mod_loc}/txt_files/stagnant_particles.txt", sep="\s+")
+
+        bin_edges = np.arange(0, 50, 1)  # Define bin edges
+
+        if configs["strength"][m] == "weak":
+            sns.histplot(
+                exhumed_list,
+                x="ti",
+                ax=ax[weak_idx+2, 0],
+                bins=bin_edges,
+                color=color[m],
+                alpha=0.5,
+                linewidth=1,
+                element="step",
+                legend=True
+            )
+
+            ax[weak_idx+2, 0].axvline(x=35, color="grey", linestyle="--", linewidth = 1)
+            ax[weak_idx+2, 0].set_yscale("log")
+            ax[weak_idx+2, 0].set_xlim(0, 50)
+            ax[weak_idx+2, 0].set_ylim(0.7, 5.e3)
+            ax[weak_idx+2, 0].set_ylabel("Count (log)")
+            ax[weak_idx+2, 0].set_xticks([])
+            ax[weak_idx+2, 0].set_xlabel("")
+            ax[weak_idx+2, 0].text(0.2, 0.8, configs["names"][m], horizontalalignment='center', verticalalignment='center', transform=ax[weak_idx+2, 0].transAxes)
+
+
+            weak_idx += 1
+
+        else:
+
+            sns.histplot(
+                exhumed_list,
+                x="ti",
+                ax=ax[strong_idx+2, 1],
+                bins=bin_edges,
+                color=color[m],
+                alpha=0.5,
+                linewidth=1,
+                element="step",
+                legend=True,
+            )
+            ax[strong_idx+2, 1].axvline(x=35, color="grey", linestyle="--", linewidth = 1)
+            ax[strong_idx+2, 1].set_yscale("log")
+            ax[strong_idx+2, 1].set_xlim(0, 50)
+            ax[strong_idx+2, 1].set_ylim(0.7, 5.e3)
+            ax[strong_idx+2, 1].set_ylabel("")
+            ax[strong_idx+2, 1].label_outer()
+            ax[strong_idx+2, 1].text(0.2, 0.8, configs["names"][m], horizontalalignment='center', verticalalignment='center', transform=ax[strong_idx+2, 1].transAxes)
+
+            strong_idx += 1
+
+        #stagnant particles
+        # Handle ti_kin, ti_dyn, ti_trans
+        new_rows = []
+        for index, row in stagnant_list.iterrows():
+            ti_values = [row["ti_dyn"], row["ti_kin"], row["ti_trans"]]
+            time_interval_values = [row["time_interval_dyn"], row["time_interval_kin"], row["time_interval_trans"]]
+            lithology_values = [row["lithology_dyn"], row["lithology_kin"], row["lithology_trans"]]
+            
+            for ti, time_interval, lithology in zip(ti_values, time_interval_values, lithology_values):
+                if not np.isnan(ti):  # Only include non-NaN values
+                    new_row = row.copy()
+                    new_row["ti"] = ti
+                    new_row["time_interval"] = time_interval
+                    new_row["lith_time"] = lithology
+                    new_rows.append(new_row)
+
+        # Concatenate new rows to create the final DataFrame
+        stagnant_list_expanded = pd.DataFrame(new_rows)
+
+        if configs["strength"][m] == "weak":
+            sns.histplot(
+                stagnant_list_expanded,
+                x="ti",
+                ax=ax[weak_stag, 0],
+                bins=bin_edges,
+                color=color[m],
+                alpha=0.5,
+                linewidth=1,
+                element="step",
+                legend=True,
+            )
+
+            ax[weak_stag, 0].axvline(x=35, color="grey", linestyle="--", linewidth = 1)
+            ax[weak_stag, 0].set_yscale("log")
+            ax[weak_stag, 0].set_xlim(0, 50)
+            ax[weak_stag, 0].set_ylim(0.7, 5.e3)
+            ax[weak_stag, 0].set_ylabel("Count (log)")
+            ax[weak_stag, 0].set_xticks([])
+            ax[weak_stag, 0].set_xlabel("")
+            ax[weak_stag, 0].text(0.2, 0.8, configs["names"][m], horizontalalignment='center', verticalalignment='center', transform=ax[weak_stag, 0].transAxes)
+
+
+            weak_stag += 1
+
+        else:
+            
+            sns.histplot(
+                stagnant_list_expanded,
+                x="ti",
+                ax=ax[strong_stag, 1],
+                bins=bin_edges,
+                color=color[m],
+                alpha=0.5,
+                linewidth=1,
+                element="step",
+                legend=True
+            )
+            ax[strong_stag, 1].axvline(x=35, color="grey", linestyle="--", linewidth = 1)
+            ax[strong_stag, 1].set_yscale("log")
+            ax[strong_stag, 1].set_xlim(0, 50)
+            ax[strong_stag, 1].set_ylim(0.7, 5.e3)
+            ax[strong_stag, 1].set_ylabel("")
+            ax[strong_stag, 1].label_outer()
+            ax[strong_stag, 1].text(0.2, 0.8, configs["names"][m], horizontalalignment='center', verticalalignment='center', transform=ax[strong_stag, 1].transAxes)
+
+
+            strong_stag += 1
+
+
+
+
+        ax[4,1].set_visible(False)
+        ax[8,1].set_visible(False)
+        # ax[8,0].legend(loc="best")
+
+        ax[8,0].set_xlabel("Time (Myr)")
+        ax[8,0].set_xticks([0, 10, 20, 30, 40, 50])
+        ax[7,1].set_xlabel("Time (Myr)")
+        ax[7,1].set_xticks([0, 10, 20, 30, 40, 50])
+        ax[3,1].set_xlabel("Time (Myr)")
+        ax[3,1].set_xticks([0, 10, 20, 30, 40, 50])
+
+
+    
     plt.tight_layout()
-    plt.subplots_adjust(hspace=0, wspace=0.0)
-
-
-
-
-    
-
-    plt.savefig(f"{figloc}/{plotname}", dpi=500)
+    plt.subplots_adjust(hspace=0.0, wspace=0.1)
+    plt.savefig(f"{plotloc}/rheo_no_lith.pdf")
     plt.close()
 
 

@@ -145,7 +145,7 @@ def main():
     
 
 
-    f1, a1 = plt.subplots(1, 4, figsize=(17, 5))
+    f1, a1 = plt.subplots(1, 3, figsize=(12, 4.5))
 
     #plot exhumed peak P conditions over rocks
     sns.scatterplot(data=exh, 
@@ -155,7 +155,9 @@ def main():
                     ax=a1[1], 
                     zorder = 10,
                     alpha=1,
-                    palette=palette_exh)
+                    palette=palette_exh,
+                    edgecolor='black',
+                    )
     a1[1].set_ylabel("Pressure (GPa)")
     a1[1].set_xlabel("T ($^\circ$C)")
     a1[1].set_title("Exhumed particles: peak Pressure")
@@ -165,15 +167,11 @@ def main():
     
 
     #plot stagnating peak P conditions over rocks
-    sns.scatterplot(data=stag, x="Tm_kin", y="Pm_kin", hue="lithology", ax=a1[2], zorder = 10, palette=palette_stag, legend=True)
-    sns.scatterplot(data=stag, x="Tm_dyn", y="Pm_dyn", hue="lithology", ax=a1[2], zorder = 10, palette=palette_stag, legend=False)
-    sns.scatterplot(data=stag, x="Tm_trans", y = "Pm_trans", hue="lithology", ax=a1[2], zorder = 10, palette=palette_stag, legend=False)
-    a1[2].set_ylabel("Pressure (GPa)")
-    a1[2].set_xlabel("T ($^\circ$C)")
-    a1[2].set_title("Peak pressure")
-    a1[2].set_xlim(0, 900)
-    a1[2].set_ylim(0, 3.5)
-    sns.kdeplot(data=rocks, x="T", y="P", ax=a1[2], fill = True, cbar = False, alpha = 1, zorder=2, color='whitesmoke')
+    sns.scatterplot(data=stag, x="Ti_kin", y="Pi_kin", hue="lithology", ax=a1[1], zorder = 7, palette=palette_stag, legend=True)
+    sns.scatterplot(data=stag, x="Ti_dyn", y="Pi_dyn", hue="lithology", ax=a1[1], zorder = 7, palette=palette_stag, legend=False)
+    sns.scatterplot(data=stag, x="Ti_trans", y = "Pi_trans", hue="lithology", ax=a1[1], zorder = 7, palette=palette_stag, legend=False)
+
+
     
     
 
@@ -193,48 +191,49 @@ def main():
 
 
    # Plot the 100% stacked vertical bar with a narrow width for Particle Classification
-    a1[3].bar([0], subd_pct, color='powderblue', label='Subducted', width=0.1, linewidth=0.5)
-    a1[3].bar([0], exh_pct, bottom=subd_pct, color='magenta', label='Exhumed', width=0.1)
-    a1[3].bar([0], stag_pct, bottom=subd_pct + exh_pct, color='olivedrab', label='Stagnant', width=0.1)
+    a1[2].bar([0], subd_pct, color='powderblue', label='Subducted', width=0.1, linewidth=0.5)
+    a1[2].bar([0], exh_pct, bottom=subd_pct, color='magenta', label='Exhumed', width=0.1)
+    a1[2].bar([0], stag_pct, bottom=subd_pct + exh_pct, color='olivedrab', label='Stagnant', width=0.1)
 
     # Set limits and formatting for the particle classification bar
-    a1[3].set_ylim(0, 100)
-    a1[3].set_xlim(-0.15, 0.85)  # Adjust x-limits to accommodate all the bars
-    a1[3].set_xticks([0])  # Set x-ticks to only display the "Total" position
-    a1[3].set_xticklabels(['Total'])  # Label the x-tick as 'Total'
-    a1[3].set_yticks([])
-    a1[3].set_title('Particle Classification')
+    a1[2].set_ylim(0, 100)
+    a1[2].set_xlim(-0.15, 0.85)  # Adjust x-limits to accommodate all the bars
+    a1[2].set_xticks([0])  # Set x-ticks to only display the "Total" position
+    a1[2].set_xticklabels(['Total'])  # Label the x-tick as 'Total'
+    a1[2].set_yticks([])
+    a1[2].set_title('Particle Classification')
 
     # Add percentages inside the bars
-    a1[3].text(0, subd_pct / 2, f'{subd_pct:.1f}%', ha='center', va='center', color='k', fontsize=bar_fontsize)
-    a1[3].text(0, subd_pct + exh_pct / 2, f'{exh_pct:.1f}%', ha='center', va='center', color='k', fontsize=bar_fontsize)
-    a1[3].text(0, subd_pct + exh_pct + stag_pct / 2, f'{stag_pct:.1f}%', ha='center', va='center', color='k', fontsize=bar_fontsize)
-    a1[3].spines[['top', 'right', 'left', 'bottom']].set_visible(False)
-    a1[3].legend(loc='upper left')
+    a1[2].text(0, subd_pct / 2, f'{subd_pct:.1f}%', ha='center', va='center', color='k', fontsize=bar_fontsize)
+    a1[2].text(0, subd_pct + exh_pct / 2, f'{exh_pct:.1f}%', ha='center', va='center', color='k', fontsize=bar_fontsize)
+    a1[2].text(0, subd_pct + exh_pct + stag_pct / 2, f'{stag_pct:.1f}%', ha='center', va='center', color='k', fontsize=bar_fontsize)
+    a1[2].spines[['top', 'right', 'left', 'bottom']].set_visible(False)
+    a1[2].legend(loc='upper left')
+    a1[2].set_ylabel(' ')
 
     # Plot the 100% stacked vertical bar for lithology distribution in Exhumed particles
     bottom = 0
     for lith, pct in exh_pct_lith.items():
-        a1[3].bar([0.2], pct * 4, bottom=bottom, color=palette_exh[lith], width=0.1)
-        a1[3].text(0.2, bottom + (pct * 2), f'{pct:.1f}%', ha='center', va='center', color='k', fontsize=bar_fontsize)
+        a1[2].bar([0.2], pct * 4, bottom=bottom, color=palette_exh[lith], width=0.1)
+        a1[2].text(0.2, bottom + (pct * 2), f'{pct:.1f}%', ha='center', va='center', color='k', fontsize=bar_fontsize)
         bottom += pct * 4
 
     # Plot the 100% stacked vertical bar for lithology distribution in Stagnant particles
     bottom = 0
     for lith, pct in stag_pct_lith.items():
-        a1[3].bar([0.4], pct * 4, bottom=bottom, color=palette_stag[lith], width=0.1, label = lith)
-        a1[3].text(0.4, bottom + (pct * 2), f'{pct:.1f}%', ha='center', va='center', color='k', fontsize=bar_fontsize)
+        a1[2].bar([0.4], pct * 4, bottom=bottom, color=palette_stag[lith], width=0.1, label = lith)
+        a1[2].text(0.4, bottom + (pct * 2), f'{pct:.1f}%', ha='center', va='center', color='k', fontsize=bar_fontsize)
         bottom += pct * 4
 
     # Set limits and formatting for lithology distribution bars
-    a1[3].set_ylim(0, 100)
-    a1[3].set_xlim(-0.15, 0.65)  # Adjust x-limits to accommodate all the bars
-    a1[3].set_xticks([0, 0.2, 0.4])  # Set x-ticks to center each lithology bar
-    a1[3].set_xticklabels(['Total', 'Exhumed', 'Stagnant'])  # Label each group
-    a1[3].set_yticks([])  # Optional: fewer y-ticks to declutter
+    a1[2].set_ylim(0, 100)
+    a1[2].set_xlim(-0.15, 0.65)  # Adjust x-limits to accommodate all the bars
+    a1[2].set_xticks([0, 0.2, 0.4])  # Set x-ticks to center each lithology bar
+    a1[2].set_xticklabels(['Total', 'Exhumed', 'Stagnant'])  # Label each group
+    a1[2].set_yticks([])  # Optional: fewer y-ticks to declutter
 
     # Add the legend for lithology distribution
-    a1[3].legend(loc='upper center')
+    a1[2].legend(loc='upper center')
 
     
 
@@ -249,7 +248,7 @@ def main():
 
     f1.tight_layout()
     
-    format = ["png", "eps"]
+    format = ["png", "pdf"]
     for f in format:
         plt.savefig(f"{plot_loc}/peak_P_comparison.{f}", dpi = 500)
     # plt.savefig(f"{plot_loc}/percentages.png", dpi = 500)

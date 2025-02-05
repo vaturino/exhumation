@@ -63,7 +63,9 @@ def compute_time_intervals(data, stagnation_min, time_thresh):
         else:
             start_time = None
 
-    data.loc[data["time_interval"] < stagnation_min, ["ti", "tf", "time_bin", "time_interval"]] = np.nan
+
+    data.loc[((data["time_interval"] < stagnation_min)), ["ti", "tf", "time_bin", "time_interval"]] = np.nan
+
 
     return data
 
@@ -74,13 +76,30 @@ def calculate_middle_values(data):
     data["tm"] = np.nan
     data["Tm"] = np.nan
 
+
     for tint in avg_values["time_bin"]:
         data["Pm"] = np.where(data["time_bin"] == tint, avg_values[avg_values["time_bin"] == tint]["Plith"].values[0], data["Pm"])
         data["tm"] = np.where(data["time_bin"] == tint, avg_values[avg_values["time_bin"] == tint]["time"].values[0], data["tm"])
         data["Tm"] = np.where(data["time_bin"] == tint, avg_values[avg_values["time_bin"] == tint]["T"].values[0], data["Tm"])
 
+    return data  
+
+#compute the values of Pressure and temperature at each ti_dyn, ti_kin, ti_trans for stagnant particles
+def compute_initial_interval_values(data):
+    init_values = data.groupby('time_bin').agg({'Plith': 'first', 'time': 'first', 'T': 'first'}).reset_index()
+    data["Pi"] = np.nan
+    data["ti"] = np.nan
+    data["Ti"] = np.nan
+
+    for tint in init_values["time_bin"]:
+        data["Pi"] = np.where(data["time_bin"] == tint, init_values[init_values["time_bin"] == tint]["Plith"].values[0], data["Pi"])
+        data["ti"] = np.where(data["time_bin"] == tint, init_values[init_values["time_bin"] == tint]["time"].values[0], data["ti"])
+        data["Ti"] = np.where(data["time_bin"] == tint, init_values[init_values["time_bin"] == tint]["T"].values[0], data["Ti"])
+
     return data
-    
+
+
+
 def process_times_for_particle(data, stagnation_min, time_thresh, grad_thresh):
     data['gradient'] = np.gradient(data["Plith"], data["time"])
     lowgrad = data[abs(data["gradient"]) < grad_thresh].reset_index(drop=True)
@@ -90,6 +109,7 @@ def process_times_for_particle(data, stagnation_min, time_thresh, grad_thresh):
 
     lowgrad = compute_time_intervals(lowgrad, stagnation_min, time_thresh)
     lowgrad = calculate_middle_values(lowgrad)
+    lowgrad = compute_initial_interval_values(lowgrad)
     lowgrad = lowgrad[lowgrad["Plith"] < 6.0]
     return lowgrad
 
@@ -136,8 +156,8 @@ def process_particle(p, txt_loc, line_colors, compositions, composition_mapping,
     particle_data = None
 
     if stagnant:
-        pt_single["Plith"] = pt_single["Plith"].rolling(window=10, min_periods=1).mean()
-        pt_single["time"] = pt_single["time"].rolling(window=10, min_periods=1).mean()
+        # pt_single["Plith"] = pt_single["Plith"].rolling(window=10, min_periods=1).mean()
+        # pt_single["time"] = pt_single["time"].rolling(window=10, min_periods=1).mean()
         pt_single["gradient"] = np.gradient(pt_single["Plith"], pt_single["time"])
         lowgrad = process_times_for_particle(pt_single, stagnation_min, time_thresh, grad_thresh)
 
@@ -254,7 +274,7 @@ def main():
     grad_thresh = 0.01
     time_thresh = 0.5
     exhumed_thresh = 0.25
-    c = ["Pm", "tm", "Tm", "time_interval", "ti", "tf", "lithology"]
+    c = ["Pm", "tm", "Tm", "Pi", "Ti", "time_interval", "ti", "tf", "lithology"]
 
 
     init = pd.read_csv(f"{txt_loc}/particles_indexes.csv")
@@ -262,12 +282,12 @@ def main():
     norm = plt.Normalize(init["init_x"].min() / 1e3, init["init_x"].max() / 1e3)
     line_colors = pal1(norm(init["init_x"] / 1e3))
 
-    exh = pd.DataFrame(columns=["id", "maxPP", "maxPT", "maxTP", "maxTT", "lithology", "tmax"], index=range(npa))
+    exh = pd.DataFrame(columns=["id", "maxPP", "maxPT", "maxTP", "maxTT", "lithology", "tmax", "ti"], index=range(npa))
     subd = pd.DataFrame(columns=["id"], index=range(npa))
 
     fixed_columns = ["id", "lithology"]
     timing = ["dyn", "trans", "kin"]
-    columns = fixed_columns + [f"{c}_{t}" for c in ["Pm", "tm", "Tm", "time_interval", "ti","tf", "lithology"] for t in timing]
+    columns = fixed_columns + [f"{c}_{t}" for c in ["Pm", "tm", "Tm", "Pi", "Ti", "time_interval", "ti","tf", "lithology"] for t in timing]
     stag = pd.DataFrame(columns=columns, index=range(npa))
 
 
@@ -309,6 +329,9 @@ def main():
                     subd.iloc[p] = [p]
                 elif result["exhumed"]:
                     exhumed += 1
+                    next_time = pt_single.loc[(pt_single["time"] > pt_single["time"].iloc[pt_single["Plith"].idxmax()]) & 
+                                              (pt_single["Plith"] <= 0.75 * pt_single["Plith"].max()), "time"].iloc[0]
+                    pt_single["ti"] = next_time
                     exh.loc[p] = [
                         p, 
                         pt_single["Plith"].max(), 
@@ -316,7 +339,8 @@ def main():
                         pt_single["Plith"].iloc[pt_single["T"].idxmax()],
                         pt_single["T"].iloc[pt_single["T"].idxmax()],
                         pt_single["lithology"].iloc[-1],
-                        pt_single["time"].iloc[pt_single["Plith"].idxmax()]
+                        pt_single["time"].iloc[pt_single["Plith"].idxmax()],
+                        next_time
                     ]
                     a1[0].plot(pt_single["T"], pt_single["Plith"], color=line_color)
                     a1[1].plot((pt_single["time"]), pt_single["Plith"], color=line_color)

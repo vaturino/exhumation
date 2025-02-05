@@ -61,22 +61,18 @@ def main():
         plot_loc_mod = f"/home/vturino/PhD/projects/exhumation/plots/single_models/{m}"
         if not os.path.exists(plot_loc_mod):
             os.mkdir(plot_loc_mod)
-        plot_loc = f"{plot_loc_mod}/Panels_pdf/"
+        plot_loc = f"{plot_loc_mod}/Compo_isotherms/"
         if not os.path.exists(plot_loc):
             os.mkdir(plot_loc)
         else:
             file_count = len(os.listdir(plot_loc))
 
-        # for t in tqdm(range(0, len(time_array))):
-        for t in [90]:
-            f1, a1 = plt.subplots(1, 3, figsize=(20, 5))
-            plotname = f"{plot_loc}{int(t/2)}.pdf" 
-            # plotname = f"{plot_loc}{t}.pdf"
+        for t in tqdm(range(0, len(time_array), 2)):
+            f1, a1 = plt.subplots(1, 1, figsize=(7, 5))
+            plotname = f"{plot_loc}{int(t/2)}.png" 
+            # plotname = f"{plot_loc}{t}.png"
             data = pd.read_parquet(f"{csvs_loc}{m}/fields/full.{int(t)}.gzip")
             data["lithology"] = 0
-            data["logvisc"] = np.log10(data["viscosity"])
-            data["logSR"] = np.log10(data["strain_rate"])
-            data["comp"] = data["oc"]+data["sed"]+data["ecl"]
 
             for ind, c in enumerate(compositions):
                 data[c][data["Points:1"] < cutoff[ind]] = 0
@@ -124,71 +120,25 @@ def main():
             data["terrain_idx"] = data["terrain"].map({label: idx for idx, label in enumerate(present_terrains)})
 
             # Plot lithology using terrain indices and corresponding color map
-            p1 = a1[0].tripcolor(triang, data["terrain_idx"], cmap=matplotlib.colors.ListedColormap(colors_for_terrain), shading='gouraud', vmin=0, vmax=len(colors_for_terrain)-1)
-            a1[0].tricontour(triang, data["T"] - 273.5, colors='k', levels=[100, 300, 500, 700, 900], linewidths=0.3)
-            # a1[0].tricontourf(triang, data["logSR"], colors='navy', levels=[np.log10(5) -14, -12], alpha = 0.5)
-            # step = 500  # plot every 100th vector to reduce the number of vectors plotted
-            # data_filtered = data_filtered_comp.iloc[::step]
+            p1 = a1.tripcolor(triang, data["terrain_idx"], cmap=matplotlib.colors.ListedColormap(colors_for_terrain), shading='gouraud', vmin=0, vmax=len(colors_for_terrain)-1)
+            a1.tricontour(triang, data["T"] - 273.5, colors='k', levels=[100, 300], linewidths=0.3)
+            a1.tricontour(triang, data["T"] - 273.5, colors='k', levels=[200], linewidths=1)
+            a1.text(0.3, 0.1, f"Time: {t/2} Myr", fontsize=12, ha='right', va='top', transform=a1.transAxes)
 
-            # Normalize velocity vectors to unit vectors
-            # vel_magnitude = np.sqrt(data_filtered["velocity:0"]**2 + data_filtered["velocity:1"]**2)
-            # data_filtered["velocity:0_norm"] = data_filtered["velocity:0"] / vel_magnitude
-            # data_filtered["velocity:1_norm"] = data_filtered["velocity:1"] / vel_magnitude
-
-            # # Plot quiver with uniform arrow lengths
-            # vel_vects = a1[0].quiver(data_filtered["Points:0"].to_numpy() / 1.e3, 
-            #                     (ymax_plot - data_filtered["Points:1"].to_numpy()) / 1.e3, 
-            #                     data_filtered["velocity:0_norm"].to_numpy(), 
-            #                     data_filtered["velocity:1_norm"].to_numpy(), 
-            #                     scale=70, color='black', width=0.0015, zorder = 10)  # Adjust scale for arrow size
-            # a1[0].quiverkey(vel_vects, 0.15, 0.1, 1, '1 cm/yr', labelpos='W', fontproperties={'size': '7'}, color='k', labelcolor='k') 
 
             # Terrain colorbar
-            cbar = plt.colorbar(p1, orientation='horizontal', ax=a1[0])
+            cbar = plt.colorbar(p1, orientation='horizontal', ax=a1)
             cbar.set_ticks(np.arange(len(colors_for_terrain)))
             cbar.set_ticklabels([terrain for terrain in present_terrains])  # Set tick labels to present terrain names
             cbar.set_label('Terrain', rotation=0, labelpad=5)
 
-            a1[0].set_ylim([(ymax_plot - ymin_plot) / 1.e3, -5])
-            a1[0].set_xlim([xmin_plot / 1.e3, xmax_plot / 1.e3])
-            a1[0].set_aspect('equal')
+            a1.set_ylim([(ymax_plot - ymin_plot) / 1.e3, -5])
+            a1.set_xlim([xmin_plot / 1.e3, xmax_plot / 1.e3])
+            a1.set_aspect('equal')
 
-            # Strain rate plot
-            p2 = a1[1].tripcolor(triang, data["logSR"], cmap='RdBu_r', shading='gouraud', vmin=-19, vmax=-12)
-            a1[1].tricontour(triang, data["comp"], colors='k', levels=[1], linewidths=0.7, alpha = 0.5)
-            a1[1].spines[['top']].set_visible(False)
-            plt.colorbar(p2, orientation='horizontal', label='Log(Strain rate) [s-1]', ax=a1[1])
-            a1[1].set_ylim([(ymax_plot - ymin_plot) / 1.e3, -5])
-            a1[1].set_xlim([xmin_plot / 1.e3, xmax_plot / 1.e3])
-            a1[1].set_aspect('equal')
-            # Annotate time in subplot a1[1]
-            time_label = f"Time: {time_array[t, 1]/1e6:.1f} Myr"
-            a1[1].text(0.05, 0.1, time_label, transform=a1[1].transAxes, fontsize=12, verticalalignment='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-
-            # Viscosity plot + velocity vectors
-            p3 = a1[2].tripcolor(triang, data["logvisc"], shading='gouraud', vmin=18, vmax=24)
-            a1[2].tricontour(triang, data["comp"], colors='k', levels=[1], linewidths=0.7, alpha = 0.5)
-            vel_plot_thresh = 0.0001  # don't plot velocity vectors smaller than this (cm/yr)
-            step = 500  # plot every 100th vector to reduce the number of vectors plotted
-            # # Filter out small velocity vectors and downsample data for plotting
-            # mask = (100. * np.sqrt(data["velocity:0"]**2 + data["velocity:1"]**2)) >= vel_plot_thresh
-            # mask = mask.reindex(data_filtered_comp.index, fill_value=False)
-            # data_filtered = data_filtered_comp[mask].iloc[::step]
-
-            # vel_vects = a1[2].quiver(data_filtered["Points:0"].to_numpy() / 1.e3, 
-            #                          (ymax_plot - data_filtered["Points:1"].to_numpy()) / 1.e3, 
-            #                          data_filtered["velocity:0"].to_numpy() * 100, 
-            #                          data_filtered["velocity:1"].to_numpy() * 100, 
-            #                          scale=50, color='black', width=0.0015)
-            # a1[2].quiverkey(vel_vects, 0.15, 0.1, 1, '1 cm/yr', labelpos='W', fontproperties={'size': '7'}, color='white', labelcolor='white')
-            a1[2].spines[['top']].set_visible(False)
-            plt.colorbar(p3, orientation='horizontal', label='Log(Viscosity) [Pa s]', ax=a1[2])
-            a1[2].set_ylim([(ymax_plot - ymin_plot) / 1.e3, -5])
-            a1[2].set_xlim([xmin_plot / 1.e3, xmax_plot / 1.e3])
-            a1[2].set_aspect('equal')
-
+           
             # Save and close the plot
-            plt.savefig(plotname, bbox_inches='tight', format='pdf', dpi=500)
+            plt.savefig(plotname, bbox_inches='tight', format='png', dpi=500)
             plt.clf()
             plt.close('all')
 

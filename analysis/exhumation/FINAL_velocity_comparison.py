@@ -190,7 +190,7 @@ def main():
         # Concatenate new rows to create the final DataFrame
         stagnant_list_expanded = pd.DataFrame(new_rows)
 
-        # print(stagnant_list[(stagnant_list["lithology"] == "oc") & (stagnant_list["ti"] <18)])
+        print(stagnant_list_expanded[(stagnant_list_expanded["lithology"] == "oc") & (stagnant_list_expanded["ti"] >22) & (stagnant_list_expanded["ti"] < 23)]["id"])
 
 
         sns.histplot(stagnant_list_expanded, x="ti", ax=ax[ind_m+1,1], hue = "lith_time", palette= colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend=False)
