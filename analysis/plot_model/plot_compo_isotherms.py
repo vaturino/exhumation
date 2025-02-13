@@ -61,16 +61,17 @@ def main():
         plot_loc_mod = f"/home/vturino/PhD/projects/exhumation/plots/single_models/{m}"
         if not os.path.exists(plot_loc_mod):
             os.mkdir(plot_loc_mod)
-        plot_loc = f"{plot_loc_mod}/Compo_isotherms/"
+        plot_loc = f"{plot_loc_mod}/Compo_isotherms_pdf/"
         if not os.path.exists(plot_loc):
             os.mkdir(plot_loc)
         else:
             file_count = len(os.listdir(plot_loc))
 
-        for t in tqdm(range(0, len(time_array), 2)):
+        # for t in tqdm(range(0, len(time_array), 2)):
+        for t in [30, 40, 80]:
             f1, a1 = plt.subplots(1, 1, figsize=(7, 5))
-            plotname = f"{plot_loc}{int(t/2)}.png" 
-            # plotname = f"{plot_loc}{t}.png"
+            plotname = f"{plot_loc}{int(t/2)}.pdf" 
+            # plotname = f"{plot_loc}{t}.pdf"
             data = pd.read_parquet(f"{csvs_loc}{m}/fields/full.{int(t)}.gzip")
             data["lithology"] = 0
 
@@ -138,7 +139,7 @@ def main():
 
            
             # Save and close the plot
-            plt.savefig(plotname, bbox_inches='tight', format='png', dpi=500)
+            plt.savefig(plotname, bbox_inches='tight', format='pdf', dpi=500)
             plt.clf()
             plt.close('all')
 

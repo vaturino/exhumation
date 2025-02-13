@@ -156,8 +156,8 @@ def process_particle(p, txt_loc, line_colors, compositions, composition_mapping,
     particle_data = None
 
     if stagnant:
-        # pt_single["Plith"] = pt_single["Plith"].rolling(window=10, min_periods=1).mean()
-        # pt_single["time"] = pt_single["time"].rolling(window=10, min_periods=1).mean()
+        pt_single["Plith"] = pt_single["Plith"].rolling(window=10, min_periods=1).mean()
+        pt_single["time"] = pt_single["time"].rolling(window=10, min_periods=1).mean()
         pt_single["gradient"] = np.gradient(pt_single["Plith"], pt_single["time"])
         lowgrad = process_times_for_particle(pt_single, stagnation_min, time_thresh, grad_thresh)
 
