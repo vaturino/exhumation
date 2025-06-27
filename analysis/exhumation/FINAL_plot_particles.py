@@ -380,8 +380,8 @@ def main():
         plt.colorbar(s_m, ax=ax).set_label('Initial X Position (km)')
         fig.tight_layout()
 
-    f1.savefig(f"{plot_loc}/possibly_exhumed.png")
-    f3.savefig(f"{plot_loc}/stagnant.png")
+    f1.savefig(f"{plot_loc}/possibly_exhumed.pdf")
+    f3.savefig(f"{plot_loc}/stagnant.pdf")
     f2.savefig(f"{plot_loc}/filtered_out.png", dpi = 500)
     plt.close()
 

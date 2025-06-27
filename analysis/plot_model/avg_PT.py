@@ -52,7 +52,7 @@ def main():
     # Define the fixed order of terrain types
     terrain_order = ["mantle", "oc", "sed", "opc", "serp", "ecl"]
     part_marker = ["o", "s", "*", "D", "v", "^", "x", "p", "h", "H"]
-    label_part = ["Burst 1", "Burst 2", "Burst 3", "Burst 4", "Burst 5", "Burst 6", "Burst 7", "Burst 8", "Burst 9", "Burst 10"]
+    label_part = ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9", "t10"]
     color_part = ["blue", "purple", "black"]
 
     file_count = 0
@@ -65,7 +65,7 @@ def main():
         plot_loc_mod = f"/home/vturino/PhD/projects/exhumation/plots/single_models/{m}/"
         if not os.path.exists(plot_loc_mod):
             os.mkdir(plot_loc_mod)
-        plot_loc = f"{plot_loc_mod}/Compo_parts/"
+        plot_loc = f"{plot_loc_mod}/Compo_synthetic_parts/"
         if not os.path.exists(plot_loc):
             os.mkdir(plot_loc)
         else:
@@ -92,43 +92,54 @@ def main():
                 start = sorted_tin_values[i]
         clump_ranges.append((start, sorted_tin_values[-1]))  # Add the last clump
         
-        mid_times = np.zeros(len(clump_ranges))
-        mid_times[0] = clump_ranges[0][0]  
-        mid_times[1] = (clump_ranges[1][0] + clump_ranges[1][1])/2  
-        mid_times[2] = (clump_ranges[2][1] + clump_ranges[2][0])/2 -1.5
-        # for ind, (start, end) in enumerate(clump_ranges):
-        #     # mid_times[ind] = (start + end) / 2
-        #     mid_times[ind] = start
-        #     # mid_times[ind] = end
 
 
-        dfr_list = []
-        idx = np.zeros(len(mid_times), dtype=int)
-        for ind, t in enumerate(mid_times):
-            closest_idx = (np.abs(exhumed_list_oc['tin'] - t)).argmin()
-            idx[ind] = exhumed_list_oc["id"].iloc[closest_idx]
-            dfr = pd.read_csv(f"{pt_loc}/pt_part_{idx[ind]}.txt", sep="\s+")
-            dfr_list.append(dfr)
+    exhumed_list_oc["time_interval"] = None
+    exhumed_list_oc["clump"] = None
 
-        # for clump_id, synpart in enumerate(dfr_list, start=1):
-        #     Pthresh = synpart["Plith"].max() * 0.75
-        #     plt.plot(synpart["x"]/1.e3, (902.e3 - synpart["y"])/1.e3, label=f"Burst {clump_id}", color=color_part[(clump_id - 1) % len(color_part)])
-        # plt.show()
-        # exit()
+    # Assign time_interval and clump ID to particles
+    for start, end in clump_ranges:
+        mask = (exhumed_list_oc['tin'] >= start) & (exhumed_list_oc['tin'] <= end)
+        exhumed_list_oc.loc[mask, 'time_interval'] = f"{start}-{end}"
+        exhumed_list_oc.loc[mask, 'clump'] = clump_ranges.index((start, end)) + 1
+
+    # Identify all unique clump IDs
+    unique_clumps = exhumed_list_oc["clump"].dropna().unique()
+
+    # Optional: Store synthetic particles for each clump
+    all_synparts = {}
+
+    # Loop over each clump
+    for clump_id in unique_clumps:
+        clump_particles = exhumed_list_oc[exhumed_list_oc["clump"] == clump_id]["id"].values
+        combined_data = []
+
+        # Collect data for all particles in this clump
+        for p in clump_particles:
+            pt_single = pd.read_csv(f"{pt_loc}/pt_part_{p}.txt", sep="\s+")
+            combined_data.append(pt_single)
+
+        # Concatenate all particle data and compute averages per time step
+        combined_df = pd.concat(combined_data, axis=0, keys=clump_particles)
+        avg_data = combined_df.groupby(level=1).mean()
+
+        # Save synthetic particle data for this clump
+        all_synparts[clump_id] = avg_data
+
         
-        for clump_id, synpart in enumerate(dfr_list, start=1):
-            Pthresh = synpart["Plith"].max() * 0.75
-            plt.plot(synpart["time"], synpart["Plith"], label=f"Burst {clump_id}", color=color_part[(clump_id - 1) % len(color_part)]) #, marker=part_marker[(clump_id - 1) % len(part_marker)], markersize=3)
-            plt.axhline(y=Pthresh, color=color_part[(clump_id - 1) % len(color_part)], linestyle='--', linewidth=1, label =f"Threshold {clump_id}")
-        plt.xlabel("Time (Myr)")
-        plt.ylabel("Pressure (GPa)")
-        plt.legend()
-        plt.title("Average Pressure of Synthetic Particles in Each Burst")
-        plt.savefig(f"{plot_loc_mod}/P-Time_plotted_particles.pdf", dpi=500)
-        plt.close()
- 
+    for clump_id, synpart in all_synparts.items():
+        Pthresh = synpart["Plith"].max() * 0.75
+        plt.plot(synpart["time"], synpart["Plith"], label=f"Burst {clump_id}", color=color_part[(clump_id - 1) % len(color_part)]) #, marker=part_marker[(clump_id - 1) % len(part_marker)], markersize=3)
+        plt.axhline(y=Pthresh, color=color_part[(clump_id - 1) % len(color_part)], linestyle='--', linewidth=1, label =f"Threshold {clump_id}")
+    plt.xlabel("Time (Myr)")
+    plt.ylabel("Pressure (GPa)")
+    # plt.grid()
+    plt.legend()
+    plt.title("Average Pressure of Synthetic Particles in Each Burst")
+    plt.savefig(f"{plot_loc_mod}/average_pressure_synthetic_particles.pdf", dpi=500)
+    plt.close()
 
-        for t in tqdm(range(1, len(time_array))):
+    for t in tqdm(range(1, len(time_array))):
             f1, a1 = plt.subplots(2, 1, figsize=(8, 5), dpi=500, height_ratios=[1, 0.25])
 
             plotname = f"{plot_loc}{int(t)}.png" 
@@ -181,9 +192,19 @@ def main():
             time_in_myr = time_array[t, 1] / 1.e6
             a1[0].annotate(f"Time = {time_in_myr:.1f} Myr", xy=(0.02, 0.05), xycoords='axes fraction', ha='left', fontsize=14, color='black')
 
-            # Add particles for each dataframe in dfr_list
-            for ind, dfr in enumerate(dfr_list):
-                a1[0].scatter(dfr['x'].iloc[t-1]/1.e3, (ymax_plot - dfr['y'].iloc[t-1])/1.e3, s=20, c=color_part[ind], marker=part_marker[ind], zorder=100, label = label_part[ind])
+            for clump_id, synpart in all_synparts.items():
+                row = synpart.iloc[t-1]
+                x_plot = row["x"] / 1.e3
+                y_plot = (ymax_plot - row["y"]) / 1.e3
+                a1[0].scatter(
+                    x_plot,
+                    y_plot,
+                    s=20,
+                    c=color_part[(clump_id - 1) % len(color_part)],
+                    marker=part_marker[(clump_id - 1) % len(part_marker)],
+                    zorder=100,
+                    label=f"Burst {clump_id}"
+                )
 
             matplotlib.rcParams['font.family'] = 'Arial'
             font_sz = 12
@@ -254,6 +275,7 @@ def main():
             plt.savefig(plotname, format='png', dpi=500)
             plt.clf()
             plt.close('all')
+
 
 if __name__ == "__main__":
     main()
