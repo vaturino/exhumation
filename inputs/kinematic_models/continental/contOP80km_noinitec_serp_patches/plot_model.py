@@ -15,7 +15,7 @@ cmax=float(sys.argv[3])  # maximum value for color bar
 zmax=900.e3; xmax=6*zmax
 
 file_path = ''.join(['text_files/',str(file_name),'.txt'])
-plot_name = ''.join(['test_plots/',str(file_name),'.png'])
+plot_name = ''.join(['test_plots/',str(file_name),'.eps'])
 file 	  = np.loadtxt(file_path,skiprows=2)
 
 fig=plt.figure()
@@ -34,7 +34,7 @@ cbar = plt.colorbar(input_plot, cax = fig.add_axes([0.7, 0.4, 0.15, 0.015]), ori
 cbar.ax.tick_params(labelsize=6)
 
 print("saving plot to %s..." % plot_name)
-plt.savefig(plot_name, bbox_inches='tight', format='png', dpi=1000)
+plt.savefig(plot_name, bbox_inches='tight', format='eps', dpi=1000)
 plt.clf()
 
    

@@ -49,3 +49,8 @@ for i in range(len(strain_ref)):
     visc_check_disl = (1/2)*Adisl**(-1/n) * strain_ref[i]**((1-n)/n) * np.exp((Edisl+press_ref*Vdisl)/(n*R*temp_ref))
     print("Strain rate= %e - Dislocation prefactor = %e. Check: %e = %e" % (strain_ref[i], Adisl,visc_ref,visc_check_disl))
 
+#test crustal viscosity at 500 degC
+Temp = 350+273.15
+for i in range(len(strain_ref)):
+    visc_disl = (1/2)*Adisl**(-1/n) * strain_ref[i]**((1-n)/n) * np.exp((Edisl+press_ref*Vdisl)/(n*R*Temp))
+    print("Strain rate= %e - viscosity = %e" % (strain_ref[i], visc_disl))

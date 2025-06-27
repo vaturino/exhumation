@@ -31,10 +31,10 @@ def main():
     parser.add_argument('json_file', help='json file with model name, time at the end of computation, folder where to save the plots, legend')
     args = parser.parse_args()
 
-    # csvs_loc =  '/home/vturino/PhD/projects/exhumation/gz_outputs/'
-    # models_loc =  '/home/vturino/PhD/projects/exhumation/raw_outputs/'
-    models_loc = '/home/vturino/Vale_nas/exhumation/raw_outputs/'
-    csvs_loc = '/home/vturino/Vale_nas/exhumation/gz_outputs/'
+    csvs_loc =  '/home/vturino/PhD/projects/exhumation/gz_outputs/'
+    models_loc =  '/home/vturino/PhD/projects/exhumation/raw_outputs/'
+    # models_loc = '/home/vturino/Vale_nas/exhumation/raw_outputs/'
+    # csvs_loc = '/home/vturino/Vale_nas/exhumation/gz_outputs/'
     json_loc = '/home/vturino/PhD/projects/exhumation/pyInput/'
 
     with open(f"{json_loc}{args.json_file}") as json_file:
@@ -79,7 +79,7 @@ def main():
         points_cr = get_points_with_y_in(data, 40.e3, 1.e3, 900.e3)
 
         # extract the velocities around the trench ###
-        left[t], right[t] = get_V_around_trench(points_cr, trench, 1600.e3)
+        left[t], right[t] = get_V_around_trench(points_cr, trench, 200.e3)
         left[t] *= 1e2
         right[t] *= 1e2
         conv_rate[t] = abs(left[t]-right[t])

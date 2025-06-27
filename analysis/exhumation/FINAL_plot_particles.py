@@ -145,10 +145,10 @@ def process_particle(p, txt_loc, line_colors, compositions, composition_mapping,
     pt_single["terrain"] = pt_single["terrain"].round()
     pt_single["lithology"] = pt_single["terrain"].map(composition_mapping)
     # pt_single["lithology"] = pt_single["lithology"].iloc[-1]
-    
+
 
     max_depth = ymax - pt_single["depth"].min()
-    exhumed = ((pt_single.depth.iat[-1] - pt_single.depth.min()) >= thresh * max_depth) and (max_depth > 10.)
+    exhumed = ((pt_single.depth.iat[-1] - pt_single.depth.min()) >= thresh * max_depth) and (max_depth >= 10.)
 
     stagnant = not exhumed # Default as stagnant
     subducted = not exhumed and not stagnant  # Default as not subducted
@@ -156,8 +156,8 @@ def process_particle(p, txt_loc, line_colors, compositions, composition_mapping,
     particle_data = None
 
     if stagnant:
-        pt_single["Plith"] = pt_single["Plith"].rolling(window=10, min_periods=1).mean()
-        pt_single["time"] = pt_single["time"].rolling(window=10, min_periods=1).mean()
+        # pt_single["Plith"] = pt_single["Plith"].rolling(window=10, min_periods=1).mean()
+        # pt_single["time"] = pt_single["time"].rolling(window=10, min_periods=1).mean()
         pt_single["gradient"] = np.gradient(pt_single["Plith"], pt_single["time"])
         lowgrad = process_times_for_particle(pt_single, stagnation_min, time_thresh, grad_thresh)
 
@@ -208,9 +208,6 @@ def plot_max_conditions(df, title_str, plot_file, lith_count, P, T, t):
 
         
         for p in range(len(P)):
-            # Scatterplot with consistent colors
-            # Get unique lithologies and assign a color palette
-            # print(df[lith[p]].unique())
             unique_lithologies = df.lithology.unique()
             colors = sns.color_palette("colorblind", len(unique_lithologies))
     
@@ -342,19 +339,21 @@ def main():
                         pt_single["time"].iloc[pt_single["Plith"].idxmax()],
                         next_time
                     ]
-                    a1[0].plot(pt_single["T"], pt_single["Plith"], color=line_color)
-                    a1[1].plot((pt_single["time"]), pt_single["Plith"], color=line_color)
-                    a1[1].set_xlim(0, 50)
+                    if p % 50 == 0:
+                        a1[0].plot(pt_single["T"], pt_single["Plith"], color=line_color)
+                        a1[1].plot((pt_single["time"]), pt_single["Plith"], color=line_color)
+                        a1[1].set_xlim(0, 50)
                 elif result["stagnant"]:
                     stagnant += 1
                     if result["data"] is not None:
                         result_data_cleaned = result["data"].copy()
                         result_data_cleaned["lithology"] = result_data_cleaned["lithology"].iloc[-1] 
                         particle_data_series = pd.Series(result_data_cleaned, index=stag.columns)
-                        stag.loc[p] = particle_data_series          
-                    a3[0].plot(pt_single["T"], pt_single["Plith"], color=line_color)
-                    a3[1].plot((pt_single["time"]), pt_single["Plith"], color=line_color)
-                    a3[1].set_xlim(0, 50)
+                        stag.loc[p] = particle_data_series   
+                    if p % 50 == 0:       
+                        a3[0].plot(pt_single["T"], pt_single["Plith"], color=line_color)
+                        a3[1].plot((pt_single["time"]), pt_single["Plith"], color=line_color)
+                        a3[1].set_xlim(0, 50)
 
             except Exception as e:
                 print(f"Error processing particle {p}: {e}")
@@ -366,16 +365,16 @@ def main():
         ax.set_title(title)
     a1[0].set_xlabel("Temperature (C)")
     a1[0].set_ylabel("Pressure (GPa)")
-    a1[1].set_xlabel("Distance (km)")
-    a1[1].set_ylabel("Depth (km)")
+    a1[1].set_xlabel("Time (Myr)")
+    a1[1].set_ylabel("Pressure (GPa)")
     a2.set_xlabel("Temperature (C)")
     a2.set_ylabel("Pressure (GPa)")
     a2.set_ylim(0, 4.5)
     a2.set_xlim(0, 1100)
     a3[0].set_xlabel("Temperature (C)")
     a3[0].set_ylabel("Pressure (GPa)")
-    a3[1].set_xlabel("Distance (km)")
-    a3[1].set_ylabel("Depth (km)")
+    a3[1].set_xlabel("Time (Myr)")
+    a3[1].set_ylabel("Pressure (GPa)")
 
     for fig, ax in zip([f1, f2, f3], [a1[1], a2, a3[1]]):
         plt.colorbar(s_m, ax=ax).set_label('Initial X Position (km)')

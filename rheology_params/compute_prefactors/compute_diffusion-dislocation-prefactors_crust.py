@@ -14,7 +14,7 @@ depth_ref  = 0e3 # m
 visc_ref   = 5.e19
 temp_ref   = 600
 
-# depth_ref  = 0e3 # m
+# depth_ref  = 0e3 # m./
 # visc_ref   = 5e19
 # temp_ref   = 773
 

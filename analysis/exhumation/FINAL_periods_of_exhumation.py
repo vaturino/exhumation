@@ -42,7 +42,6 @@ def load_data(id, txt_loc):
 
 
 def compute_time_intervals(data, stagnation_min, time_thresh, Pthresh):
-    
     # Find the exhumation threshold time (texh)
     filexh = ((data["Plith"] <= Pthresh) & (data["time"] >= stagnation_min))
     texh = data[filexh]["time"].min()
@@ -115,18 +114,13 @@ def process_times_for_particle(data, stagnation_min, time_thresh, grad_thresh, m
 
     # Determine 75% of the maximum pressure
     Pmax = data["Plith"].max()
+    # Pthresh = 0.75 * Pmax
     Pthresh = round(0.75 * Pmax,3)
 
 
     # Filter data to ensure the time interval starts where Plith < Pthresh
     fil = ((data["Plith"] <= Pthresh) & (data["time"] > min_time))
     valid_data = data[fil].reset_index(drop=True)
-
-    # plt.plot(data["time"], data["Plith"])
-    # plt.plot(valid_data["time"], valid_data["Plith"])
-    # plt.axhline(y=Pthresh, color="red", linestyle="--")
-    # plt.show()
-    # exit
 
 
     # Further filter valid_data where gradient < 0 or abs(gradient) < grad_thresh

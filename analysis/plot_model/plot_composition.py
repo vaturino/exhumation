@@ -58,24 +58,26 @@ def main():
         stat = pd.read_csv(f"{models_loc}{m}/statistics", skiprows=configs['head_lines'], sep='\s+', header=None)
         time_array = grab_dimTime_fields(f"{csvs_loc}{m}/fields", stat, time_array, configs['head_lines']-1)
 
-        plot_loc_mod = f"/home/vturino/PhD/projects/exhumation/plots/single_models/{m}"
+        plot_loc_mod = f"/home/vturino/PhD/projects/exhumation/plots/single_models/{m}/"
         if not os.path.exists(plot_loc_mod):
             os.mkdir(plot_loc_mod)
-        plot_loc = f"{plot_loc_mod}/Panels_pdf/"
+        plot_loc = f"{plot_loc_mod}/Compo/"
         if not os.path.exists(plot_loc):
             os.mkdir(plot_loc)
         else:
             file_count = len(os.listdir(plot_loc))
 
+        cr = pd.read_csv(f"{plot_loc_mod}/txt_files/2D_v.txt", sep="\s+")
+        cr["conv_rate"].iloc[0] = cr["conv_rate"].iloc[1]
+
         # for t in tqdm(range(0, len(time_array))):
-        for t in [14, 28, 34, 56]:
-            f1, a1 = plt.subplots(1, 3, figsize=(20, 5))
-            plotname = f"{plot_loc}{int(t/2)}.pdf" 
+        for t in tqdm(range(60, 80)):
+            f1, a1 = plt.subplots(2, 1, figsize=(8, 5), dpi=500, height_ratios=[1, 0.25])
+
+            plotname = f"{plot_loc}{int(t)}.png" 
             # plotname = f"{plot_loc}{t}.pdf"
             data = pd.read_parquet(f"{csvs_loc}{m}/fields/full.{int(t)}.gzip")
             data["lithology"] = 0
-            data["logvisc"] = np.log10(data["viscosity"])
-            data["logSR"] = np.log10(data["strain_rate"])
             data["comp"] = data["oc"]+data["sed"]+data["ecl"]
 
             for ind, c in enumerate(compositions):
@@ -99,7 +101,7 @@ def main():
             trench = get_trench_position(pts, threshold=0.13e7)
             xmin_plot = trench - 100.e3
             xmax_plot = trench + 200.e3
-            ymin_plot = 740.e3
+            ymin_plot = 760.e3
             ymax_plot = 902.e3
 
             x = data["Points:0"].to_numpy() / 1.e3
@@ -125,70 +127,96 @@ def main():
 
             # Plot lithology using terrain indices and corresponding color map
             p1 = a1[0].tripcolor(triang, data["terrain_idx"], cmap=matplotlib.colors.ListedColormap(colors_for_terrain), shading='gouraud', vmin=0, vmax=len(colors_for_terrain)-1)
-            a1[0].tricontour(triang, data["T"] - 273.5, colors='k', levels=[100, 300, 500, 700, 900], linewidths=0.3)
-            # a1[0].tricontourf(triang, data["logSR"], colors='navy', levels=[np.log10(5) -14, -12], alpha = 0.5)
-            # step = 500  # plot every 100th vector to reduce the number of vectors plotted
-            # data_filtered = data_filtered_comp.iloc[::step]
+            
+            # annotate time in Myr with 1 decimal
+            time_in_myr = time_array[t, 1] / 1.e6
+            a1[0].annotate(f"Time = {time_in_myr:.1f} Myr", xy=(0.02, 0.05), xycoords='axes fraction', ha='left', fontsize=14, color='black')
 
-            # Normalize velocity vectors to unit vectors
-            # vel_magnitude = np.sqrt(data_filtered["velocity:0"]**2 + data_filtered["velocity:1"]**2)
-            # data_filtered["velocity:0_norm"] = data_filtered["velocity:0"] / vel_magnitude
-            # data_filtered["velocity:1_norm"] = data_filtered["velocity:1"] / vel_magnitude
+            # Set Calibri as the font
+            matplotlib.rcParams['font.family'] = 'Arial'
+            font_sz = 12
 
-            # # Plot quiver with uniform arrow lengths
-            # vel_vects = a1[0].quiver(data_filtered["Points:0"].to_numpy() / 1.e3, 
-            #                     (ymax_plot - data_filtered["Points:1"].to_numpy()) / 1.e3, 
-            #                     data_filtered["velocity:0_norm"].to_numpy(), 
-            #                     data_filtered["velocity:1_norm"].to_numpy(), 
-            #                     scale=70, color='black', width=0.0015, zorder = 10)  # Adjust scale for arrow size
-            # a1[0].quiverkey(vel_vects, 0.15, 0.1, 1, '1 cm/yr', labelpos='W', fontproperties={'size': '7'}, color='k', labelcolor='k') 
 
-            # Terrain colorbar
-            cbar = plt.colorbar(p1, orientation='horizontal', ax=a1[0])
+
+           
+            a1[0].clabel(
+                a1[0].tricontour(triang, data["T"] - 273.5, colors='k', levels=[300, 700, 1100], linewidths=0.5),
+                inline=False,
+                fontsize=10,
+                fmt='%1.0f°C',
+                manual = [(trench / 1.e3 + 170, 0),   (trench / 1.e3 + 170, 35),   (trench / 1.e3 + 170, 70)],
+
+                use_clabeltext=True
+            )
+            for label in a1[0].texts:
+                label.set_rotation(0)
+                label.set_fontweight('bold')
+                label.set_bbox(dict(facecolor='white', edgecolor='none', alpha=0.5, boxstyle='round,pad=0.2'))
+
+     
+
+
+
+
+            # Terrain colorbar (vertical on the right)
+            cbar = plt.colorbar(p1, orientation='vertical', ax=a1[0], pad=0.02, shrink=0.95)
             cbar.set_ticks(np.arange(len(colors_for_terrain)))
             cbar.set_ticklabels([terrain for terrain in present_terrains])  # Set tick labels to present terrain names
-            cbar.set_label('Terrain', rotation=0, labelpad=5)
-
+            cbar.set_label('Lithology', rotation=90, labelpad=1, fontsize=font_sz)
             a1[0].set_ylim([(ymax_plot - ymin_plot) / 1.e3, -5])
             a1[0].set_xlim([xmin_plot / 1.e3, xmax_plot / 1.e3])
             a1[0].set_aspect('equal')
+            a1[0].set_xlabel("x (km)", fontsize=font_sz)
+            a1[0].set_ylabel("Depth (km)", fontsize=font_sz)
 
-            # Strain rate plot
-            p2 = a1[1].tripcolor(triang, data["logSR"], cmap='RdBu_r', shading='gouraud', vmin=-19, vmax=-12)
-            a1[1].tricontour(triang, data["comp"], colors='k', levels=[1], linewidths=0.7, alpha = 0.5)
-            a1[1].spines[['top']].set_visible(False)
-            plt.colorbar(p2, orientation='horizontal', label='Log(Strain rate) [s-1]', ax=a1[1])
-            a1[1].set_ylim([(ymax_plot - ymin_plot) / 1.e3, -5])
-            a1[1].set_xlim([xmin_plot / 1.e3, xmax_plot / 1.e3])
-            a1[1].set_aspect('equal')
-            # Annotate time in subplot a1[1]
-            time_label = f"Time: {time_array[t, 1]/1e6:.1f} Myr"
-            a1[1].text(0.05, 0.1, time_label, transform=a1[1].transAxes, fontsize=12, verticalalignment='top', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
+            # Remove the top spine
+            a1[0].spines['top'].set_visible(False)
 
-            # Viscosity plot + velocity vectors
-            p3 = a1[2].tripcolor(triang, data["logvisc"], shading='gouraud', vmin=18, vmax=24)
-            a1[2].tricontour(triang, data["comp"], colors='k', levels=[1], linewidths=0.7, alpha = 0.5)
-            vel_plot_thresh = 0.0001  # don't plot velocity vectors smaller than this (cm/yr)
-            step = 500  # plot every 100th vector to reduce the number of vectors plotted
-            # # Filter out small velocity vectors and downsample data for plotting
-            # mask = (100. * np.sqrt(data["velocity:0"]**2 + data["velocity:1"]**2)) >= vel_plot_thresh
-            # mask = mask.reindex(data_filtered_comp.index, fill_value=False)
-            # data_filtered = data_filtered_comp[mask].iloc[::step]
+            # Set font size for tick labels
+            a1[0].tick_params(axis='both', which='major', labelsize=font_sz)
 
-            # vel_vects = a1[2].quiver(data_filtered["Points:0"].to_numpy() / 1.e3, 
-            #                          (ymax_plot - data_filtered["Points:1"].to_numpy()) / 1.e3, 
-            #                          data_filtered["velocity:0"].to_numpy() * 100, 
-            #                          data_filtered["velocity:1"].to_numpy() * 100, 
-            #                          scale=50, color='black', width=0.0015)
-            # a1[2].quiverkey(vel_vects, 0.15, 0.1, 1, '1 cm/yr', labelpos='W', fontproperties={'size': '7'}, color='white', labelcolor='white')
-            a1[2].spines[['top']].set_visible(False)
-            plt.colorbar(p3, orientation='horizontal', label='Log(Viscosity) [Pa s]', ax=a1[2])
-            a1[2].set_ylim([(ymax_plot - ymin_plot) / 1.e3, -5])
-            a1[2].set_xlim([xmin_plot / 1.e3, xmax_plot / 1.e3])
-            a1[2].set_aspect('equal')
+            # plot convergence rate
+            a1[1].plot(cr["time"]/1.e6, cr["conv_rate"], color="slategrey", linewidth=2, label="Convergence rate")
+            a1[1].scatter(cr["time"].iloc[t]/1.e6, cr["conv_rate"].iloc[t], color="darkred", s=50, zorder=100, clip_on=False)
+            a1[1].set_xlim([0, 52])
+            a1[1].set_ylim([0, 8])
+            a1[1].set_xlabel("Time (Myr)", fontsize=font_sz)
+            a1[1].set_ylabel(r"$v_c$ (cm/yr)", fontsize=font_sz)
+
+            # Set font size for tick labels
+            a1[1].tick_params(axis='both', which='major', labelsize=font_sz)
+
+            # Hide all spines
+            for side in ["top", "right", "bottom", "left"]:
+                a1[1].spines[side].set_visible(False)
+
+            # Hide tick marks but keep tick labels
+            a1[1].tick_params(left=True, bottom=True)
+
+            # Get axis limits to position arrows properly
+            x_min, x_max = a1[1].get_xlim() 
+            y_min, y_max = a1[1].get_ylim()
+
+            x_min = x_min - 0.5
+            y_min = y_min - 0.8
+
+            # Add custom x-axis with arrow
+            a1[1].annotate('', xy=(x_max, 0), xytext=(x_min, 0),
+                        arrowprops=dict(arrowstyle='->', linewidth=1),
+                        xycoords='data', zorder=5)
+
+            # Add custom y-axis with arrow
+            a1[1].annotate('', xy=(0, y_max), xytext=(0, y_min),
+                        arrowprops=dict(arrowstyle='->', linewidth=1),
+                        xycoords='data', zorder=5)
+            
+
+            
 
             # Save and close the plot
-            plt.savefig(plotname, bbox_inches='tight', format='pdf', dpi=500)
+            plt. subplots_adjust(hspace=0.1)
+            plt.tight_layout()
+            plt.savefig(plotname, format='png', dpi=500)
             plt.clf()
             plt.close('all')
 

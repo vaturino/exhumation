@@ -52,62 +52,35 @@ def main():
         plot_loc_mod = f"/home/vturino/PhD/projects/exhumation/plots/single_models/{m}"
         if not os.path.exists(plot_loc_mod):
             os.mkdir(plot_loc_mod)
-        plot_loc = f"{plot_loc_mod}/Zoomed_visc/"
+        plot_loc = f"{plot_loc_mod}/Viscosity_full_model/"
         if not os.path.exists(plot_loc):
             os.mkdir(plot_loc)
         else:
             # Count the files in the fields_loc directory
             file_count = len(os.listdir(plot_loc))
 
-        compositions = configs['compositions']
-        cutoff = configs['cutoff']
+        
+        xmin_plot = 0
+        xmax_plot = 5400.e3
+        ymin_plot = 0
+        ymax_plot = 902.e3
 
 
         
-        # for t in tqdm(range(0, len(time_array), 2)):
-        for t in tqdm(range(60, 80)):
+        for t in tqdm(range(0, len(time_array))):
+        # for t in tqdm(range(60, 80)):
 
             fig, ax = plt.subplots()
             plotname = f"{plot_loc}{int(t)}.png" 
             data = pd.read_parquet(f"{csvs_loc}{m}/fields/full.{int(t)}.gzip") 
             data["lithology"] = 0
             data["logvisc"] = np.log10(data["viscosity"])
-            for ind, c in enumerate(compositions):
-                data[c][data["Points:1"] < cutoff[ind]] = 0
-                data[c][data[c] >= 0.5] = 1
-                data[c][data[c] < 0.5] = 0
-
-            data["comp"] = data["oc"]+data["sed"]+data["ecl"]
-
-            for ind_c, c in enumerate(compositions):
-                weight = ind_c + 1
-                data["lithology"] += weight * data[c]
             
-            data["lithology"] = data["lithology"].astype(int)
-            composition_mapping = {ind_c + 1: c for ind_c, c in enumerate(compositions)}
-            data["terrain"] = data["lithology"].map(composition_mapping)
-            data["terrain"].fillna("mantle", inplace=True)
-            filter_mask = (data["terrain"] != "mantle") & (data["terrain"] != "opc")
-            data_filtered_comp = data[filter_mask]
-
-            data["comp"] = data["oc"]+data["sed"]+data["ecl"]+data["serp"]
-
-            
-            pts = get_points_with_y_in(data, 15.e3, 2.e3, ymax = 900.e3)
-            trench= get_trench_position(pts,threshold = 0.13e7)
-            xmin_plot = trench -100.e3
-            xmax_plot = trench + 200.e3
-            ymin_plot = 740.e3
-            ymax_plot = 902.e3
 
             x = data["Points:0"].to_numpy()/1.e3
             y = (ymax_plot - data["Points:1"].to_numpy())/1.e3
 
-            Plith = y*1e3*9.81*3100
-
             triang = tri.Triangulation(x, y)
-            colors = matplotlib.colormaps['viridis']((18,24,601))
-           
            
             # plot only triangles with sidelength smaller some max_radius
             max_radius = 10
@@ -119,31 +92,15 @@ def main():
             maxi = np.max(np.sqrt(xtri**2 + ytri**2), axis=1)
             triang.set_mask(np.logical_and(maxi > max_radius, y[triangles][:,1] < 90.))
 
-            ax.tripcolor(triang, data["logvisc"], shading='gouraud', vmin=18, vmax=24)
-            ax.tricontour(triang, data["comp"], levels=[1], colors='navy', linewidths=2)
-            step = 500  # plot every 500th vector to reduce the number of vectors plotted
-            data_filtered = data_filtered_comp.iloc[::step]
+            tripcolor_plot = ax.tripcolor(triang, data["logvisc"], shading='gouraud', cmap = "viridis", vmin=18, vmax=24)
+            plt.colorbar(tripcolor_plot, orientation='horizontal', label='Log(Viscosity) [Pa s]', pad=0.1, aspect=40)
 
-            # Convert velocity from m/yr to mm/yr
-            velocity_mm_per_yr = data_filtered["velocity:1"].to_numpy() * 1e3
 
-            # Plot quiver with vertical velocity only
-            vel_vects = plt.quiver(data_filtered["Points:0"].to_numpy() / 1.e3, 
-                                (ymax_plot - data_filtered["Points:1"].to_numpy()) / 1.e3, 
-                                np.zeros_like(velocity_mm_per_yr),  # Horizontal component is zero
-                                velocity_mm_per_yr, 
-                                scale=40, color='black', width=0.003)  # Adjust scale and width for larger arrows
-            ax.quiverkey(vel_vects, 0.15, 0.1, 40, '10 mm/yr', labelpos='W', fontproperties={'size': '7'}, color='white', labelcolor='white')
-            # Filter data for vertical velocity below 2 mm/yr
-            data_filtered_below_threshold = data_filtered[velocity_mm_per_yr < 2]
-
-            # plt.scatter(row["x"].to_numpy()/1.e3, (ymax_plot - row["depth"].to_numpy())/1.e3, color='red', marker='x', zorder = 1)
-            plt.colorbar(orientation='horizontal', label='Log(Viscosity) [Pa s]')
+            # annotate time 
+            ax.text(0.01, 0.22, f"Time: {time_array[t, 1] / 1.e6:.1f} Ma", transform=ax.transAxes, fontsize=12, verticalalignment='top', horizontalalignment='left')
             ax.set_ylim([(ymax_plot-ymin_plot)/1.e3,-5])
             ax.set_xlim([xmin_plot/1.e3,xmax_plot/1.e3])
-            # ax1 = ax.twinx()
-            # ax1.set_ylim(5, -0.5)
-            # No top spine
+
             ax.spines['top'].set_visible(False)
             ax.set_aspect('equal')
             
@@ -156,4 +113,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

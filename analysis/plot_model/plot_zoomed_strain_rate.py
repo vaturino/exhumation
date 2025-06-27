@@ -103,10 +103,10 @@ def main():
             triang.set_mask(np.logical_and(maxi > max_radius, y[triangles][:,1] < 90.))
 
           
-            plt.tripcolor(triang, data["logSR"], cmap='RdBu_r', shading='gouraud', vmin=-19, vmax=-12)
+            pcm = plt.tripcolor(triang, data["logSR"], cmap='RdBu_r', shading='gouraud', vmin=-17, vmax=-12)
             plt.tricontour(triang, data["comp"], levels = [1.0], colors='black', linewidths=1, alpha = 0.5)
             # plt.scatter(row["x"].to_numpy()/1.e3, (ymax_plot - row["depth"].to_numpy())/1.e3, color='red', marker='x', zorder = 1)
-            # plt.colorbar(orientation='horizontal', label='Log(Strain rate) [s-1]')
+            plt.colorbar(pcm, orientation='horizontal', label='Log(Strain rate) [s-1]')            
             plt.ylim([(ymax_plot-ymin_plot)/1.e3,-5])
             plt.xlim([xmin_plot/1.e3,xmax_plot/1.e3])
             plt.gca().set_aspect('equal')

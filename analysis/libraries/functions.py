@@ -212,7 +212,7 @@ def horizontalStress(p,trench_point,distance_from_trench = 1.e6):
     right = p.loc[p['Points:0'] > trench_point + distance_from_trench,"shear_stress:0"].iloc[0]
     return right
 
-def get_V_around_trench(p,trench_point,distance_from_trench = 1.e6):
+def get_V_around_trench(p,trench_point,distance_from_trench):
     left = p.loc[p['Points:0'] < trench_point - distance_from_trench,"velocity:0"].iloc[-1]
     right = p.loc[p['Points:0'] > trench_point + distance_from_trench,"velocity:0"].iloc[0]
     return (left, right)
