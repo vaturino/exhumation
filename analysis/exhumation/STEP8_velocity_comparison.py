@@ -26,26 +26,12 @@ def main():
 
 
 
-    # Create a mapping for lithology colors
-     # Define color palettes
-    colors_tin = {
-        "sed": "midnightblue",
-        "oc": "#733A11",
-        "ecl": "#003300",
-        "serp": "#3b0000"
-    }
-
-    colors_tmax = {
-        "sed": "mediumblue",
-        "oc": "#B06D1A",
-        "ecl": "#45701C",
-        "serp": "brown"
-    }
+    
 
     colors_tfin = {
         "sed": "cornflowerblue",
-        "oc": "#E3B64F",
-        "ecl": "#A0C93D",
+        "oc": "darkorange",
+        "ecl": "forestgreen",
         "serp": "lightsalmon"
     }
 
@@ -69,7 +55,7 @@ def main():
     plotname = f"velocity_comparison_timing_{configs['test']}.pdf"
     count = len(configs["models"])
 
-
+    time_max = 65
 
  
     # # Create the plot
@@ -102,7 +88,7 @@ def main():
         ax[0,0].set_xticks([])
 
         # # Histograms for tmax and tfin (Manual layering with plt.bar)
-        bin_edges = np.arange(0, 50,1)  # Define bin edges
+        bin_edges = np.arange(0, time_max,1)  # Define bin edges
 
 
         # Sort exhumed_list by lithology to ensure 'oc' is plotted over 'sed'
@@ -121,7 +107,7 @@ def main():
         ax[ind_m+1,0].set_xticks([])
         ax[ind_m+1,0].set_ylim(0.7, 5.e3)
         ax[ind_m+1,0].axvline(x=35, color="grey", linestyle="--", label="35 Ma", linewidth = linewidth)
-        ax[ind_m+1,0].text(0.32, 0.9, "Time at exhumable threshold", fontsize=12, transform=ax[ind_m+1,0].transAxes)
+        # ax[ind_m+1,0].text(0.32, 0.9, "Time at exhumable threshold", fontsize=12, transform=ax[ind_m+1,0].transAxes)
 
 
     
@@ -195,7 +181,7 @@ def main():
 
         sns.histplot(stagnant_list_expanded, x="ti", ax=ax[ind_m+1,1], hue = "lith_time", palette= colors_tfin, alpha=alpha, linewidth=1, element="step", bins= bin_edges, legend=False)
 
-        ax[ind_m+1,1].text(17, 2500, "Beginning of stagnation", fontsize=12)
+        # ax[ind_m+1,1].text(17, 2500, "Beginning of stagnation", fontsize=12)
 
         # Add a title, labels, and legend
         ax[ind_m+1,1].set_xlabel("")
@@ -227,17 +213,17 @@ def main():
         psubducted = 1 - pexhumed - pstagnant
 
 
-        bar_width = 0.02
+        bar_width = 0.01  # Reduce the width of the bar
         ax[ind_m+1,2].bar(0.8, psubducted, color=classification["subducted"], 
-                        label="Subducted", edgecolor="black", linewidth=0.5, width=bar_width)
+            label="Subducted", edgecolor="black", linewidth=0.5, width=bar_width)
         ax[ind_m+1,2].bar(0.8, pexhumed, bottom=psubducted, color=classification["exhumed"], 
-                        label="Exhumed", edgecolor="black", linewidth=0.5, width=bar_width)
+            label="Exhumed", edgecolor="black", linewidth=0.5, width=bar_width)
         ax[ind_m+1,2].bar(0.8, pstagnant, bottom=psubducted+pexhumed, color=classification["stagnant"], 
-                        label="Stagnant", edgecolor="black", linewidth=0.5, width=bar_width)
-        #add text with the percentage of particles on the left of the bar
-        ax[ind_m+1,2].text(0.8, 0.5, f"{round(psubducted*100, 0)}%", fontsize=10, ha="center", va="center", weight="bold", color = "mediumblue")
-        ax[ind_m+1,2].text(0.8, psubducted + 0.5*pexhumed, f"{round(pexhumed*100, 0)}%", fontsize=10, ha="center", va="top", weight="bold", color = "indigo")
-        ax[ind_m+1,2].text(0.8, psubducted + pexhumed + 0.5*pstagnant, f"{round(pstagnant*100, 0)}%", fontsize=10, ha="center", va="bottom", weight="bold", color = "darkgreen")
+            label="Stagnant", edgecolor="black", linewidth=0.5, width=bar_width)
+        # Add text with the percentage of particles on the right of the bar
+        ax[ind_m+1,2].text(0.806, psubducted / 2, f"{round(psubducted * 100, 0)}%", fontsize=10, ha="left", va="center", color="black")
+        ax[ind_m+1,2].text(0.806, psubducted + pexhumed / 2, f"{round(pexhumed * 100, 0)}%", fontsize=10, ha="left", va="center", color="black")
+        ax[ind_m+1,2].text(0.806, psubducted + pexhumed + pstagnant / 2, f"{round(pstagnant * 100, 0)}%", fontsize=10, ha="left", va="center", color="black")
         
 
         ax[ind_m+1,2].axis("off")

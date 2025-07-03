@@ -49,13 +49,13 @@ def filter_particles_by_sample(model_path, sample_ids, compositions, tr):
     Returns:
         pd.DataFrame: DataFrame of particles matching the criteria.
     """
-    last_file_path = os.path.join(model_path, 'particles/full.100.gzip')
+    last_file_path = os.path.join(model_path, 'particles/full.130.gzip')
     if not os.path.exists(last_file_path):
         print(f"File not found: {last_file_path}")
         return pd.DataFrame()
 
     # Load the last timestep
-    last_timestep_data = load_data(model_path, '/particles/full.100.gzip', compositions, tr)
+    last_timestep_data = load_data(model_path, '/particles/full.130.gzip', compositions, tr)
     
     # Filter by IDs in sample
     filtered_data = last_timestep_data[last_timestep_data["id"].isin(sample_ids)]
@@ -63,7 +63,7 @@ def filter_particles_by_sample(model_path, sample_ids, compositions, tr):
 
 
 def main():
-    json_file = "/home/vturino/PhD/projects/exhumation/pyInput/sed_bas_mu0.2.json"
+    json_file = "/home/vturino/PhD/projects/exhumation/pyInput/velocity_comparison.json"
     with open(json_file) as json_file:
         file = json.load(json_file)
 
@@ -87,8 +87,8 @@ def main():
 
     dataset["lithology_composition"] = dataset["lithology_composition"].round().astype(int)
 
-    # Sample 20% of the dataset
-    msk = np.random.rand(len(dataset)) <= 0.2
+    # Sample 25% of the dataset
+    msk = np.random.rand(len(dataset)) <= 0.25
     sample = dataset[msk]
     sample_ids = set(sample["id"])  # Extract sample IDs for filtering
     # get the count of each class

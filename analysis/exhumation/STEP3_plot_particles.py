@@ -15,10 +15,6 @@ from pathlib import Path
 import seaborn as sns
 from matplotlib.cm import get_cmap
 
-import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
-pd.options.mode.chained_assignment = None  # default='warn'
-
 path = str(Path(Path(__file__).parent.absolute()).parent.absolute())
 sys.path.insert(0, path)
 from libraries.functions import *
@@ -37,7 +33,7 @@ def load_data(id, txt_loc):
     return data
 
 
-# Compute the time intervals for the particles
+# Compute the time intervals for the stagnant particles
 def compute_time_intervals(data, stagnation_min, time_thresh):
     start_time = None
     data["time_interval"] = np.nan 
@@ -69,7 +65,7 @@ def compute_time_intervals(data, stagnation_min, time_thresh):
 
     return data
 
-
+# to know which bin the particles belong to, we need to compute the middle value of them
 def calculate_middle_values(data):
     avg_values = data.groupby('time_bin').agg({'Plith': 'mean', 'time': 'mean', 'T': 'mean'}).reset_index()
     data["Pm"] = np.nan
@@ -99,7 +95,7 @@ def compute_initial_interval_values(data):
     return data
 
 
-
+# for stagnant particles, finally compute the bins, times and pressures
 def process_times_for_particle(data, stagnation_min, time_thresh, grad_thresh):
     data['gradient'] = np.gradient(data["Plith"], data["time"])
     lowgrad = data[abs(data["gradient"]) < grad_thresh].reset_index(drop=True)
@@ -113,7 +109,7 @@ def process_times_for_particle(data, stagnation_min, time_thresh, grad_thresh):
     lowgrad = lowgrad[lowgrad["Plith"] < 6.0]
     return lowgrad
 
-
+# assign values for stagnant particles
 def assign_particle_values(particles, lowgrad_dyn, lowgrad_kin, lowgrad_trans, i, c):
             for col in c:
                 if not lowgrad_dyn[col].empty:
@@ -136,19 +132,17 @@ def assign_particle_values(particles, lowgrad_dyn, lowgrad_kin, lowgrad_trans, i
 
 
 def process_particle(p, txt_loc, line_colors, compositions, composition_mapping, thresh, time_thresh, stagnation_min, c, grad_thresh, ymax=901.):
-    # Load data
     pt_single = load_data(p, txt_loc)
 
-    # Process terrain and lithology
     pt_single["T"] = pt_single["T"]
     pt_single["terrain"] = sum((ind_c + 1) * pt_single[c].round() for ind_c, c in enumerate(compositions))
     pt_single["terrain"] = pt_single["terrain"].round()
     pt_single["lithology"] = pt_single["terrain"].map(composition_mapping)
-    # pt_single["lithology"] = pt_single["lithology"].iloc[-1]
-
 
     max_depth = ymax - pt_single["depth"].min()
-    exhumed = ((pt_single.depth.iat[-1] - pt_single.depth.min()) >= thresh * max_depth) and (max_depth >= 10.)
+    pmax = pt_single["Plith"].max()
+    t_at_pmax = pt_single["time"].iat[pt_single["Plith"].idxmax()]
+    exhumed = (pt_single["Plith"].iat[-31] <= (1 - thresh) * pmax) and (max_depth >= 10.) and (pt_single["time"].iat[-31] > t_at_pmax)# Check if the particle is exhumed
 
     stagnant = not exhumed # Default as stagnant
     subducted = not exhumed and not stagnant  # Default as not subducted
@@ -245,8 +239,6 @@ def main():
     parser.add_argument('json_file', help='json file with model name, time at the end of computation, folder where to save the plots, legend')
     args = parser.parse_args()
 
-    models_loc = '/home/vturino/Vale_nas/exhumation/raw_outputs/'
-    csvs_loc = '/home/vturino/Vale_nas/exhumation/gz_outputs/'
     json_loc = '/home/vturino/PhD/projects/exhumation/pyInput/'
 
     with open(f"{json_loc}{args.json_file}") as json_file:
@@ -270,7 +262,7 @@ def main():
     stagnation_min = 10.
     grad_thresh = 0.01
     time_thresh = 0.5
-    exhumed_thresh = 0.25
+    exhumed_thresh = 0.35
     c = ["Pm", "tm", "Tm", "Pi", "Ti", "time_interval", "ti", "tf", "lithology"]
 
 
@@ -303,6 +295,7 @@ def main():
     f2, a2 = plt.subplots(1, 1)
     f3, a3 = plt.subplots(1, 2, figsize=(15, 5))
 
+
     with ProcessPoolExecutor() as executor:
         futures = [
             executor.submit(
@@ -325,10 +318,10 @@ def main():
                     a2.plot(pt_single["T"], pt_single["Plith"], color=line_color)
                     subd.iloc[p] = [p]
                 elif result["exhumed"]:
-                    exhumed += 1
                     next_time = pt_single.loc[(pt_single["time"] > pt_single["time"].iloc[pt_single["Plith"].idxmax()]) & 
-                                              (pt_single["Plith"] <= 0.75 * pt_single["Plith"].max()), "time"].iloc[0]
+                                              (pt_single["Plith"] <= (1-exhumed_thresh) * pt_single["Plith"].max()), "time"].iloc[0]
                     pt_single["ti"] = next_time
+                    exhumed += 1
                     exh.loc[p] = [
                         p, 
                         pt_single["Plith"].max(), 
@@ -342,7 +335,7 @@ def main():
                     if p % 50 == 0:
                         a1[0].plot(pt_single["T"], pt_single["Plith"], color=line_color)
                         a1[1].plot((pt_single["time"]), pt_single["Plith"], color=line_color)
-                        a1[1].set_xlim(0, 50)
+                        a1[1].set_xlim(0, 70)
                 elif result["stagnant"]:
                     stagnant += 1
                     if result["data"] is not None:
@@ -353,7 +346,7 @@ def main():
                     if p % 50 == 0:       
                         a3[0].plot(pt_single["T"], pt_single["Plith"], color=line_color)
                         a3[1].plot((pt_single["time"]), pt_single["Plith"], color=line_color)
-                        a3[1].set_xlim(0, 50)
+                        a3[1].set_xlim(0, 70)
 
             except Exception as e:
                 print(f"Error processing particle {p}: {e}")

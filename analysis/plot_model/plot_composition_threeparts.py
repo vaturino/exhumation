@@ -93,13 +93,11 @@ def main():
         clump_ranges.append((start, sorted_tin_values[-1]))  # Add the last clump
         
         mid_times = np.zeros(len(clump_ranges))
-        mid_times[0] = clump_ranges[0][0]  
-        mid_times[1] = (clump_ranges[1][0] + clump_ranges[1][1])/2  
-        mid_times[2] = (clump_ranges[2][1] + clump_ranges[2][0])/2 -1.5
-        # for ind, (start, end) in enumerate(clump_ranges):
-        #     # mid_times[ind] = (start + end) / 2
-        #     mid_times[ind] = start
-        #     # mid_times[ind] = end
+        # mid_times[0] = clump_ranges[0][0]  
+        # mid_times[1] = (clump_ranges[1][0] + clump_ranges[1][1])/2  
+        # mid_times[2] = (clump_ranges[2][1] + clump_ranges[2][0])/2 -1.5
+        for ind, (start, end) in enumerate(clump_ranges):
+            mid_times[ind] = (start + end) / 2
 
 
         dfr_list = []
@@ -110,11 +108,6 @@ def main():
             dfr = pd.read_csv(f"{pt_loc}/pt_part_{idx[ind]}.txt", sep="\s+")
             dfr_list.append(dfr)
 
-        # for clump_id, synpart in enumerate(dfr_list, start=1):
-        #     Pthresh = synpart["Plith"].max() * 0.75
-        #     plt.plot(synpart["x"]/1.e3, (902.e3 - synpart["y"])/1.e3, label=f"Burst {clump_id}", color=color_part[(clump_id - 1) % len(color_part)])
-        # plt.show()
-        # exit()
         
         for clump_id, synpart in enumerate(dfr_list, start=1):
             Pthresh = synpart["Plith"].max() * 0.75

@@ -19,6 +19,8 @@ sys.path.insert(0, path)
 from libraries.functions import *
 from libraries.particles import *
 from numba import jit
+import warnings
+warnings.filterwarnings("ignore")
 
 #define function to calculate adjusted r-squared
 def adjR(x, y, degree):

@@ -36,29 +36,21 @@ def main():
     cr = pd.read_csv(f"{txt_loc}/2D_v.txt", sep="\s+")
     cr["conv_rate"].iloc[0] = np.nan
 
-
-
-    # Create a mapping for lithology colors
-     # Define color palettes
-    colors_tin = {
-        "sed": "midnightblue",
-        "oc": "#733A11",
-        "ecl": "#003300",
-        "serp": "#3b0000"
-    }
-
-    colors_tmax = {
-        "sed": "mediumblue",
-        "oc": "#B06D1A",
-        "ecl": "#45701C",
-        "serp": "brown"
-    }
+    xmax_plot = 65
+    time_max = 65
 
     colors_tfin = {
         "sed": "cornflowerblue",
-        "oc": "#E3B64F",
-        "ecl": "#A0C93D",
+        "oc": "darkorange",
+        "ecl": "#61aa2f",
         "serp": "lightsalmon"
+    }
+
+    colors_tin = {
+        "sed": "mediumblue",
+        "oc": "chocolate",
+        "ecl": "darkgreen",
+        "serp": "orangered"
     }
 
 
@@ -75,20 +67,20 @@ def main():
     ax[0].label_outer()  # Only show outer labels and tick labels
     ax[0].legend(loc='upper right')
     ax[0].set_ylim(0, cr["conv_rate"].max()+1)
-    ax[0].set_xlim(0, 50)
+    ax[0].set_xlim(0, xmax_plot)
     ax[0].set_title("Exhumable particles", fontsize=12)
     ax[0].set_yticks([0, 5])
 
     ax[1].set_visible(False)
 
     # # Histograms for tmax and tfin (Manual layering with plt.bar)
-    bin_edges = np.arange(0, 50,1)  # Define bin edges
+    bin_edges = np.arange(0, time_max,1)  # Define bin edges
 
 
     # Sort exhumed_list by lithology to ensure 'oc' is plotted over 'sed'
     exhumed_list_sorted = exhumed_list.sort_values(by='lithology', ascending=True)
-    sns.histplot(exhumed_list_sorted, x="ti", hue="lithology", bins=bin_edges, ax=ax[2], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", legend=False)
-    # sns.histplot(exhumed_list_sorted, x="tm", hue="lithology", bins=bin_edges, ax=ax[2], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", legend = False)
+    sns.histplot(exhumed_list_sorted, x="tin", hue="lithology", bins=bin_edges, ax=ax[2], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", legend=False)
+    sns.histplot(exhumed_list_sorted, x="texh", hue="lithology", bins=bin_edges, ax=ax[2], palette=colors_tin, alpha=1, linewidth=1, element="step", fill=False, legend=False)
     
 
     # Set scale, labels, and limits
@@ -97,7 +89,7 @@ def main():
     # ax[2].text(1, 20, " Particles \n Subduction", fontsize=18)
     ax[2].set_xlabel("")
     ax[2].set_ylabel("Particles count (log)")
-    ax[2].set_xlim(0, 50)
+    ax[2].set_xlim(0, xmax_plot)
     ax[2].set_ylim(0.7, 5.e3)
     ax[2].axvline(x=35, color="grey", linestyle="--", label="35 Ma", linewidth = linewidth)
     ax[2].text(0.32, -2, "Time at exhumable threshold", fontsize=12, transform=ax[1].transAxes)
@@ -147,7 +139,7 @@ def main():
     # Add a title, labels, and legend
     ax[4].set_xlabel("")
     ax[4].set_ylabel("")
-    ax[4].set_xlim(0, 50)
+    ax[4].set_xlim(0, xmax_plot)
     ax[4].set_ylim(0.7, 5.e3)
     ax[4].set_xticks([])
     ax[4].set_yticks([])
@@ -163,11 +155,14 @@ def main():
 
 
 
-    new_bins = np.arange(0, 50, 5)
+    new_bins = np.arange(0, time_max, 5)
     offset = 0
 
+
     # for each lithology in the stagnant list, create a dataframe with the average values for each bin
-    for l, lith in enumerate(stagnant_list["lithology"].unique()):
+    # for l, lith in enumerate(stagnant_list["lithology"].unique()):
+    for l, lith in enumerate(["sed", "oc", "ecl"]):
+        # print(f"Processing lithology: {lith}")
         lith_df = stagnant_list[stagnant_list["lithology"] == lith]
         avg_bins = pd.DataFrame(columns=["bin", "bin_edges", "particles_num", "avg_ti", "std_ti", "avg_duration", "std_duration"])
         current_bin = 1
@@ -205,8 +200,8 @@ def main():
             color=colors_tfin[lith],  
             markersize=7, 
             linewidth=0, 
-            capsize=5,
-            capthick=2,
+            # capsize=5,
+            # capthick=2,
             zorder=2
         )
 
@@ -215,7 +210,7 @@ def main():
     ax[5].set_yticks([])
     ax[5].label_outer()  # Only show outer labels and tick labels
     ax[5].axvline(x=35, color="grey", linestyle="--", label="35 Ma", linewidth = linewidth)
-    ax[5].set_xlim(0, 50)
+    ax[5].set_xlim(0, xmax_plot)
     ax[5].set_xlabel("Time (Myr)")
 
    

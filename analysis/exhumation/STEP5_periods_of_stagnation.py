@@ -66,6 +66,7 @@ def main():
         os.mkdir(sfiles)
 
     timing = ["dyn", "trans", "kin"]
+    time_max = 65
 
     fixed_columns = ["id", "lithology"]
     columns = fixed_columns + [f"{c}_{t}" for c in ["Pm", "tm", "Tm", "time_interval", "ti", "tf"] for t in timing]
@@ -91,7 +92,7 @@ def main():
         plt.xlabel("Time (Myr)")
         plt.ylabel("Pressure (GPa)")
         plt.ylim(0, max_Pm+0.1)
-        plt.xlim(0, 50)
+        plt.xlim(0, time_max)
         plt.title(f"Particle {id} - Lithology: {part.iloc[i]['lithology']}")
         plt.savefig(f"{sloc}/stagnant_times_{id}.png")
         plt.close()
@@ -105,7 +106,7 @@ def main():
             plt.xlabel("Time (Myr)")
             plt.ylabel("Pressure (GPa)")
             plt.ylim(0, max_Pm+0.1)
-            plt.xlim(0, 50)
+            plt.xlim(0, time_max)
             plt.title(f"Particle {id} - Lithology: {part.iloc[i]['lithology']}")
             plt.savefig(f"{ecloc}/stagnant_times_{id}.png")
             plt.close()

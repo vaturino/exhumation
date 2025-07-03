@@ -3,6 +3,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import warnings
+warnings.filterwarnings("ignore")
 
 
 #get convergence rate data: 
@@ -15,6 +17,8 @@ t1 = np.linspace(0, 7.17225e6, 100)
 t2 = np.linspace(7.17225e6, 13.7765e6, 100)
 t3 = np.linspace(13.7765e6, 17.7713e6, 100)
 t4 = np.linspace(17.7713e6, 35e6, 100)  # Changed to 35e6
+t5 = np.linspace(35e6, 50e6, 100)  # Extended to 50e6
+t6 = np.linspace(50e6, 65e6, 100)  # Additional time range for constant value
 
 # Original equations
 m3 = -1.11833e-08
@@ -30,8 +34,7 @@ v3 = m3 * t3 + b3
 v3[-1] = v4_sp[0]  # Ensure v3's last value matches v4's first value
 
 # Define an array of percentages for the linear decrease after t4
-percentages = [0.0, 0.1, 0.5, 1.0]  # 0%, 10%, 50%, 100%
-t5 = 50e6
+percentages = [0.0, 0.5, 1.0]  # 0%, 50%, 100%
 
 # Prepare the output file
 output_file = "/home/vturino/PhD/projects/exhumation/plots/imposed_velocities/velocity_equations.txt"
@@ -51,38 +54,56 @@ with open(output_file, "w") as file:
     # Write the equations for the linear decrease based on percentages
     for i, percentage in enumerate(percentages, start=1):
         v5 = percentage * v4_value
-        m = (v5 - v4_value) / (t5 - 35e6)  # Slope for the linear decrease
+        m = (v5 - v4_value) / (t5[-1] - 35e6)  # Slope for the linear decrease
         b = v4_value - m * 35e6            # Intercept for the linear decrease
         
-        percentage_str = f"v_5 = {m:.6e} * t + {b:.6f}, for t in [35e6, {t5:.2e}], and v_5 = {percentage*100:.0f}% of v_4\n"
+        percentage_str = f"v_5 = {m:.6e} * t + {b:.6f}, for t in [35e6, {t5[-1]:.2e}], and v_5 = {percentage*100:.0f}% of v_4\n"
         file.write(percentage_str)
+
+    # Write the constant value for t6 for all percentages
+    for percentage in percentages:
+        v5 = percentage * v4_value  # Final velocity value for this percentage
+        v6_value = v5  # Constant value at the end of t5
+        constant_str = f"v_6 = {v6_value:.6f}, for t in [{t5[-1]:.2e}, {t6[-1]:.2e}], and v_6 = {percentage*100:.0f}% of v_4\n"
+        file.write(constant_str)
 
 # Plot the equations
 plt.figure(figsize=(10, 6))
 
-# Plot the first four segments
+# Plot all segments including the linear decreases
 plt.plot(cr["time"], cr["conv_rate"]/1e2, label="Dynamic Convergence Rate", color='black')
 plt.plot(t1, v1_sp, label=r"$v_{1,sp} = 1.00756 \times 10^{-9} t + 0.020515$", color='b')
 plt.plot(t2, v2_sp, label=r"$v_{2,sp} = 7.52792 \times 10^{-9} t - 0.026251$", color='g')
 plt.plot(t3, v3, label=r"$v_{3,sp} = -1.11833 \times 10^{-8} t + 0.231524$", color='r')
 plt.plot(t4, v4_sp, label=r"$v_{4,sp} = 0.034222$", color='orange')
 
-# After v4, plot linear decreases for each percentage
+# Plot linear decreases for each percentage
 colors = plt.cm.Dark2(np.arange(len(percentages)))
-
 for i, percentage in enumerate(percentages):
     v5 = percentage * v4_value  # Final velocity value for this percentage
-    m = (v5 - v4_value) / (t5 - 35e6)  # Slope for the linear decrease
-    t_after = np.linspace(35e6, t5, 100)
+    m = (v5 - v4_value) / (t5[-1] - 35e6)  # Slope for the linear decrease
+    t_after = np.linspace(35e6, t5[-1], 100)
     v_after = m * (t_after - 35e6) + v4_value
     plt.plot(t_after, v_after, label=f"Linear decrease to {percentage*100:.0f}% of v4", color=colors[i])
+
+# Plot constant values for v6
+for i, percentage in enumerate(percentages):
+    v5 = percentage * v4_value
+    v6_value = v5
+    t_constant = np.linspace(t5[-1], t6[-1], 100)
+    v_constant = np.full_like(t_constant, v6_value)
+    plt.plot(t_constant, v_constant, label=f"v_6 = {percentage*100:.0f}% of v4", linestyle='--', color=colors[i])
+
+
+
+# Removed duplicate plotting loop for linear decreases
 
 # Add titles and labels
 plt.title("Plot of v_sp Equations over Time with Linear Decrease for Multiple Percentages")
 plt.xlabel("Time (t)")
 plt.ylabel("v_sp(t)")
 plt.grid(True)
-plt.legend()
+# plt.legend()
 
 # Save the plot
 plot_file = "/home/vturino/PhD/projects/exhumation/plots/imposed_velocities/"
@@ -91,5 +112,4 @@ plt.close()
 
 print(f"Equations written to {output_file}")
 print(f"Plot saved as {plot_file}")
-
 

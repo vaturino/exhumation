@@ -100,6 +100,7 @@ def main():
         time_array = np.zeros((len(os.listdir(f"{csvs_loc}{m}/particles")), 2))
         stat = pd.read_csv(f"{models_loc}{m}/statistics", skiprows=configs['head_lines'], sep='\s+', header=None)
         time_array = grab_dimTime_particles(f"{csvs_loc}{m}/particles", stat, time_array, configs['head_lines'] - 1)
+        
 
         plot_loc = f"/home/vturino/PhD/projects/exhumation/plots/single_models/{configs['models'][ind_m]}"
         txt_loc, pt_files = setup_directories(plot_loc)

@@ -56,24 +56,11 @@ def main():
     rocks = pd.read_excel(f"{rocks_loc}rocks_agard2018.xlsx")
     rocks = rocks[rocks["AREA"] != "Metamorphic Soles"]
 
-    colors_tin = {
-        "sed": "midnightblue",
-        "oc": "#733A11",
-        "ecl": "#003300",
-        "serp": "#3b0000"
-    }
-
-    colors_tmax = {
-        "sed": "mediumblue",
-        "oc": "#B06D1A",
-        "ecl": "#45701C",
-        "serp": "brown"
-    }
 
     colors_tfin = {
         "sed": "cornflowerblue",
-        "oc": "#E3B64F",
-        "ecl": "#A0C93D",
+        "oc": "darkorange",
+        "ecl": "forestgreen",
         "serp": "lightsalmon"
     }
 
@@ -131,6 +118,7 @@ def main():
     # Calculate percentages for each category
     subd_pct = (subd_count / total_count) * 100
     exh_pct = (exh_count / total_count) * 100
+    stag_count = len(stag[stag["ti_kin"] <= 50])
     stag_pct = (stag_count / total_count) * 100
 
 

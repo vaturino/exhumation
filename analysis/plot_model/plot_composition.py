@@ -70,8 +70,8 @@ def main():
         cr = pd.read_csv(f"{plot_loc_mod}/txt_files/2D_v.txt", sep="\s+")
         cr["conv_rate"].iloc[0] = cr["conv_rate"].iloc[1]
 
-        # for t in tqdm(range(0, len(time_array))):
-        for t in tqdm(range(60, 80)):
+        for t in tqdm(range(file_count, len(time_array))):
+        # for t in tqdm(range(60, 80)):
             f1, a1 = plt.subplots(2, 1, figsize=(8, 5), dpi=500, height_ratios=[1, 0.25])
 
             plotname = f"{plot_loc}{int(t)}.png" 

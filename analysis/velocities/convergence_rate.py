@@ -31,10 +31,10 @@ def main():
     parser.add_argument('json_file', help='json file with model name, time at the end of computation, folder where to save the plots, legend')
     args = parser.parse_args()
 
-    csvs_loc =  '/home/vturino/PhD/projects/exhumation/gz_outputs/'
-    models_loc =  '/home/vturino/PhD/projects/exhumation/raw_outputs/'
-    # models_loc = '/home/vturino/Vale_nas/exhumation/raw_outputs/'
-    # csvs_loc = '/home/vturino/Vale_nas/exhumation/gz_outputs/'
+    # csvs_loc =  '/home/vturino/PhD/projects/exhumation/gz_outputs/'
+    # models_loc =  '/home/vturino/PhD/projects/exhumation/raw_outputs/'
+    models_loc = '/home/vturino/Vale_nas/exhumation/raw_outputs/'
+    csvs_loc = '/home/vturino/Vale_nas/exhumation/gz_outputs/'
     json_loc = '/home/vturino/PhD/projects/exhumation/pyInput/'
 
     with open(f"{json_loc}{args.json_file}") as json_file:
