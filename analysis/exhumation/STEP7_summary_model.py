@@ -95,9 +95,12 @@ def main():
     # Load the data
     allp = pd.read_csv(f"{txt_loc}/particles_indexes.csv")
     stag = pd.read_csv(f"{txt_loc}/stagnant_particles.txt", sep="\s+")
+    stag = stag[(stag["ti_kin"] <= 51) | (stag["ti_kin"].isna())]
     exh = pd.read_csv(f"{txt_loc}/exhumed_particles.txt", sep="\s+")
     subd = pd.read_csv(f"{txt_loc}/subducted_particles.txt", sep="\s+")
     subd = subd.dropna()
+
+ 
 
     # Check unique values in stag['lithology']
     unique_lithologies_stag = stag["lithology"].unique()
@@ -111,6 +114,7 @@ def main():
     subd_count = len(subd)
     exh_count = len(exh)
     stag_count = len(stag)
+    
 
     # Total count of all particles
     total_count = subd_count + exh_count + stag_count
@@ -118,8 +122,9 @@ def main():
     # Calculate percentages for each category
     subd_pct = (subd_count / total_count) * 100
     exh_pct = (exh_count / total_count) * 100
-    stag_count = len(stag[stag["ti_kin"] <= 50])
+    stag_count = len(stag)
     stag_pct = (stag_count / total_count) * 100
+
 
 
     #calculate percentages of exhumed particles by lithology

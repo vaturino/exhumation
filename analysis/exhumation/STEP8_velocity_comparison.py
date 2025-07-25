@@ -72,6 +72,9 @@ def main():
         # Load the data
         exhumed_list = pd.read_csv(f"{txt_loc}/exhumed_times.txt", sep="\s+")
         stagnant_list = pd.read_csv(f"{txt_loc}/stagnant_particles.txt", sep="\s+")
+        stagnant_list = stagnant_list[(stagnant_list["ti_kin"] <= 51) | (stagnant_list["ti_kin"].isna())]
+        
+
         cr = pd.read_csv(f"{txt_loc}/2D_v.txt", sep="\s+")
         cr["conv_rate"].iloc[0] = np.nan
 
@@ -93,7 +96,7 @@ def main():
 
         # Sort exhumed_list by lithology to ensure 'oc' is plotted over 'sed'
         exhumed_list_sorted = exhumed_list.sort_values(by='lithology', ascending=True)
-        sns.histplot(exhumed_list_sorted, x="ti", hue="lithology", bins=bin_edges, ax=ax[ind_m+1,0], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", legend=False)
+        sns.histplot(exhumed_list_sorted, x="tin", hue="lithology", bins=bin_edges, ax=ax[ind_m+1,0], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", legend=False)
         # sns.histplot(exhumed_list_sorted, x="tm", hue="lithology", bins=bin_edges, ax=ax[ind_m+1,0], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", legend = False)
         
 
@@ -207,6 +210,7 @@ def main():
         #count amount of stagnant particles
         nstagnant = len(stagnant_list)
 
+
         #calculate percentage of particles exhumed/stagnant with respect to total
         pexhumed = nexhumed/nparts
         pstagnant = nstagnant/nparts
@@ -221,9 +225,9 @@ def main():
         ax[ind_m+1,2].bar(0.8, pstagnant, bottom=psubducted+pexhumed, color=classification["stagnant"], 
             label="Stagnant", edgecolor="black", linewidth=0.5, width=bar_width)
         # Add text with the percentage of particles on the right of the bar
-        ax[ind_m+1,2].text(0.806, psubducted / 2, f"{round(psubducted * 100, 0)}%", fontsize=10, ha="left", va="center", color="black")
-        ax[ind_m+1,2].text(0.806, psubducted + pexhumed / 2, f"{round(pexhumed * 100, 0)}%", fontsize=10, ha="left", va="center", color="black")
-        ax[ind_m+1,2].text(0.806, psubducted + pexhumed + pstagnant / 2, f"{round(pstagnant * 100, 0)}%", fontsize=10, ha="left", va="center", color="black")
+        ax[ind_m+1,2].text(0.806, psubducted / 2, f"{round(psubducted * 100, 1)}%", fontsize=10, ha="left", va="center", color="black")
+        ax[ind_m+1,2].text(0.806, psubducted + pexhumed / 2, f"{round(pexhumed * 100, 1)}%", fontsize=10, ha="left", va="center", color="black")
+        ax[ind_m+1,2].text(0.806, psubducted + pexhumed + pstagnant / 2, f"{round(pstagnant * 100, 1)}%", fontsize=10, ha="left", va="center", color="black")
         
 
         ax[ind_m+1,2].axis("off")

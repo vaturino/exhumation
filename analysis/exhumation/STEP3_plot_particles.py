@@ -133,6 +133,8 @@ def assign_particle_values(particles, lowgrad_dyn, lowgrad_kin, lowgrad_trans, i
 
 def process_particle(p, txt_loc, line_colors, compositions, composition_mapping, thresh, time_thresh, stagnation_min, c, grad_thresh, ymax=901.):
     pt_single = load_data(p, txt_loc)
+    # pt_single["Plith"] = pt_single["Plith"].rolling(window=10, min_periods=1).mean()
+    # pt_single["time"] = pt_single["time"].rolling(window=10, min_periods=1).mean()
 
     pt_single["T"] = pt_single["T"]
     pt_single["terrain"] = sum((ind_c + 1) * pt_single[c].round() for ind_c, c in enumerate(compositions))
@@ -142,7 +144,7 @@ def process_particle(p, txt_loc, line_colors, compositions, composition_mapping,
     max_depth = ymax - pt_single["depth"].min()
     pmax = pt_single["Plith"].max()
     t_at_pmax = pt_single["time"].iat[pt_single["Plith"].idxmax()]
-    exhumed = (pt_single["Plith"].iat[-31] <= (1 - thresh) * pmax) and (max_depth >= 10.) and (pt_single["time"].iat[-31] > t_at_pmax)# Check if the particle is exhumed
+    exhumed = (pt_single["Plith"].iat[-29] <= (1 - thresh) * pmax) and (max_depth >= 10.) and (pt_single["time"].iat[-29] > t_at_pmax)# Check if the particle is exhumed
 
     stagnant = not exhumed # Default as stagnant
     subducted = not exhumed and not stagnant  # Default as not subducted
@@ -150,8 +152,6 @@ def process_particle(p, txt_loc, line_colors, compositions, composition_mapping,
     particle_data = None
 
     if stagnant:
-        # pt_single["Plith"] = pt_single["Plith"].rolling(window=10, min_periods=1).mean()
-        # pt_single["time"] = pt_single["time"].rolling(window=10, min_periods=1).mean()
         pt_single["gradient"] = np.gradient(pt_single["Plith"], pt_single["time"])
         lowgrad = process_times_for_particle(pt_single, stagnation_min, time_thresh, grad_thresh)
 

@@ -33,10 +33,14 @@ def main():
     # Load the data
     exhumed_list = pd.read_csv(f"{txt_loc}/exhumed_times.txt", sep="\s+")
     stagnant_list = pd.read_csv(f"{txt_loc}/stagnant_particles.txt", sep="\s+")
+    stagnant_list = stagnant_list[(stagnant_list["ti_kin"] <= 51) | (stagnant_list["ti_kin"].isna())]
+    allparts = pd.read_csv(f"{txt_loc}/particles_indexes.csv")
+    
+
     cr = pd.read_csv(f"{txt_loc}/2D_v.txt", sep="\s+")
     cr["conv_rate"].iloc[0] = np.nan
 
-    xmax_plot = 65
+    xmax_plot = 50
     time_max = 65
 
     colors_tfin = {
@@ -80,7 +84,7 @@ def main():
     # Sort exhumed_list by lithology to ensure 'oc' is plotted over 'sed'
     exhumed_list_sorted = exhumed_list.sort_values(by='lithology', ascending=True)
     sns.histplot(exhumed_list_sorted, x="tin", hue="lithology", bins=bin_edges, ax=ax[2], palette=colors_tfin, alpha=alpha, linewidth=1, element="step", legend=False)
-    sns.histplot(exhumed_list_sorted, x="texh", hue="lithology", bins=bin_edges, ax=ax[2], palette=colors_tin, alpha=1, linewidth=1, element="step", fill=False, legend=False)
+    # sns.histplot(exhumed_list_sorted, x="texh", hue="lithology", bins=bin_edges, ax=ax[2], palette=colors_tin, alpha=1, linewidth=1, element="step", fill=False, legend=False)
     
 
     # Set scale, labels, and limits
@@ -109,6 +113,8 @@ def main():
     stagnant_list["ti"] = np.nan
     stagnant_list["time_interval"] = np.nan
     stagnant_list["lith_time"] = np.nan
+
+    
 
     # Handle ti_kin, ti_dyn, ti_trans
     new_rows = []
@@ -225,6 +231,10 @@ def main():
     plt.savefig(f"{plot_loc}/timeline.pdf", dpi=500)
     plt.close()
 
+
+    print("exhum perc = ", len(exhumed_list) / len(allparts) * 100)
+    print("exhumed liths = ", exhumed_list["lithology"].value_counts()/len(allparts) * 100)
+    print("stagn perc = ", len(stagnant_list) / len(allparts) * 100)
 
 
 
